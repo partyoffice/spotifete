@@ -1,0 +1,6 @@
+database:
+  host: postgres.host.de
+  port: 5432
+  name: database-name
+  user: database-user
+  password: database-password

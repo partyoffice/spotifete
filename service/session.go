@@ -7,17 +7,15 @@ import (
 
 type SessionService struct{}
 
-var db = database.GetInstance()
-
 func (s SessionService) GetActiveSessions() []Session {
 	var sessions []Session
-	db.Find(&sessions, "active = true")
+	database.Connection.Find(&sessions, "active = true")
 	return sessions
 }
 
 func (s SessionService) GetSessionById(id int64) (Session, error) {
 	var sessions []Session
-	db.Where("id = ?", id).Limit(1).Find(&sessions)
+	database.Connection.Where("id = ?", id).Limit(1).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return sessions[0], nil

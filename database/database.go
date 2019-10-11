@@ -2,43 +2,32 @@ package database
 
 import (
 	"fmt"
+	"github.com/47-11/spotifete/config"
 	. "github.com/47-11/spotifete/model"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-var instance *gorm.DB
-
-func GetInstance() *gorm.DB {
-	if instance == nil {
-		db, err := gorm.Open("postgres", "host=nikos410.de port=5432 user=spotifete dbname=spotifete password=?")
-		if err != nil {
-			panic("failed to connect database")
-		}
-
-		instance = db
-	}
-
-	return instance
-}
+var connectionUrl string
+var Connection *gorm.DB
 
 func Shutdown() {
-	if instance != nil {
-		fmt.Println("Closing database")
-		instance.Close()
+	if Connection != nil {
+		Connection.Close()
 	}
 }
 
 func init() {
+	c := config.GetConfig()
+	connectionUrl = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", c.GetString("database.host"), c.GetString("database.port"), c.GetString("database.name"), c.GetString("database.user"), c.GetString("database.password"))
 	// Automatically migrate the schema during startup
-	db, err := gorm.Open("postgres", "host=nikos410.de port=5432 user=spotifete dbname=spotifete password=?")
+	db, err := gorm.Open("postgres", connectionUrl)
 	if err != nil {
 		panic("failed to connect database")
 	}
-	defer db.Close()
-
-	fmt.Println("Initializing database")
 
 	// Migrate the schema
 	db.AutoMigrate(&Session{})
+
+	Connection = db
 }
