@@ -91,3 +91,6 @@ fabric.properties
 
 # SQLite database files
 *.db
+
+# Config files
+config/*.yml
