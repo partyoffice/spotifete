@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"html"
+	"encoding/json"
+	"github.com/47-11/spotifete/model"
 	"log"
 	"net/http"
 
@@ -12,17 +12,17 @@ import (
 func main() {
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", Index)
-	router.HandleFunc("/{path}", Any)
+	router.HandleFunc("/api/sessions", getSessions)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Welcome!")
+func getSessions(w http.ResponseWriter, r *http.Request) {
+	sessions := buildMockSessions()
+
+	json.NewEncoder(w).Encode(sessions)
 }
 
-func Any(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	path := vars["path"]
-	fmt.Fprintln(w, html.EscapeString(path))
+func buildMockSessions() []model.Session {
+	testy := model.SpotifyUser{Name: "TestyMcTesticles"}
+	return []model.Session{{Uuid: "4711", Active: true, Owner: testy}}
 }
