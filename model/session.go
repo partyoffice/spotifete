@@ -1,7 +1,9 @@
 package model
 
+import "github.com/jinzhu/gorm"
+
 type Session struct {
-	Uuid   string      `json:"uuid"`
+	gorm.Model
 	Active bool        `json:"active"`
 	Owner  SpotifyUser `json:"owner"`
 }
