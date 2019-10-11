@@ -1,7 +1,7 @@
 package model
 
 type Session struct {
-	Uuid   string
-	Active bool
-	Owner  SpotifyUser
+	Uuid   string      `json:"uuid"`
+	Active bool        `json:"active"`
+	Owner  SpotifyUser `json:"owner"`
 }

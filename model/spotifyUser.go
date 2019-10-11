@@ -1,5 +1,5 @@
 package model
 
 type SpotifyUser struct {
-	Name string
+	Name string `json:"name"`
 }
