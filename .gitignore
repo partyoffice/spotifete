@@ -94,3 +94,6 @@ fabric.properties
 
 # Config files
 config/*.yml
+
+# GoLand DataSource config
+.idea/**/dataSources.xml
