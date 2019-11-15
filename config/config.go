@@ -22,3 +22,12 @@ func GetConfig() *viper.Viper {
 
 	return config
 }
+
+func GetActiveProfile() string {
+	c := GetConfig()
+	if c.IsSet("server.activeProfile") {
+		return c.GetString("server.activeProfile")
+	} else {
+		return "debug"
+	}
+}

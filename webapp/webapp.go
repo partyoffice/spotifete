@@ -5,7 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Start() {
+func Start(activeProfile string) {
+	gin.SetMode(activeProfile)
 	ginEngine := gin.Default()
 
 	registerRoutes(ginEngine)

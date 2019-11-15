@@ -9,5 +9,6 @@ import (
 func main() {
 	defer database.Shutdown()
 
-	webapp.Start()
+	activeProfile := config.GetActiveProfile()
+	webapp.Start(activeProfile)
 }
