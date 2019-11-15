@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS sessions(
    updated_at TIMESTAMP,
    deleted_at TIMESTAMP,
    active BOOLEAN NOT NULL DEFAULT FALSE,
-   join_id char(8) NOT NULL
+   join_id char(8)
 );
