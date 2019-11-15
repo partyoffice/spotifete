@@ -16,7 +16,7 @@ func Start(activeProfile string) {
 
 func registerRoutes(baseRouter *gin.Engine) {
 	// Templates
-	baseRouter.LoadHTMLGlob("webapp/templates/*.html")
+	baseRouter.LoadHTMLGlob("resources/templates/*.html")
 	templateController := new(TemplateController)
 	baseRouter.GET("/", templateController.Index)
 
