@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+
 	defer database.Shutdown()
 
 	activeProfile := config.GetActiveProfile()
