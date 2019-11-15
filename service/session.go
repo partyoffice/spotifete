@@ -7,9 +7,21 @@ import (
 
 type SessionService struct{}
 
+func (s SessionService) GetTotalSessionCount() int {
+	var count int
+	database.Connection.Model(&Session{}).Count(&count)
+	return count
+}
+
+func (s SessionService) GetActiveSessionCount() int {
+	var count int
+	database.Connection.Model(&Session{}).Where("active = true").Count(&count)
+	return count
+}
+
 func (s SessionService) GetActiveSessions() []Session {
 	var sessions []Session
-	database.Connection.Find(&sessions, "active = true")
+	database.Connection.Where("active = true").Find(&sessions)
 	return sessions
 }
 
