@@ -14,6 +14,12 @@ func Start() {
 }
 
 func registerRoutes(baseRouter *gin.Engine) {
+	// Templates
+	baseRouter.LoadHTMLGlob("webapp/templates/*.html")
+	templateController := new(TemplateController)
+	baseRouter.GET("/", templateController.Index)
+
+	// API
 	apiRouter := baseRouter.Group("/api/v1")
 	apiController := new(ApiController)
 
