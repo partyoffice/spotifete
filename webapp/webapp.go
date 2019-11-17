@@ -27,4 +27,5 @@ func registerRoutes(baseRouter *gin.Engine) {
 	apiRouter.GET("/", apiController.Index)
 	apiRouter.GET("/sessions", apiController.GetActiveSessions)
 	apiRouter.GET("/sessions/:sessionId", apiController.GetSession)
+	apiRouter.GET("/users/:userId", apiController.GetUser)
 }

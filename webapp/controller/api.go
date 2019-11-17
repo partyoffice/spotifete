@@ -36,3 +36,18 @@ func (controller ApiController) GetSession(c *gin.Context) {
 		c.JSON(http.StatusOK, session)
 	}
 }
+
+func (controller ApiController) GetUser(c *gin.Context) {
+	userId, err := strconv.ParseInt(c.Param("userId"), 0, 0)
+	user, err := controller.userService.GetUserById(userId)
+
+	if err != nil {
+		if _, notFound := err.(model.EntryNotFoundError); notFound {
+			c.String(http.StatusNotFound, err.Error())
+		} else {
+			c.String(http.StatusInternalServerError, err.Error())
+		}
+	} else {
+		c.JSON(http.StatusOK, user)
+	}
+}
