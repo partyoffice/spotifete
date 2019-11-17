@@ -12,6 +12,7 @@ func (s SpotifyUserService) GetTotalUserCount() int {
 	database.Connection.Model(&SpotifyUser{}).Count(&count)
 	return count
 }
+
 func (s SpotifyUserService) GetUserById(id int64) (SpotifyUser, error) {
 	var users []SpotifyUser
 	database.Connection.Where("id = ?", id).Limit(1).Find(&users)

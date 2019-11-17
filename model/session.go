@@ -6,4 +6,5 @@ type Session struct {
 	gorm.Model
 	Active  bool
 	OwnerId uint
+	JoinId  string
 }
