@@ -1,6 +1,8 @@
 package model
 
+import "github.com/jinzhu/gorm"
+
 type SpotifyUser struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	gorm.Model
+	SpotifyId string `json:"spotifyId"`
 }
