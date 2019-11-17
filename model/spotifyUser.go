@@ -4,5 +4,5 @@ import "github.com/jinzhu/gorm"
 
 type SpotifyUser struct {
 	gorm.Model
-	SpotifyId string `json:"spotifyId"`
+	SpotifyId string
 }

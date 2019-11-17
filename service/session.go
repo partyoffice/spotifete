@@ -35,3 +35,14 @@ func (s SessionService) GetSessionById(id int64) (Session, error) {
 		return Session{}, EntryNotFoundError{Message: "Session not found."}
 	}
 }
+
+func (s SessionService) GetSessionByJoinId(id int64) (Session, error) {
+	var sessions []Session
+	database.Connection.Where("join_id = ?", id).Limit(1).Find(&sessions)
+
+	if len(sessions) == 1 {
+		return sessions[0], nil
+	} else {
+		return Session{}, EntryNotFoundError{Message: "Session not found."}
+	}
+}
