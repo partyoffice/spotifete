@@ -27,7 +27,7 @@ func (s SessionService) GetActiveSessions() []Session {
 
 func (s SessionService) GetSessionById(id int64) (Session, error) {
 	var sessions []Session
-	database.Connection.Where("id = ?", id).Limit(1).Find(&sessions)
+	database.Connection.Where("id = ?", id).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return sessions[0], nil
@@ -38,7 +38,7 @@ func (s SessionService) GetSessionById(id int64) (Session, error) {
 
 func (s SessionService) GetSessionByJoinId(id int64) (Session, error) {
 	var sessions []Session
-	database.Connection.Where("join_id = ?", id).Limit(1).Find(&sessions)
+	database.Connection.Where("join_id = ?", id).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return sessions[0], nil
