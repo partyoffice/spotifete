@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS listening_sessions RENAME TO sessions;
