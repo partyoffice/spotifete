@@ -39,7 +39,7 @@ func (s SpotifyService) GetAuthUrl() string {
 }
 
 func (s SpotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*oauth2.Token, error) {
-	accessToken := session.Get("spotifyAccesstoken")
+	accessToken := session.Get("spotifyAccessToken")
 	refreshToken := session.Get("spotifyRefreshToken")
 	tokenExpiry := session.Get("spotifyTokenExpiry")
 	tokenType := session.Get("spotifyTokenType")

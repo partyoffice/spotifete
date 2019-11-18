@@ -53,4 +53,5 @@ func setupSpotifyController(baseRouter *gin.Engine) {
 
 	spotifyRouter.GET("/login", spotifyController.Login)
 	spotifyRouter.GET("/callback", spotifyController.Callback)
+	spotifyRouter.GET("/logout", spotifyController.Logout)
 }

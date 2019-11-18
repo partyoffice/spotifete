@@ -36,7 +36,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 
 	// Save token on session
 	session := sessions.Default(c)
-	session.Set("spotifyAccesstoken", token.AccessToken)
+	session.Set("spotifyAccessToken", token.AccessToken)
 	session.Set("spotifyRefreshToken", token.RefreshToken)
 	session.Set("spotifyTokenExpiry", token.Expiry.Format(time.RFC3339))
 	session.Set("spotifyTokenType", token.TokenType)
@@ -49,5 +49,22 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	}
 
 	// TODO: Add something like authSuccess / error as Redirect parameter and display success
+	c.Redirect(http.StatusTemporaryRedirect, "/")
+}
+
+func (controller SpotifyController) Logout(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Delete("spotifyAccessToken")
+	session.Delete("spotifyRefreshToken")
+	session.Delete("spotifyTokenExpiry")
+	session.Delete("spotifyTokenType")
+	err := session.Save()
+
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Could not log out: "+err.Error())
+		log.Println(err)
+		return
+	}
+
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
