@@ -1,26 +1,37 @@
 package webapp
 
 import (
+	"crypto/rand"
 	. "github.com/47-11/spotifete/webapp/controller"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
 func Start(activeProfile string) {
 	gin.SetMode(activeProfile)
-	ginEngine := gin.Default()
+	baseRouter := gin.Default()
 
-	registerRoutes(ginEngine)
+	setupSessions(baseRouter)
 
-	ginEngine.Run(":8410")
+	setupApiController(baseRouter)
+	setupTemplateController(baseRouter)
+	setupSpotifyController(baseRouter)
+
+	baseRouter.Run(":8410")
 }
 
-func registerRoutes(baseRouter *gin.Engine) {
-	// Templates
-	baseRouter.LoadHTMLGlob("resources/templates/*.html")
-	templateController := new(TemplateController)
-	baseRouter.GET("/", templateController.Index)
+func setupSessions(baseRouter *gin.Engine) {
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		panic("Could not create random randomBytes for cookie store: " + err.Error())
+	}
 
-	// API
+	baseRouter.Use(sessions.Sessions("spotifetesession", cookie.NewStore(randomBytes)))
+}
+
+func setupApiController(baseRouter *gin.Engine) {
 	apiRouter := baseRouter.Group("/api/v1")
 	apiController := new(ApiController)
 
@@ -28,4 +39,18 @@ func registerRoutes(baseRouter *gin.Engine) {
 	apiRouter.GET("/sessions", apiController.GetActiveSessions)
 	apiRouter.GET("/sessions/:sessionId", apiController.GetSession)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
+}
+
+func setupTemplateController(baseRouter *gin.Engine) {
+	baseRouter.LoadHTMLGlob("resources/templates/*.html")
+	templateController := new(TemplateController)
+	baseRouter.GET("/", templateController.Index)
+}
+
+func setupSpotifyController(baseRouter *gin.Engine) {
+	spotifyRouter := baseRouter.Group("/spotify")
+	spotifyController := new(SpotifyController)
+
+	spotifyRouter.GET("/login", spotifyController.Login)
+	spotifyRouter.GET("/callback", spotifyController.Callback)
 }

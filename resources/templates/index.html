@@ -1,6 +1,29 @@
 <html>
     <h1>Spotifete</h1>
-    <p>Welcome!</p>
-    <p>There are {{ .activeSessionCount}} active sessions ({{ .totalSessionCount}} total)</p>
+    <p>Welcome! You can join an existing session or create a new one.</p>
+
+    <form action="session/join">
+        <label for="">session ID</label>
+        <input id="joinIdInput" name="sessionId"/>
+        <button type="submit">Join</button>
+    </form>
+
+    {{ if .spotifyAuthorized }}
+        <p>Your active sessions</p>
+        <ul>
+            {{ with .userSessions }}
+                {{ range . }}
+                    <li>{{.JoinId}}</li>
+                {{ end }}
+            {{ end }}
+        </ul>
+    {{ else }}
+        <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
+    {{ end }}
+
+    <hr/>
+
     <p>The current time is {{ .time}}</p>
+    <p>There are {{ .activeSessionCount}} active sessions ({{ .totalSessionCount}} total)</p>
+
 </html>

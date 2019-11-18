@@ -24,7 +24,7 @@ func (controller ApiController) GetActiveSessions(c *gin.Context) {
 
 func (controller ApiController) GetSession(c *gin.Context) {
 	sessionId, err := strconv.ParseInt(c.Param("sessionId"), 0, 0)
-	session, err := controller.sessionService.GetSessionByJoinId(sessionId)
+	session, err := controller.sessionService.GetSessionByJoinId(uint(sessionId))
 
 	if err != nil {
 		if _, ok := err.(model.EntryNotFoundError); ok {
@@ -39,7 +39,7 @@ func (controller ApiController) GetSession(c *gin.Context) {
 
 func (controller ApiController) GetUser(c *gin.Context) {
 	userId, err := strconv.ParseInt(c.Param("userId"), 0, 0)
-	user, err := controller.userService.GetUserById(userId)
+	user, err := controller.userService.GetUserById(uint(userId))
 
 	if err != nil {
 		if _, notFound := err.(model.EntryNotFoundError); notFound {

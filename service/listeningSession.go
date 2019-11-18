@@ -36,7 +36,7 @@ func (s SessionService) GetSessionById(id int64) (ListeningSession, error) {
 	}
 }
 
-func (s SessionService) GetSessionByJoinId(id int64) (ListeningSession, error) {
+func (s SessionService) GetSessionByJoinId(id uint) (ListeningSession, error) {
 	var sessions []ListeningSession
 	database.Connection.Where("join_id = ?", id).Find(&sessions)
 
@@ -45,4 +45,10 @@ func (s SessionService) GetSessionByJoinId(id int64) (ListeningSession, error) {
 	} else {
 		return ListeningSession{}, EntryNotFoundError{Message: "Session not found."}
 	}
+}
+
+func (s SessionService) GetActiveSessionsByOwnerId(ownerId uint) []ListeningSession {
+	var sessions []ListeningSession
+	database.Connection.Where("active = true AND owner_id = ?", ownerId).Find(&sessions)
+	return sessions
 }
