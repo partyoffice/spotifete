@@ -8,8 +8,8 @@
         <button type="submit">Join</button>
     </form>
 
-    {{ if .spotifyUser }}
-        <p>Logged in as {{ .spotifyUser.SpotifyId }}</p>
+    {{ if .user }}
+        <p>Logged in as {{ .user.SpotifyId }}</p>
         <p>Your active sessions:</p>
         <ul>
             {{ with .userSessions }}

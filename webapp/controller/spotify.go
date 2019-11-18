@@ -2,15 +2,14 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/service"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"time"
 )
 
 type SpotifyController struct {
 	spotifyService service.SpotifyService
+	userService    service.UserService
 }
 
 func (controller SpotifyController) Login(c *gin.Context) {
@@ -24,7 +23,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 
 	token, err := spotifyService.GetAuthenticator().Token(state, c.Request)
 	if err != nil {
-		c.String(http.StatusForbidden, "Could not get token: "+err.Error())
+		c.String(http.StatusUnauthorized, "Could not get token: "+err.Error())
 		log.Println(err.Error())
 		return
 	}
@@ -34,37 +33,27 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 		return
 	}
 
-	// Save token on session
-	session := sessions.Default(c)
-	session.Set("spotifyAccessToken", token.AccessToken)
-	session.Set("spotifyRefreshToken", token.RefreshToken)
-	session.Set("spotifyTokenExpiry", token.Expiry.Format(time.RFC3339))
-	session.Set("spotifyTokenType", token.TokenType)
-	err = session.Save()
-
+	// Get the spotify user for the received callback
+	client := controller.spotifyService.GetAuthenticator().NewClient(token)
+	spotifyUser, err := client.CurrentUser()
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not save session: "+err.Error())
-		log.Println(err)
+		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
+		log.Println(err.Error())
 		return
 	}
 
-	// TODO: Add something like authSuccess / error as Redirect parameter and display success
+	// Get or create the database entry for the current user
+	user := controller.userService.GetOrCreateUser(spotifyUser)
+	controller.userService.SetToken(user, token)
+
+	// Associate user with current session
+	service.LoginSessionService().GetOrCreateSessionId(c, &user.ID)
+
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 func (controller SpotifyController) Logout(c *gin.Context) {
-	session := sessions.Default(c)
-	session.Delete("spotifyAccessToken")
-	session.Delete("spotifyRefreshToken")
-	session.Delete("spotifyTokenExpiry")
-	session.Delete("spotifyTokenType")
-	err := session.Save()
-
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not log out: "+err.Error())
-		log.Println(err)
-		return
-	}
+	service.LoginSessionService().DeleteSessionId(c)
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }

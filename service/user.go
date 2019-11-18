@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/47-11/SpotiFete/database/model"
 	"github.com/47-11/spotifete/database"
+	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/model"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
@@ -41,22 +41,12 @@ func (s UserService) GetUserBySpotifyId(id string) (*model.User, error) {
 	}
 }
 
-func (s UserService) GetOrCreateUserForToken(token *oauth2.Token) (*model.User, error) {
-	client := s.spotifyService.GetAuthenticator().NewClient(token)
-	user, err := client.CurrentUser()
-	if err != nil {
-		return nil, err
-	}
-
-	return s.GetOrCreateUserForSpotifyPrivateUser(user)
-}
-
-func (s UserService) GetOrCreateUserForSpotifyPrivateUser(spotifyUser *spotify.PrivateUser) (*model.User, error) {
+func (s UserService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *model.User {
 	var users []model.User
 	database.Connection.Where("spotify_id = ?", spotifyUser.ID).Find(&users)
 
 	if len(users) == 1 {
-		return &users[0], nil
+		return &users[0]
 	} else {
 		// No user found -> Create new
 		newUser := model.User{
@@ -67,6 +57,15 @@ func (s UserService) GetOrCreateUserForSpotifyPrivateUser(spotifyUser *spotify.P
 		database.Connection.NewRecord(newUser)
 		database.Connection.Create(&newUser)
 
-		return &newUser, nil
+		return &newUser
 	}
+}
+
+func (s UserService) SetToken(user *model.User, token *oauth2.Token) {
+	user.SpotifyAccessToken = token.AccessToken
+	user.SpotifyRefreshToken = token.RefreshToken
+	user.SpotifyTokenType = token.TokenType
+	user.SpotifyTokenExpiry = token.Expiry
+
+	database.Connection.Save(user)
 }

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/47-11/SpotiFete/database/model"
 	"github.com/47-11/spotifete/database"
+	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/model"
 )
 

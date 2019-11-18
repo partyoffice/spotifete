@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/service"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -15,9 +14,8 @@ type TemplateController struct {
 }
 
 func (controller TemplateController) Index(c *gin.Context) {
-	session := sessions.Default(c)
-	client, err := controller.spotifyService.GetSpotifyClientUserFromSession(session)
-	if err != nil || client == nil {
+	_, userId := service.LoginSessionService().GetOrCreateSessionId(c, nil)
+	if userId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"time":               time.Now(),
 			"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
@@ -26,30 +24,28 @@ func (controller TemplateController) Index(c *gin.Context) {
 			"userSessions":       nil,
 			"authUrl":            controller.spotifyService.GetAuthUrl(),
 		})
-
 		return
 	}
 
-	// We have a client. That means we are authorized to access spotify
-	spotifyUser, err := client.CurrentUser()
+	user, err := controller.userService.GetUserById(*userId)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
-	}
-
-	user, err := controller.userService.GetOrCreateUserForSpotifyPrivateUser(spotifyUser)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not create or get user: "+err.Error())
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"time":               time.Now(),
+			"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
+			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
+			"user":               nil,
+			"userSessions":       nil,
+			"authUrl":            controller.spotifyService.GetAuthUrl(),
+		})
 		return
 	}
-
-	userSessions := controller.sessionService.GetActiveSessionsByOwnerId(user.ID)
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
 		"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
 		"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
 		"user":               user,
-		"userSessions":       userSessions,
+		"userSessions":       controller.sessionService.GetActiveSessionsByOwnerId(*userId),
 		"authUrl":            nil,
 	})
 }
