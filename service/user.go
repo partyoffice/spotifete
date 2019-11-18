@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/47-11/SpotiFete/database/model"
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model"
 	"github.com/jinzhu/gorm"
@@ -14,12 +15,12 @@ type UserService struct {
 
 func (s UserService) GetTotalUserCount() int {
 	var count int
-	database.Connection.Model(&User{}).Count(&count)
+	database.Connection.Model(&model.User{}).Count(&count)
 	return count
 }
 
-func (s UserService) GetUserById(id uint) (*User, error) {
-	var users []User
+func (s UserService) GetUserById(id uint) (*model.User, error) {
+	var users []model.User
 	database.Connection.Where("id = ?", id).Find(&users)
 
 	if len(users) == 1 {
@@ -29,8 +30,8 @@ func (s UserService) GetUserById(id uint) (*User, error) {
 	}
 }
 
-func (s UserService) GetUserBySpotifyId(id string) (*User, error) {
-	var users []User
+func (s UserService) GetUserBySpotifyId(id string) (*model.User, error) {
+	var users []model.User
 	database.Connection.Where("spotify_id = ?", id).Find(&users)
 
 	if len(users) == 1 {
@@ -40,7 +41,7 @@ func (s UserService) GetUserBySpotifyId(id string) (*User, error) {
 	}
 }
 
-func (s UserService) GetOrCreateUserForToken(token *oauth2.Token) (*User, error) {
+func (s UserService) GetOrCreateUserForToken(token *oauth2.Token) (*model.User, error) {
 	client := s.spotifyService.GetAuthenticator().NewClient(token)
 	user, err := client.CurrentUser()
 	if err != nil {
@@ -50,15 +51,15 @@ func (s UserService) GetOrCreateUserForToken(token *oauth2.Token) (*User, error)
 	return s.GetOrCreateUserForSpotifyPrivateUser(user)
 }
 
-func (s UserService) GetOrCreateUserForSpotifyPrivateUser(spotifyUser *spotify.PrivateUser) (*User, error) {
-	var users []User
+func (s UserService) GetOrCreateUserForSpotifyPrivateUser(spotifyUser *spotify.PrivateUser) (*model.User, error) {
+	var users []model.User
 	database.Connection.Where("spotify_id = ?", spotifyUser.ID).Find(&users)
 
 	if len(users) == 1 {
 		return &users[0], nil
 	} else {
 		// No user found -> Create new
-		newUser := User{
+		newUser := model.User{
 			Model:     gorm.Model{},
 			SpotifyId: spotifyUser.ID,
 		}
