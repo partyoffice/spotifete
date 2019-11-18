@@ -5,27 +5,27 @@ import (
 	. "github.com/47-11/spotifete/model"
 )
 
-type SessionService struct{}
+type ListeningSessionService struct{}
 
-func (s SessionService) GetTotalSessionCount() int {
+func (s ListeningSessionService) GetTotalSessionCount() int {
 	var count int
 	database.Connection.Model(&ListeningSession{}).Count(&count)
 	return count
 }
 
-func (s SessionService) GetActiveSessionCount() int {
+func (s ListeningSessionService) GetActiveSessionCount() int {
 	var count int
 	database.Connection.Model(&ListeningSession{}).Where("active = true").Count(&count)
 	return count
 }
 
-func (s SessionService) GetActiveSessions() []ListeningSession {
+func (s ListeningSessionService) GetActiveSessions() []ListeningSession {
 	var sessions []ListeningSession
 	database.Connection.Where("active = true").Find(&sessions)
 	return sessions
 }
 
-func (s SessionService) GetSessionById(id int64) (ListeningSession, error) {
+func (s ListeningSessionService) GetSessionById(id int64) (ListeningSession, error) {
 	var sessions []ListeningSession
 	database.Connection.Where("id = ?", id).Find(&sessions)
 
@@ -36,7 +36,7 @@ func (s SessionService) GetSessionById(id int64) (ListeningSession, error) {
 	}
 }
 
-func (s SessionService) GetSessionByJoinId(id uint) (ListeningSession, error) {
+func (s ListeningSessionService) GetSessionByJoinId(id uint) (ListeningSession, error) {
 	var sessions []ListeningSession
 	database.Connection.Where("join_id = ?", id).Find(&sessions)
 
@@ -47,7 +47,7 @@ func (s SessionService) GetSessionByJoinId(id uint) (ListeningSession, error) {
 	}
 }
 
-func (s SessionService) GetActiveSessionsByOwnerId(ownerId uint) []ListeningSession {
+func (s ListeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []ListeningSession {
 	var sessions []ListeningSession
 	database.Connection.Where("active = true AND owner_id = ?", ownerId).Find(&sessions)
 	return sessions

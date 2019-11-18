@@ -9,8 +9,8 @@ import (
 )
 
 type ApiController struct {
-	sessionService service.SessionService
-	userService    service.SpotifyUserService
+	sessionService service.ListeningSessionService
+	userService    service.UserService
 }
 
 func (controller ApiController) Index(c *gin.Context) {

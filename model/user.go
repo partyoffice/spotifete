@@ -2,7 +2,7 @@ package model
 
 import "github.com/jinzhu/gorm"
 
-type SpotifyUser struct {
+type User struct {
 	gorm.Model
 	SpotifyId string
 }

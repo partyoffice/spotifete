@@ -9,9 +9,9 @@ import (
 )
 
 type TemplateController struct {
-	sessionService     service.SessionService
-	spotifyUserService service.SpotifyUserService
-	spotifyService     service.SpotifyService
+	sessionService service.ListeningSessionService
+	userService    service.UserService
+	spotifyService service.SpotifyService
 }
 
 func (controller TemplateController) Index(c *gin.Context) {
@@ -22,7 +22,7 @@ func (controller TemplateController) Index(c *gin.Context) {
 			"time":               time.Now(),
 			"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
 			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
-			"spotifyUser":        nil,
+			"user":               nil,
 			"userSessions":       nil,
 			"authUrl":            controller.spotifyService.GetAuthUrl(),
 		})
@@ -33,22 +33,22 @@ func (controller TemplateController) Index(c *gin.Context) {
 	// We have a client. That means we are authorized to access spotify
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not get current user: "+err.Error())
+		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
 	}
 
-	internalUser, err := controller.spotifyUserService.GetOrCreateUserForSpotifyPrivateUser(spotifyUser)
+	user, err := controller.userService.GetOrCreateUserForSpotifyPrivateUser(spotifyUser)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not create or get internalUser: "+err.Error())
+		c.String(http.StatusInternalServerError, "Could not create or get user: "+err.Error())
 		return
 	}
 
-	userSessions := controller.sessionService.GetActiveSessionsByOwnerId(internalUser.ID)
+	userSessions := controller.sessionService.GetActiveSessionsByOwnerId(user.ID)
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
 		"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
 		"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
-		"spotifyUser":        internalUser,
+		"user":               user,
 		"userSessions":       userSessions,
 		"authUrl":            nil,
 	})
