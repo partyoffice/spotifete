@@ -8,7 +8,7 @@
         <button type="submit">Join</button>
     </form>
 
-    {{ if .spotifyAuthorized }}
+    {{ if .spotifyUser }}
         <p>Logged in as {{ .spotifyUser.SpotifyId }}</p>
         <p>Your active sessions:</p>
         <ul>

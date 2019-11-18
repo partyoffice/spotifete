@@ -22,7 +22,6 @@ func (controller TemplateController) Index(c *gin.Context) {
 			"time":               time.Now(),
 			"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
 			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
-			"spotifyAuthorized":  false,
 			"spotifyUser":        nil,
 			"userSessions":       nil,
 			"authUrl":            controller.spotifyService.GetAuthUrl(),
@@ -49,9 +48,8 @@ func (controller TemplateController) Index(c *gin.Context) {
 		"time":               time.Now(),
 		"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
 		"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
-		"spotifyAuthorized":  true,
 		"spotifyUser":        internalUser,
 		"userSessions":       userSessions,
-		"authUrl":            controller.spotifyService.GetAuthUrl(),
+		"authUrl":            nil,
 	})
 }
