@@ -9,7 +9,7 @@
     </form>
 
     {{ if .user }}
-        <p>Logged in as {{ .user.SpotifyId }}</p>
+        <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
         <p>Your active sessions:</p>
         <ul>
             {{ with .userSessions }}
