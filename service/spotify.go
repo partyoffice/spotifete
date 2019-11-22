@@ -1,17 +1,21 @@
 package service
 
 import (
+	"errors"
 	"github.com/47-11/spotifete/config"
+	"github.com/47-11/spotifete/database"
+	"github.com/47-11/spotifete/database/model"
 	"github.com/gin-contrib/sessions"
+	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+	"math/rand"
 	"time"
 )
 
 type SpotifyService struct{}
 
 var authenticator *spotify.Authenticator
-var state string
 
 func (s SpotifyService) GetAuthenticator() spotify.Authenticator {
 	if authenticator == nil {
@@ -26,16 +30,36 @@ func (s SpotifyService) GetAuthenticator() spotify.Authenticator {
 	return *authenticator
 }
 
-func (s SpotifyService) GetState() string {
-	if len(state) == 0 {
-		state = "constant-for-now"
-	}
+func (s SpotifyService) NewState() string {
+	for {
+		b := make([]rune, 256)
+		for i := range b {
+			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		}
+		newState := string(b)
 
-	return state
+		var existingStates []model.AuthenticationState
+		database.Connection.Where("state = ?", newState).Find(&existingStates)
+		if len(existingStates) == 0 {
+			var newEntry = model.AuthenticationState{
+				Model:  gorm.Model{},
+				State:  newState,
+				Active: true,
+			}
+			database.Connection.Create(newEntry)
+
+			return newState
+		}
+	}
 }
 
 func (s SpotifyService) NewAuthUrl() (string, string) {
-	state := s.GetState()
+	state := s.NewState()
+	database.Connection.Create(&model.AuthenticationState{
+		Model:  gorm.Model{},
+		State:  state,
+		Active: true,
+	})
 	return s.GetAuthenticator().AuthURL(state), state
 }
 
@@ -83,5 +107,23 @@ func (s SpotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 		return false, err
 	} else {
 		return true, nil
+	}
+}
+
+func (s SpotifyService) InvalidateState(state string) error {
+	var entries []model.AuthenticationState
+	database.Connection.Where("state = ?", state).Find(&entries)
+
+	if len(entries) == 1 {
+		entry := entries[0]
+		if entry.Active {
+			entry.Active = false
+			database.Connection.Save(&entry)
+			return nil
+		} else {
+			return errors.New("state has already been used")
+		}
+	} else {
+		return errors.New("state not found")
 	}
 }

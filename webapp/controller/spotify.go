@@ -20,17 +20,19 @@ func (controller SpotifyController) Login(c *gin.Context) {
 func (controller SpotifyController) Callback(c *gin.Context) {
 	// Set user and token in session and redirect back to index
 	spotifyService := controller.spotifyService
-	state := spotifyService.GetState()
+
+	state := c.Request.FormValue("state")
+	err := controller.spotifyService.InvalidateState(state)
+	if err != nil {
+		c.String(http.StatusUnauthorized, err.Error())
+		log.Println(err.Error())
+		return
+	}
 
 	token, err := spotifyService.GetAuthenticator().Token(state, c.Request)
 	if err != nil {
 		c.String(http.StatusUnauthorized, "Could not get token: "+err.Error())
 		log.Println(err.Error())
-		return
-	}
-	if st := c.Request.FormValue("state"); st != state {
-		c.String(http.StatusUnauthorized, "State mismatch")
-		log.Printf("State mismatch: %s != %s\n", st, state)
 		return
 	}
 
