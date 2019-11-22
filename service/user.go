@@ -50,8 +50,9 @@ func (s UserService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *model.Us
 	} else {
 		// No user found -> Create new
 		newUser := model.User{
-			Model:     gorm.Model{},
-			SpotifyId: spotifyUser.ID,
+			Model:              gorm.Model{},
+			SpotifyId:          spotifyUser.ID,
+			SpotifyDisplayName: spotifyUser.DisplayName,
 		}
 
 		database.Connection.NewRecord(newUser)

@@ -9,6 +9,7 @@ import (
 type User struct {
 	gorm.Model
 	SpotifyId           string
+	SpotifyDisplayName  string
 	SpotifyAccessToken  string
 	SpotifyRefreshToken string
 	SpotifyTokenType    string
