@@ -49,9 +49,9 @@ func (controller ApiController) GetUser(c *gin.Context) {
 }
 
 func (controller ApiController) GetAuthUrl(c *gin.Context) {
-	url, state := controller.spotifyService.NewAuthUrl()
+	url, sessionId := controller.spotifyService.NewAuthUrl()
 	c.JSON(http.StatusOK, model.AuthUrlDto{
-		Url:   url,
-		State: state,
+		Url:       url,
+		SessionId: sessionId,
 	})
 }
