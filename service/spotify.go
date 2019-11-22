@@ -9,7 +9,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
-	"math/rand"
 	"time"
 )
 
@@ -30,37 +29,15 @@ func (s SpotifyService) GetAuthenticator() spotify.Authenticator {
 	return *authenticator
 }
 
-func (s SpotifyService) NewState() string {
-	for {
-		b := make([]rune, 256)
-		for i := range b {
-			b[i] = letterRunes[rand.Intn(len(letterRunes))]
-		}
-		newState := string(b)
-
-		var existingStates []model.AuthenticationState
-		database.Connection.Where("state = ?", newState).Find(&existingStates)
-		if len(existingStates) == 0 {
-			var newEntry = model.AuthenticationState{
-				Model:  gorm.Model{},
-				State:  newState,
-				Active: true,
-			}
-			database.Connection.Create(newEntry)
-
-			return newState
-		}
-	}
-}
-
 func (s SpotifyService) NewAuthUrl() (string, string) {
-	state := s.NewState()
-	database.Connection.Create(&model.AuthenticationState{
-		Model:  gorm.Model{},
-		State:  state,
-		Active: true,
+	sessionId := LoginSessionService().newSessionId()
+	database.Connection.Create(&model.LoginSession{
+		Model:     gorm.Model{},
+		SessionId: sessionId,
+		UserId:    nil,
+		Active:    true,
 	})
-	return s.GetAuthenticator().AuthURL(state), state
+	return s.GetAuthenticator().AuthURL(sessionId), sessionId
 }
 
 func (s SpotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*oauth2.Token, error) {
@@ -111,7 +88,7 @@ func (s SpotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 }
 
 func (s SpotifyService) InvalidateState(state string) error {
-	var entries []model.AuthenticationState
+	var entries []model.LoginSession
 	database.Connection.Where("state = ?", state).Find(&entries)
 
 	if len(entries) == 1 {

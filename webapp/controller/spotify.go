@@ -56,7 +56,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 }
 
 func (controller SpotifyController) Logout(c *gin.Context) {
-	service.LoginSessionService().DeleteSessionId(c)
+	service.LoginSessionService().InvalidateSession(c)
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }

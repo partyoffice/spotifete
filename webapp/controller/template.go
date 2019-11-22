@@ -8,30 +8,30 @@ import (
 )
 
 type TemplateController struct {
-	sessionService service.ListeningSessionService
-	userService    service.UserService
-	spotifyService service.SpotifyService
+	listeningSessionService service.ListeningSessionService
+	userService             service.UserService
+	spotifyService          service.SpotifyService
 }
 
 func (controller TemplateController) Index(c *gin.Context) {
-	_, userId := service.LoginSessionService().GetOrCreateSessionId(c, nil)
-	if userId == nil {
+	loginSession := service.LoginSessionService().GetOrCreateSessionId(c, nil)
+	if loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"time":               time.Now(),
-			"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
-			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
+			"activeSessionCount": controller.listeningSessionService.GetActiveSessionCount(),
+			"totalSessionCount":  controller.listeningSessionService.GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
 		})
 		return
 	}
 
-	user, err := controller.userService.GetUserById(*userId)
+	user, err := controller.userService.GetUserById(*loginSession.UserId)
 	if err != nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"time":               time.Now(),
-			"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
-			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
+			"activeSessionCount": controller.listeningSessionService.GetActiveSessionCount(),
+			"totalSessionCount":  controller.listeningSessionService.GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
 		})
@@ -40,9 +40,9 @@ func (controller TemplateController) Index(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
-		"activeSessionCount": controller.sessionService.GetActiveSessionCount(),
-		"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
+		"activeSessionCount": controller.listeningSessionService.GetActiveSessionCount(),
+		"totalSessionCount":  controller.listeningSessionService.GetTotalSessionCount(),
 		"user":               user,
-		"userSessions":       controller.sessionService.GetActiveSessionsByOwnerId(*userId),
+		"userSessions":       controller.listeningSessionService.GetActiveSessionsByOwnerId(*loginSession.UserId),
 	})
 }

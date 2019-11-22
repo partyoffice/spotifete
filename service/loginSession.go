@@ -1,15 +1,16 @@
 package service
 
 import (
+	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"math/rand"
 	"sync"
 )
 
 type loginSessionService struct {
-	userService   UserService
-	loginSessions map[string]*uint
+	userService UserService
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -19,23 +20,26 @@ var once sync.Once
 func LoginSessionService() *loginSessionService {
 	once.Do(func() {
 		instance = &loginSessionService{
-			loginSessions: make(map[string]*uint),
+			userService: UserService{},
 		}
 	})
 	return instance
 }
 
 func (s loginSessionService) GetUserForLoginSession(sessionId string) (*model.User, error) {
-	if userId, found := s.loginSessions[sessionId]; found {
-		return s.userService.GetUserById(*userId)
+	var sessions []model.LoginSession
+	database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
+	if len(sessions) == 1 {
+		return s.userService.GetUserById(*sessions[0].UserId)
 	} else {
 		return nil, nil
 	}
 }
 
 func (s loginSessionService) sessionIdExists(sessionId string) bool {
-	_, exists := s.loginSessions[sessionId]
-	return exists
+	var count uint
+	database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Count(&count)
+	return count == 1
 }
 
 func (s loginSessionService) newSessionId() string {
@@ -52,29 +56,46 @@ func (s loginSessionService) newSessionId() string {
 	}
 }
 
-func (s loginSessionService) GetOrCreateSessionId(c *gin.Context, newUserId *uint) (*string, *uint) {
+func (s loginSessionService) GetOrCreateSessionId(c *gin.Context, newUserId *uint) model.LoginSession {
 	sessionId, err := c.Cookie("SESSIONID")
 	if err != nil {
 		// No cookie found -> Set session
 		newSessionId := s.newSessionId()
 		c.SetCookie("SESSIONID", newSessionId, 0, "/", "", false, true)
-		s.loginSessions[newSessionId] = newUserId
+		newLoginSession := model.LoginSession{
+			Model:     gorm.Model{},
+			SessionId: newSessionId,
+			UserId:    newUserId,
+			Active:    true,
+		}
+		database.Connection.Create(&newLoginSession)
 
-		return &newSessionId, newUserId
+		return newLoginSession
 	} else {
 		// Cookie found
-		if sessionUserId, found := s.loginSessions[sessionId]; found && sessionUserId != nil {
-			return &sessionId, sessionUserId
+		var sessions []model.LoginSession
+		database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
+
+		if len(sessions) == 1 {
+			// Sesssion found in database -> Just return it
+			return sessions[0]
 		} else {
-			s.loginSessions[sessionId] = newUserId
-			return &sessionId, newUserId
+			// Session not found in database -> this normally should not happen, but create it with an enpty user nonetheless
+			newLoginSession := model.LoginSession{
+				Model:     gorm.Model{},
+				SessionId: sessionId,
+				UserId:    nil,
+				Active:    true,
+			}
+			database.Connection.Create(&newLoginSession)
+			return newLoginSession
 		}
 	}
 }
 
-func (s loginSessionService) DeleteSessionId(c *gin.Context) {
+func (s loginSessionService) InvalidateSession(c *gin.Context) {
 	sessionId, err := c.Cookie("SESSIONID")
 	if err == nil {
-		delete(s.loginSessions, sessionId)
+		database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Update("active", false)
 	}
 }
