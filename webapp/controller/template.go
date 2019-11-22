@@ -22,7 +22,6 @@ func (controller TemplateController) Index(c *gin.Context) {
 			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
-			"authUrl":            controller.spotifyService.GetAuthUrl(),
 		})
 		return
 	}
@@ -35,7 +34,6 @@ func (controller TemplateController) Index(c *gin.Context) {
 			"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
-			"authUrl":            controller.spotifyService.GetAuthUrl(),
 		})
 		return
 	}
@@ -46,6 +44,5 @@ func (controller TemplateController) Index(c *gin.Context) {
 		"totalSessionCount":  controller.sessionService.GetTotalSessionCount(),
 		"user":               user,
 		"userSessions":       controller.sessionService.GetActiveSessionsByOwnerId(*userId),
-		"authUrl":            nil,
 	})
 }

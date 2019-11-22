@@ -34,8 +34,9 @@ func (s SpotifyService) GetState() string {
 	return state
 }
 
-func (s SpotifyService) GetAuthUrl() string {
-	return s.GetAuthenticator().AuthURL(s.GetState())
+func (s SpotifyService) NewAuthUrl() (string, string) {
+	state := s.GetState()
+	return s.GetAuthenticator().AuthURL(state), state
 }
 
 func (s SpotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*oauth2.Token, error) {

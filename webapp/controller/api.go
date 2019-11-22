@@ -11,15 +11,11 @@ import (
 type ApiController struct {
 	sessionService service.ListeningSessionService
 	userService    service.UserService
+	spotifyService service.SpotifyService
 }
 
 func (controller ApiController) Index(c *gin.Context) {
 	c.String(http.StatusOK, "SpotiFete API v1")
-}
-
-func (controller ApiController) GetActiveSessions(c *gin.Context) {
-	activeSessions := controller.sessionService.GetActiveSessions()
-	c.JSON(http.StatusOK, activeSessions)
 }
 
 func (controller ApiController) GetSession(c *gin.Context) {
@@ -50,4 +46,12 @@ func (controller ApiController) GetUser(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, user)
 	}
+}
+
+func (controller ApiController) GetAuthUrl(c *gin.Context) {
+	url, state := controller.spotifyService.NewAuthUrl()
+	c.JSON(http.StatusOK, model.AuthUrlDto{
+		Url:   url,
+		State: state,
+	})
 }

@@ -21,7 +21,7 @@ func setupApiController(baseRouter *gin.Engine) {
 	apiController := new(ApiController)
 
 	apiRouter.GET("/", apiController.Index)
-	apiRouter.GET("/sessions", apiController.GetActiveSessions)
+	apiRouter.GET("authurl/new", apiController.GetAuthUrl)
 	apiRouter.GET("/sessions/:sessionId", apiController.GetSession)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
 }

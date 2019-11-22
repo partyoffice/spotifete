@@ -13,7 +13,8 @@ type SpotifyController struct {
 }
 
 func (controller SpotifyController) Login(c *gin.Context) {
-	c.Redirect(http.StatusTemporaryRedirect, controller.spotifyService.GetAuthUrl())
+	authUrl, _ := controller.spotifyService.NewAuthUrl()
+	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
 func (controller SpotifyController) Callback(c *gin.Context) {
