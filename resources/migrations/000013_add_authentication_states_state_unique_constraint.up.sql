@@ -1,1 +1,2 @@
-ALTER TABLE authentication_states DROP CONSTRAINT state_unique;
+ALTER TABLE authentication_states
+    ADD CONSTRAINT state_unique UNIQUE (state);
