@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/47-11/spotifete/model"
 	"github.com/47-11/spotifete/service"
+	. "github.com/47-11/spotifete/webapp/model/api/v1"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -53,5 +54,21 @@ func (controller ApiController) GetAuthUrl(c *gin.Context) {
 	c.JSON(http.StatusOK, model.AuthUrlDto{
 		Url:       url,
 		SessionId: sessionId,
+	})
+}
+
+func (controller ApiController) DidAuthSucceed(c *gin.Context) {
+	sessionId := c.Query("sessionId")
+	if sessionId == "" {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Parameter sessionId not found."})
+		return
+	}
+
+	session := service.LoginSessionService().GetSessionBySessionId(sessionId)
+
+	c.JSON(http.StatusOK, struct {
+		DidSucceed bool `json:"didSucceed"`
+	}{
+		DidSucceed: session.UserId != nil,
 	})
 }
