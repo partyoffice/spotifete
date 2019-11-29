@@ -37,7 +37,7 @@ func (listeningSessionService) GetActiveSessions() []model.ListeningSession {
 	return sessions
 }
 
-func (listeningSessionService) GetSessionById(id int64) (model.ListeningSession, error) {
+func (listeningSessionService) GetSessionById(id uint) (model.ListeningSession, error) {
 	var sessions []model.ListeningSession
 	database.Connection.Where("id = ?", id).Find(&sessions)
 
@@ -48,14 +48,14 @@ func (listeningSessionService) GetSessionById(id int64) (model.ListeningSession,
 	}
 }
 
-func (listeningSessionService) GetSessionByJoinId(id uint) (model.ListeningSession, error) {
+func (listeningSessionService) GetSessionByJoinId(joinId string) *model.ListeningSession {
 	var sessions []model.ListeningSession
-	database.Connection.Where("join_id = ?", id).Find(&sessions)
+	database.Connection.Where("join_id = ?", joinId).Find(&sessions)
 
 	if len(sessions) == 1 {
-		return sessions[0], nil
+		return &sessions[0]
 	} else {
-		return model.ListeningSession{}, EntryNotFoundError{Message: "Session not found."}
+		return nil
 	}
 }
 

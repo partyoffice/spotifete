@@ -7,7 +7,6 @@ import (
 	"github.com/47-11/spotifete/webapp/model/api/v1/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 type ApiController struct{}
@@ -17,30 +16,22 @@ func (controller ApiController) Index(c *gin.Context) {
 }
 
 func (controller ApiController) GetSession(c *gin.Context) {
-	sessionId, err := strconv.ParseInt(c.Param("sessionId"), 0, 0)
-	session, err := service.ListeningSessionService().GetSessionByJoinId(uint(sessionId))
+	sessionId := c.Param("sessionId")
+	session := service.ListeningSessionService().GetSessionByJoinId(sessionId)
 
-	if err != nil {
-		if _, ok := err.(model.EntryNotFoundError); ok {
-			c.String(http.StatusNotFound, err.Error())
-		} else {
-			c.String(http.StatusInternalServerError, err.Error())
-		}
+	if session == nil {
+		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
 	} else {
-		c.JSON(http.StatusOK, dto.ListeningSessionDto{}.FromDatabaseModel(session))
+		c.JSON(http.StatusOK, dto.ListeningSessionDto{}.FromDatabaseModel(*session))
 	}
 }
 
 func (controller ApiController) GetUser(c *gin.Context) {
-	userId, err := strconv.ParseInt(c.Param("userId"), 0, 0)
-	user, err := service.UserService().GetUserById(uint(userId))
+	userId := c.Param("userId")
+	user := service.UserService().GetUserBySpotifyId(userId)
 
-	if err != nil {
-		if _, notFound := err.(model.EntryNotFoundError); notFound {
-			c.String(http.StatusNotFound, err.Error())
-		} else {
-			c.String(http.StatusInternalServerError, err.Error())
-		}
+	if user == nil {
+		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "user not found"})
 	} else {
 		c.JSON(http.StatusOK, dto.UserDto{}.FromDatabaseModel(*user))
 	}

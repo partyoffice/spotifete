@@ -25,16 +25,6 @@ func LoginSessionService() *loginSessionService {
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-func (loginSessionService) GetUserForLoginSession(sessionId string) (*model.User, error) {
-	var sessions []model.LoginSession
-	database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
-	if len(sessions) == 1 {
-		return UserService().GetUserById(*sessions[0].UserId)
-	} else {
-		return nil, nil
-	}
-}
-
 func (loginSessionService) sessionIdExists(sessionId string) bool {
 	var count uint
 	database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Count(&count)

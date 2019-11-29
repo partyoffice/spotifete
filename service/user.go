@@ -3,7 +3,6 @@ package service
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/model"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -28,25 +27,25 @@ func (userService) GetTotalUserCount() int {
 	return count
 }
 
-func (userService) GetUserById(id uint) (*model.User, error) {
+func (userService) GetUserById(id uint) *model.User {
 	var users []model.User
 	database.Connection.Where("id = ?", id).Find(&users)
 
 	if len(users) == 1 {
-		return &users[0], nil
+		return &users[0]
 	} else {
-		return nil, EntryNotFoundError{Message: "User not found."}
+		return nil
 	}
 }
 
-func (userService) GetUserBySpotifyId(id string) (*model.User, error) {
+func (userService) GetUserBySpotifyId(spotifyId string) *model.User {
 	var users []model.User
-	database.Connection.Where("spotify_id = ?", id).Find(&users)
+	database.Connection.Where("spotify_id = ?", spotifyId).Find(&users)
 
 	if len(users) == 1 {
-		return &users[0], nil
+		return &users[0]
 	} else {
-		return nil, EntryNotFoundError{Message: "User not found."}
+		return nil
 	}
 }
 
