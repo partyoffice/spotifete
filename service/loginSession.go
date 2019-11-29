@@ -95,10 +95,10 @@ func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *model.LoginSe
 }
 
 func (s loginSessionService) createAndSetNewSession(c *gin.Context) model.LoginSession {
-	return s.createAndSetNewession(c, s.newSessionId())
+	return s.createAndSetSession(c, s.newSessionId())
 }
 
-func (s loginSessionService) createAndSetNewession(c *gin.Context, sessionId string) model.LoginSession {
+func (s loginSessionService) createAndSetSession(c *gin.Context, sessionId string) model.LoginSession {
 	s.SetSessionCookie(c, sessionId)
 	newLoginSession := model.LoginSession{
 		Model:     gorm.Model{},
