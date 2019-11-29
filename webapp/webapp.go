@@ -21,8 +21,8 @@ func setupApiController(baseRouter *gin.Engine) {
 	apiController := new(ApiController)
 
 	apiRouter.GET("/", apiController.Index)
-	apiRouter.GET("authurl/new", apiController.GetAuthUrl)
-	apiRouter.GET("authurl/didsucceed", apiController.DidAuthSucceed)
+	apiRouter.GET("spotify/auth/new", apiController.GetAuthUrl)
+	apiRouter.GET("spotify/auth/authenticated", apiController.DidAuthSucceed)
 	apiRouter.GET("/sessions/:sessionId", apiController.GetSession)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
 }

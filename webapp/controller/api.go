@@ -65,10 +65,17 @@ func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 	}
 
 	session := service.LoginSessionService().GetSessionBySessionId(sessionId)
-
-	c.JSON(http.StatusOK, struct {
-		DidSucceed bool `json:"didSucceed"`
-	}{
-		DidSucceed: session.UserId != nil,
-	})
+	if session == nil || session.UserId == nil {
+		c.JSON(http.StatusUnauthorized, struct {
+			DidSucceed bool `json:"didSucceed"`
+		}{
+			DidSucceed: false,
+		})
+	} else {
+		c.JSON(http.StatusOK, struct {
+			DidSucceed bool `json:"didSucceed"`
+		}{
+			DidSucceed: true,
+		})
+	}
 }
