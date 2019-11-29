@@ -22,13 +22,25 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	spotifyService := controller.spotifyService
 
 	state := c.Request.FormValue("state")
-	err := controller.spotifyService.InvalidateState(state)
-	if err != nil {
-		c.String(http.StatusUnauthorized, err.Error())
-		log.Println(err.Error())
+
+	// Check that this state exists and was not used in a callback before
+	session := service.LoginSessionService().GetSessionBySessionId(state)
+	if session == nil {
+		c.String(http.StatusUnauthorized, "Unknown state.")
 		return
 	}
 
+	if session.UserId != nil {
+		c.String(http.StatusUnauthorized, "State has already been used.")
+		return
+	}
+
+	if !service.LoginSessionService().IsSessionValid(*session) {
+		c.String(http.StatusUnauthorized, "Session is no longer valid.")
+		return
+	}
+
+	// Fetch the token
 	token, err := spotifyService.GetAuthenticator().Token(state, c.Request)
 	if err != nil {
 		c.String(http.StatusUnauthorized, "Could not get token: "+err.Error())
@@ -36,7 +48,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 		return
 	}
 
-	// Get the spotify user for the received callback
+	// Get the spotify user for the token
 	client := controller.spotifyService.GetAuthenticator().NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
@@ -50,7 +62,10 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	controller.userService.SetToken(user, token)
 
 	// Associate user with current session
-	service.LoginSessionService().GetOrCreateSessionId(c, &user.ID)
+	service.LoginSessionService().SetUserForSession(*session, *user)
+
+	// Set or update session cookie
+	service.LoginSessionService().SetSessionCookie(c, session.SessionId)
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }

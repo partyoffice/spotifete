@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"math/rand"
 	"sync"
+	"time"
 )
 
 type loginSessionService struct {
@@ -56,46 +57,72 @@ func (s loginSessionService) newSessionId() string {
 	}
 }
 
-func (s loginSessionService) GetOrCreateSessionId(c *gin.Context, newUserId *uint) model.LoginSession {
+func (s loginSessionService) GetSessionBySessionId(sessionId string) *model.LoginSession {
+	session := model.LoginSession{}
+	database.Connection.Where("session_id = ?", sessionId).Find(&session)
+	return &session
+}
+
+func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *model.LoginSession {
 	sessionId, err := c.Cookie("SESSIONID")
-	if err != nil {
-		// No cookie found -> Set session
-		newSessionId := s.newSessionId()
-		c.SetCookie("SESSIONID", newSessionId, 0, "/", "", false, true)
-		newLoginSession := model.LoginSession{
-			Model:     gorm.Model{},
-			SessionId: newSessionId,
-			UserId:    newUserId,
-			Active:    true,
-		}
-		database.Connection.Create(&newLoginSession)
-
-		return newLoginSession
-	} else {
-		// Cookie found
-		var sessions []model.LoginSession
-		database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
-
-		if len(sessions) == 1 {
-			// Sesssion found in database -> Just return it
-			return sessions[0]
-		} else {
-			// Session not found in database -> this normally should not happen, but create it with an enpty user nonetheless
-			newLoginSession := model.LoginSession{
-				Model:     gorm.Model{},
-				SessionId: sessionId,
-				UserId:    nil,
-				Active:    true,
-			}
-			database.Connection.Create(&newLoginSession)
-			return newLoginSession
-		}
+	if err != nil || sessionId == "" {
+		// No cookie found -> Create new session id and save a new sentry with that id to the database
+		return nil
 	}
+
+	// Cookie found
+	session := s.GetSessionBySessionId(sessionId)
+	if session != nil {
+		// Sesssion found in database
+		if s.IsSessionValid(*session) {
+			return session
+		} else {
+			s.InvalidateSession(c)
+			return nil
+		}
+
+	} else {
+		// The session id from the cookie could not be found in database -> this normally should not happen and
+		// could be an indicator for a malicious attack. For now just return nil
+		// TODO: Do something smart when this happens
+		return nil
+	}
+}
+
+func (s loginSessionService) createAndSetNewSession(c *gin.Context) model.LoginSession {
+	return s.createAndSetNewession(c, s.newSessionId())
+}
+
+func (s loginSessionService) createAndSetNewession(c *gin.Context, sessionId string) model.LoginSession {
+	s.SetSessionCookie(c, sessionId)
+	newLoginSession := model.LoginSession{
+		Model:     gorm.Model{},
+		SessionId: sessionId,
+		UserId:    nil,
+		Active:    true,
+	}
+	database.Connection.Create(&newLoginSession)
+
+	return newLoginSession
+}
+
+func (s loginSessionService) SetUserForSession(session model.LoginSession, user model.User) {
+	session.UserId = &user.ID
+	database.Connection.Save(session)
 }
 
 func (s loginSessionService) InvalidateSession(c *gin.Context) {
 	sessionId, err := c.Cookie("SESSIONID")
 	if err == nil {
+		c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
 		database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Update("active", false)
 	}
+}
+
+func (s loginSessionService) IsSessionValid(session model.LoginSession) bool {
+	return session.Active && session.CreatedAt.AddDate(0, 1, 0).After(time.Now())
+}
+
+func (s loginSessionService) SetSessionCookie(c *gin.Context, sessionId string) {
+	c.SetCookie("SESSIONID", sessionId, 0, "/", "", false, true)
 }

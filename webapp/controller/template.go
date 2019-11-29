@@ -14,8 +14,8 @@ type TemplateController struct {
 }
 
 func (controller TemplateController) Index(c *gin.Context) {
-	loginSession := service.LoginSessionService().GetOrCreateSessionId(c, nil)
-	if loginSession.UserId == nil {
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"time":               time.Now(),
 			"activeSessionCount": controller.listeningSessionService.GetActiveSessionCount(),

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
@@ -84,23 +83,5 @@ func (s SpotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 		return false, err
 	} else {
 		return true, nil
-	}
-}
-
-func (s SpotifyService) InvalidateState(state string) error {
-	var entries []model.LoginSession
-	database.Connection.Where("state = ?", state).Find(&entries)
-
-	if len(entries) == 1 {
-		entry := entries[0]
-		if entry.Active {
-			entry.Active = false
-			database.Connection.Save(&entry)
-			return nil
-		} else {
-			return errors.New("state has already been used")
-		}
-	} else {
-		return errors.New("state not found")
 	}
 }
