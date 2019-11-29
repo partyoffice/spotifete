@@ -59,9 +59,13 @@ func (s loginSessionService) newSessionId() string {
 }
 
 func (s loginSessionService) GetSessionBySessionId(sessionId string) *model.LoginSession {
-	session := model.LoginSession{}
-	database.Connection.Where("session_id = ?", sessionId).Find(&session)
-	return &session
+	sessions := []model.LoginSession{}
+	database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
+
+	if len(sessions) == 1 {
+		return &sessions[0]
+	}
+	return nil
 }
 
 func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *model.LoginSession {
