@@ -3,7 +3,8 @@ package controller
 import (
 	"github.com/47-11/spotifete/model"
 	"github.com/47-11/spotifete/service"
-	. "github.com/47-11/spotifete/webapp/model/api/v1"
+	"github.com/47-11/spotifete/webapp/model/api/v1/dto"
+	"github.com/47-11/spotifete/webapp/model/api/v1/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -30,7 +31,7 @@ func (controller ApiController) GetSession(c *gin.Context) {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
 	} else {
-		c.JSON(http.StatusOK, session)
+		c.JSON(http.StatusOK, dto.ListeningSessionDto{}.FromDatabaseModel(session))
 	}
 }
 
@@ -45,7 +46,7 @@ func (controller ApiController) GetUser(c *gin.Context) {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
 	} else {
-		c.JSON(http.StatusOK, user)
+		c.JSON(http.StatusOK, dto.UserDto{}.FromDatabaseModel(*user))
 	}
 }
 
@@ -60,7 +61,7 @@ func (controller ApiController) GetAuthUrl(c *gin.Context) {
 func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 	sessionId := c.Query("sessionId")
 	if sessionId == "" {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Parameter sessionId not found."})
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Parameter sessionId not found."})
 		return
 	}
 
@@ -88,13 +89,13 @@ func (controller ApiController) InvalidateSessionId(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Session id not given."})
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Session id not given."})
 		return
 	}
 
 	err = service.LoginSessionService().InvalidateSessionBySessionId(requestBody.SessionId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: err.Error()})
 		return
 	}
 
