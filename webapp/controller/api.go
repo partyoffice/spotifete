@@ -80,3 +80,23 @@ func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 		})
 	}
 }
+
+func (controller ApiController) InvalidateSessionId(c *gin.Context) {
+	requestBody := struct {
+		SessionId string `json:"sessionId"`
+	}{}
+
+	err := c.ShouldBindJSON(&requestBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Session id not given."})
+		return
+	}
+
+	err = service.LoginSessionService().InvalidateSessionBySessionId(requestBody.SessionId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}

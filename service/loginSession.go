@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/gin-gonic/gin"
@@ -77,7 +78,6 @@ func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *model.LoginSe
 		if s.IsSessionValid(*session) {
 			return session
 		} else {
-			s.InvalidateSession(c)
 			return nil
 		}
 
@@ -112,11 +112,22 @@ func (s loginSessionService) SetUserForSession(session model.LoginSession, user 
 	database.Connection.Save(session)
 }
 
-func (s loginSessionService) InvalidateSession(c *gin.Context) {
+func (s loginSessionService) InvalidateSession(c *gin.Context) error {
 	sessionId, err := c.Cookie("SESSIONID")
 	if err == nil {
 		c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
-		database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Update("active", false)
+		return s.InvalidateSessionBySessionId(sessionId)
+	}
+
+	return errors.New("session cookie not present")
+}
+
+func (s loginSessionService) InvalidateSessionBySessionId(sessionId string) error {
+	rowsAffected := database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Update("active", false).RowsAffected
+	if rowsAffected > 0 {
+		return nil
+	} else {
+		return errors.New("session id not found")
 	}
 }
 
