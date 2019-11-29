@@ -87,7 +87,7 @@ func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *model.LoginSe
 
 	} else {
 		// The session id from the cookie could not be found in database -> this normally should not happen and
-		// could be an indicator for a malicious attack. For now just return nil
+		// could be an indicator for a malicious attack. For now just remove the cookie and return nil
 		// TODO: Do something smart when this happens
 		_ = s.InvalidateSession(c)
 		return nil
