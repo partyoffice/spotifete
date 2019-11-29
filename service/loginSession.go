@@ -112,7 +112,6 @@ func (s loginSessionService) createAndSetSession(c *gin.Context, sessionId strin
 }
 
 func (s loginSessionService) SetUserForSession(session model.LoginSession, user model.User) {
-	// TODO: Invalidate all other sessions for that user
 	session.UserId = &user.ID
 	database.Connection.Save(session)
 }
