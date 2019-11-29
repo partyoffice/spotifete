@@ -7,20 +7,15 @@ import (
 	"net/http"
 )
 
-type SpotifyController struct {
-	spotifyService service.SpotifyService
-	userService    service.UserService
-}
+type SpotifyController struct{}
 
 func (controller SpotifyController) Login(c *gin.Context) {
-	authUrl, _ := controller.spotifyService.NewAuthUrl()
+	authUrl, _ := service.SpotifyService().NewAuthUrl()
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
 func (controller SpotifyController) Callback(c *gin.Context) {
 	// Set user and token in session and redirect back to index
-	spotifyService := controller.spotifyService
-
 	state := c.Request.FormValue("state")
 
 	// Check that this state exists and was not used in a callback before
@@ -41,7 +36,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	}
 
 	// Fetch the token
-	token, err := spotifyService.GetAuthenticator().Token(state, c.Request)
+	token, err := service.SpotifyService().GetAuthenticator().Token(state, c.Request)
 	if err != nil {
 		c.String(http.StatusUnauthorized, "Could not get token: "+err.Error())
 		log.Println(err.Error())
@@ -49,7 +44,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	}
 
 	// Get the spotify user for the token
-	client := controller.spotifyService.GetAuthenticator().NewClient(token)
+	client := service.SpotifyService().GetAuthenticator().NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
@@ -58,8 +53,8 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	}
 
 	// Get or create the database entry for the current user
-	user := controller.userService.GetOrCreateUser(spotifyUser)
-	controller.userService.SetToken(user, token)
+	user := service.UserService().GetOrCreateUser(spotifyUser)
+	service.UserService().SetToken(user, token)
 
 	// Associate user with current session
 	service.LoginSessionService().SetUserForSession(*session, *user)
@@ -71,7 +66,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 }
 
 func (controller SpotifyController) Logout(c *gin.Context) {
-	service.LoginSessionService().InvalidateSession(c)
+	_ = service.LoginSessionService().InvalidateSession(c)
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }

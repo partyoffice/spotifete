@@ -10,11 +10,7 @@ import (
 	"strconv"
 )
 
-type ApiController struct {
-	sessionService service.ListeningSessionService
-	userService    service.UserService
-	spotifyService service.SpotifyService
-}
+type ApiController struct{}
 
 func (controller ApiController) Index(c *gin.Context) {
 	c.String(http.StatusOK, "SpotiFete API v1")
@@ -22,7 +18,7 @@ func (controller ApiController) Index(c *gin.Context) {
 
 func (controller ApiController) GetSession(c *gin.Context) {
 	sessionId, err := strconv.ParseInt(c.Param("sessionId"), 0, 0)
-	session, err := controller.sessionService.GetSessionByJoinId(uint(sessionId))
+	session, err := service.ListeningSessionService().GetSessionByJoinId(uint(sessionId))
 
 	if err != nil {
 		if _, ok := err.(model.EntryNotFoundError); ok {
@@ -37,7 +33,7 @@ func (controller ApiController) GetSession(c *gin.Context) {
 
 func (controller ApiController) GetUser(c *gin.Context) {
 	userId, err := strconv.ParseInt(c.Param("userId"), 0, 0)
-	user, err := controller.userService.GetUserById(uint(userId))
+	user, err := service.UserService().GetUserById(uint(userId))
 
 	if err != nil {
 		if _, notFound := err.(model.EntryNotFoundError); notFound {
@@ -51,7 +47,7 @@ func (controller ApiController) GetUser(c *gin.Context) {
 }
 
 func (controller ApiController) GetAuthUrl(c *gin.Context) {
-	url, sessionId := controller.spotifyService.NewAuthUrl()
+	url, sessionId := service.SpotifyService().NewAuthUrl()
 	c.JSON(http.StatusOK, model.AuthUrlDto{
 		Url:       url,
 		SessionId: sessionId,

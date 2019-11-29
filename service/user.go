@@ -7,19 +7,28 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+	"sync"
 )
 
-type UserService struct {
-	spotifyService SpotifyService
+type userService struct{}
+
+var userServiceInstance *userService
+var userServiceOnce sync.Once
+
+func UserService() *userService {
+	userServiceOnce.Do(func() {
+		userServiceInstance = &userService{}
+	})
+	return userServiceInstance
 }
 
-func (s UserService) GetTotalUserCount() int {
+func (userService) GetTotalUserCount() int {
 	var count int
 	database.Connection.Model(&model.User{}).Count(&count)
 	return count
 }
 
-func (s UserService) GetUserById(id uint) (*model.User, error) {
+func (userService) GetUserById(id uint) (*model.User, error) {
 	var users []model.User
 	database.Connection.Where("id = ?", id).Find(&users)
 
@@ -30,7 +39,7 @@ func (s UserService) GetUserById(id uint) (*model.User, error) {
 	}
 }
 
-func (s UserService) GetUserBySpotifyId(id string) (*model.User, error) {
+func (userService) GetUserBySpotifyId(id string) (*model.User, error) {
 	var users []model.User
 	database.Connection.Where("spotify_id = ?", id).Find(&users)
 
@@ -41,7 +50,7 @@ func (s UserService) GetUserBySpotifyId(id string) (*model.User, error) {
 	}
 }
 
-func (s UserService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *model.User {
+func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *model.User {
 	var users []model.User
 	database.Connection.Where("spotify_id = ?", spotifyUser.ID).Find(&users)
 
@@ -62,7 +71,7 @@ func (s UserService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *model.Us
 	}
 }
 
-func (s UserService) SetToken(user *model.User, token *oauth2.Token) {
+func (userService) SetToken(user *model.User, token *oauth2.Token) {
 	user.SpotifyAccessToken = token.AccessToken
 	user.SpotifyRefreshToken = token.RefreshToken
 	user.SpotifyTokenType = token.TokenType

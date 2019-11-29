@@ -8,27 +8,37 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+	"sync"
 	"time"
 )
 
-type SpotifyService struct{}
+type spotifyService struct {
+	authenticator *spotify.Authenticator
+}
 
-var authenticator *spotify.Authenticator
+var spotifyServiceInstance *spotifyService
+var spotifyServiceOnce sync.Once
 
-func (s SpotifyService) GetAuthenticator() spotify.Authenticator {
-	if authenticator == nil {
+func SpotifyService() *spotifyService {
+	spotifyServiceOnce.Do(func() {
 		c := config.GetConfig()
 		callbackUrl := c.GetString("server.baseUrl") + "/spotify/callback"
 
 		newAuth := spotify.NewAuthenticator(callbackUrl, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPrivate, spotify.ScopeUserLibraryRead, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadCurrentlyPlaying)
 		newAuth.SetAuthInfo(c.GetString("spotify.id"), c.GetString("spotify.secret"))
-		authenticator = &newAuth
-	}
 
-	return *authenticator
+		spotifyServiceInstance = &spotifyService{
+			authenticator: &newAuth,
+		}
+	})
+	return spotifyServiceInstance
 }
 
-func (s SpotifyService) NewAuthUrl() (string, string) {
+func (s spotifyService) GetAuthenticator() spotify.Authenticator {
+	return *s.authenticator
+}
+
+func (s spotifyService) NewAuthUrl() (string, string) {
 	sessionId := LoginSessionService().newSessionId()
 	database.Connection.Create(&model.LoginSession{
 		Model:     gorm.Model{},
@@ -39,7 +49,7 @@ func (s SpotifyService) NewAuthUrl() (string, string) {
 	return s.GetAuthenticator().AuthURL(sessionId), sessionId
 }
 
-func (s SpotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*oauth2.Token, error) {
+func (spotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*oauth2.Token, error) {
 	accessToken := session.Get("spotifyAccessToken")
 	refreshToken := session.Get("spotifyRefreshToken")
 	tokenExpiry := session.Get("spotifyTokenExpiry")
@@ -62,7 +72,7 @@ func (s SpotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*o
 	}
 }
 
-func (s SpotifyService) GetSpotifyClientUserFromSession(session sessions.Session) (*spotify.Client, error) {
+func (s spotifyService) GetSpotifyClientUserFromSession(session sessions.Session) (*spotify.Client, error) {
 	token, err := s.GetSpotifyTokenFromSession(session)
 	if token == nil {
 		return nil, nil
@@ -75,7 +85,7 @@ func (s SpotifyService) GetSpotifyClientUserFromSession(session sessions.Session
 	return &client, nil
 }
 
-func (s SpotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
+func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 	client := s.GetAuthenticator().NewClient(token)
 	user, err := client.CurrentUser()
 	if err != nil && user == nil {

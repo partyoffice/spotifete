@@ -11,34 +11,31 @@ import (
 	"time"
 )
 
-type loginSessionService struct {
-	userService UserService
+type loginSessionService struct{}
+
+var loginSessionServiceInstance *loginSessionService
+var loginSessionServiceOnce sync.Once
+
+func LoginSessionService() *loginSessionService {
+	loginSessionServiceOnce.Do(func() {
+		loginSessionServiceInstance = &loginSessionService{}
+	})
+	return loginSessionServiceInstance
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-var instance *loginSessionService
-var once sync.Once
 
-func LoginSessionService() *loginSessionService {
-	once.Do(func() {
-		instance = &loginSessionService{
-			userService: UserService{},
-		}
-	})
-	return instance
-}
-
-func (s loginSessionService) GetUserForLoginSession(sessionId string) (*model.User, error) {
+func (loginSessionService) GetUserForLoginSession(sessionId string) (*model.User, error) {
 	var sessions []model.LoginSession
 	database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
 	if len(sessions) == 1 {
-		return s.userService.GetUserById(*sessions[0].UserId)
+		return UserService().GetUserById(*sessions[0].UserId)
 	} else {
 		return nil, nil
 	}
 }
 
-func (s loginSessionService) sessionIdExists(sessionId string) bool {
+func (loginSessionService) sessionIdExists(sessionId string) bool {
 	var count uint
 	database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Count(&count)
 	return count == 1
@@ -58,7 +55,7 @@ func (s loginSessionService) newSessionId() string {
 	}
 }
 
-func (s loginSessionService) GetSessionBySessionId(sessionId string) *model.LoginSession {
+func (loginSessionService) GetSessionBySessionId(sessionId string) *model.LoginSession {
 	sessions := []model.LoginSession{}
 	database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
 
@@ -111,7 +108,7 @@ func (s loginSessionService) createAndSetSession(c *gin.Context, sessionId strin
 	return newLoginSession
 }
 
-func (s loginSessionService) SetUserForSession(session model.LoginSession, user model.User) {
+func (loginSessionService) SetUserForSession(session model.LoginSession, user model.User) {
 	session.UserId = &user.ID
 	database.Connection.Save(session)
 }
@@ -126,7 +123,7 @@ func (s loginSessionService) InvalidateSession(c *gin.Context) error {
 	return errors.New("session cookie not present")
 }
 
-func (s loginSessionService) InvalidateSessionBySessionId(sessionId string) error {
+func (loginSessionService) InvalidateSessionBySessionId(sessionId string) error {
 	rowsAffected := database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Update("active", false).RowsAffected
 	if rowsAffected > 0 {
 		return nil
@@ -135,10 +132,10 @@ func (s loginSessionService) InvalidateSessionBySessionId(sessionId string) erro
 	}
 }
 
-func (s loginSessionService) IsSessionValid(session model.LoginSession) bool {
+func (loginSessionService) IsSessionValid(session model.LoginSession) bool {
 	return session.Active && session.CreatedAt.AddDate(0, 1, 0).After(time.Now())
 }
 
-func (s loginSessionService) SetSessionCookie(c *gin.Context, sessionId string) {
+func (loginSessionService) SetSessionCookie(c *gin.Context, sessionId string) {
 	c.SetCookie("SESSIONID", sessionId, 0, "/", "", false, true)
 }

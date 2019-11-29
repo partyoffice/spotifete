@@ -4,29 +4,40 @@ import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/model"
+	"sync"
 )
 
-type ListeningSessionService struct{}
+type listeningSessionService struct{}
 
-func (s ListeningSessionService) GetTotalSessionCount() int {
+var listeningSessionServiceInstance *listeningSessionService
+var listeningSessionServiceOnce sync.Once
+
+func ListeningSessionService() *listeningSessionService {
+	listeningSessionServiceOnce.Do(func() {
+		listeningSessionServiceInstance = &listeningSessionService{}
+	})
+	return listeningSessionServiceInstance
+}
+
+func (listeningSessionService) GetTotalSessionCount() int {
 	var count int
 	database.Connection.Model(&model.ListeningSession{}).Count(&count)
 	return count
 }
 
-func (s ListeningSessionService) GetActiveSessionCount() int {
+func (listeningSessionService) GetActiveSessionCount() int {
 	var count int
 	database.Connection.Model(&model.ListeningSession{}).Where("active = true").Count(&count)
 	return count
 }
 
-func (s ListeningSessionService) GetActiveSessions() []model.ListeningSession {
+func (listeningSessionService) GetActiveSessions() []model.ListeningSession {
 	var sessions []model.ListeningSession
 	database.Connection.Where("active = true").Find(&sessions)
 	return sessions
 }
 
-func (s ListeningSessionService) GetSessionById(id int64) (model.ListeningSession, error) {
+func (listeningSessionService) GetSessionById(id int64) (model.ListeningSession, error) {
 	var sessions []model.ListeningSession
 	database.Connection.Where("id = ?", id).Find(&sessions)
 
@@ -37,7 +48,7 @@ func (s ListeningSessionService) GetSessionById(id int64) (model.ListeningSessio
 	}
 }
 
-func (s ListeningSessionService) GetSessionByJoinId(id uint) (model.ListeningSession, error) {
+func (listeningSessionService) GetSessionByJoinId(id uint) (model.ListeningSession, error) {
 	var sessions []model.ListeningSession
 	database.Connection.Where("join_id = ?", id).Find(&sessions)
 
@@ -48,7 +59,7 @@ func (s ListeningSessionService) GetSessionByJoinId(id uint) (model.ListeningSes
 	}
 }
 
-func (s ListeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.ListeningSession {
+func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.ListeningSession {
 	var sessions []model.ListeningSession
 	database.Connection.Where("active = true AND owner_id = ?", ownerId).Find(&sessions)
 	return sessions
