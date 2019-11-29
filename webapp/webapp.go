@@ -3,6 +3,7 @@ package webapp
 import (
 	. "github.com/47-11/spotifete/webapp/controller"
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 func Start(activeProfile string) {
@@ -13,7 +14,11 @@ func Start(activeProfile string) {
 	setupTemplateController(baseRouter)
 	setupSpotifyController(baseRouter)
 
-	baseRouter.Run(":8410")
+	err := baseRouter.Run(":8410")
+
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 }
 
 func setupApiController(baseRouter *gin.Engine) {
