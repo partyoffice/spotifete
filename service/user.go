@@ -29,7 +29,9 @@ func (userService) GetTotalUserCount() int {
 
 func (userService) GetUserById(id uint) *model.User {
 	var users []model.User
-	database.Connection.Where("id = ?", id).Find(&users)
+	database.Connection.Where(model.User{
+		Model: gorm.Model{ID: id},
+	}).Find(&users)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -40,7 +42,8 @@ func (userService) GetUserById(id uint) *model.User {
 
 func (userService) GetUserBySpotifyId(spotifyId string) *model.User {
 	var users []model.User
-	database.Connection.Where("spotify_id = ?", spotifyId).Find(&users)
+	var sessions []model.ListeningSession
+	database.Connection.Where(model.User{SpotifyId: spotifyId}).Find(&users).Related(&sessions)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -51,7 +54,7 @@ func (userService) GetUserBySpotifyId(spotifyId string) *model.User {
 
 func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *model.User {
 	var users []model.User
-	database.Connection.Where("spotify_id = ?", spotifyUser.ID).Find(&users)
+	database.Connection.Where(model.User{SpotifyId: spotifyUser.ID}).Find(&users)
 
 	if len(users) == 1 {
 		return &users[0]

@@ -27,7 +27,7 @@ var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 
 func (loginSessionService) sessionIdExists(sessionId string) bool {
 	var count uint
-	database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Count(&count)
+	database.Connection.Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Count(&count)
 	return count == 1
 }
 
@@ -47,7 +47,7 @@ func (s loginSessionService) newSessionId() string {
 
 func (loginSessionService) GetSessionBySessionId(sessionId string) *model.LoginSession {
 	sessions := []model.LoginSession{}
-	database.Connection.Where("session_id = ?", sessionId).Find(&sessions)
+	database.Connection.Where(model.LoginSession{SessionId: sessionId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -114,7 +114,7 @@ func (s loginSessionService) InvalidateSession(c *gin.Context) error {
 }
 
 func (loginSessionService) InvalidateSessionBySessionId(sessionId string) error {
-	rowsAffected := database.Connection.Model(&model.LoginSession{}).Where("session_id = ?", sessionId).Update("active", false).RowsAffected
+	rowsAffected := database.Connection.Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Update("active", false).RowsAffected
 	if rowsAffected > 0 {
 		return nil
 	} else {

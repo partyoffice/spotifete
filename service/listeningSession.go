@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/model"
+	"github.com/jinzhu/gorm"
 	"sync"
 )
 
@@ -27,30 +27,30 @@ func (listeningSessionService) GetTotalSessionCount() int {
 
 func (listeningSessionService) GetActiveSessionCount() int {
 	var count int
-	database.Connection.Model(&model.ListeningSession{}).Where("active = true").Count(&count)
+	database.Connection.Model(&model.ListeningSession{}).Where(model.ListeningSession{Active: true}).Count(&count)
 	return count
 }
 
 func (listeningSessionService) GetActiveSessions() []model.ListeningSession {
 	var sessions []model.ListeningSession
-	database.Connection.Where("active = true").Find(&sessions)
+	database.Connection.Where(model.ListeningSession{Active: true}).Find(&sessions)
 	return sessions
 }
 
-func (listeningSessionService) GetSessionById(id uint) (model.ListeningSession, error) {
+func (listeningSessionService) GetSessionById(id uint) *model.ListeningSession {
 	var sessions []model.ListeningSession
-	database.Connection.Where("id = ?", id).Find(&sessions)
+	database.Connection.Where(model.ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
 
 	if len(sessions) == 1 {
-		return sessions[0], nil
+		return &sessions[0]
 	} else {
-		return model.ListeningSession{}, EntryNotFoundError{Message: "Session not found."}
+		return nil
 	}
 }
 
 func (listeningSessionService) GetSessionByJoinId(joinId string) *model.ListeningSession {
 	var sessions []model.ListeningSession
-	database.Connection.Where("join_id = ?", joinId).Find(&sessions)
+	database.Connection.Where(model.ListeningSession{JoinId: joinId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -61,6 +61,6 @@ func (listeningSessionService) GetSessionByJoinId(joinId string) *model.Listenin
 
 func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.ListeningSession {
 	var sessions []model.ListeningSession
-	database.Connection.Where("active = true AND owner_id = ?", ownerId).Find(&sessions)
+	database.Connection.Where(model.ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
 	return sessions
 }
