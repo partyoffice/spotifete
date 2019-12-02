@@ -3,7 +3,7 @@
     <p>Welcome! You can join an existing session or create a new one.</p>
 
     <form action="session/join">
-        <label for="">session ID</label>
+        <label for="joinIdInput">session ID</label>
         <input id="joinIdInput" name="joinId"/>
         <button type="submit">Join</button>
     </form>
@@ -19,9 +19,9 @@
             {{ end }}
         </ul>
 
-        <br/>
-
         <a href="/session/new">Create new Session</a>
+
+        <br/>
 
         <a href="spotify/logout">Log out</a>
     {{ else }}

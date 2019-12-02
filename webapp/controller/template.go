@@ -45,6 +45,10 @@ func (TemplateController) Index(c *gin.Context) {
 }
 
 func (TemplateController) NewListeningSession(c *gin.Context) {
+	c.HTML(http.StatusOK, "newSession.html", gin.H{})
+}
+
+func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.Redirect(http.StatusUnauthorized, "/spotify/login")
@@ -53,7 +57,13 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 
-	session, err := service.ListeningSessionService().NewSession(user)
+	title := c.PostForm("title")
+	if len(title) == 0 {
+		c.String(http.StatusBadRequest, "title must not be empty")
+		return
+	}
+
+	session, err := service.ListeningSessionService().NewSession(user, title)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return

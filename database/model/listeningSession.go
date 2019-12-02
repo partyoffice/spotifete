@@ -8,4 +8,5 @@ type ListeningSession struct {
 	OwnerId         uint
 	JoinId          string
 	SpotifyPlaylist string
+	Title           string
 }

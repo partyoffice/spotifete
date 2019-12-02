@@ -75,11 +75,11 @@ func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.
 	return sessions
 }
 
-func (s listeningSessionService) NewSession(user *model.User) (*model.ListeningSession, error) {
+func (s listeningSessionService) NewSession(user *model.User, title string) (*model.ListeningSession, error) {
 	client := SpotifyService().GetAuthenticator().NewClient(user.GetToken())
 
 	joinId := s.newJoinId()
-	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("SpotiFete session %s", joinId), fmt.Sprintf("Automatic playlist for SpotiFete session %s.", joinId), false)
+	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s.", title, joinId), false)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +90,7 @@ func (s listeningSessionService) NewSession(user *model.User) (*model.ListeningS
 		OwnerId:         user.ID,
 		JoinId:          joinId,
 		SpotifyPlaylist: playlist.ID.String(),
+		Title:           title,
 	}
 
 	database.Connection.Create(&listeningSession)
