@@ -28,7 +28,7 @@ var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 func (loginSessionService) sessionIdExists(sessionId string) bool {
 	var count uint
 	database.Connection.Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Count(&count)
-	return count == 1
+	return count > 0
 }
 
 func (s loginSessionService) newSessionId() string {

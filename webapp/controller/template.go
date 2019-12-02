@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -41,6 +42,24 @@ func (TemplateController) Index(c *gin.Context) {
 		"user":               user,
 		"userSessions":       service.ListeningSessionService().GetActiveSessionsByOwnerId(*loginSession.UserId),
 	})
+}
+
+func (TemplateController) NewListeningSession(c *gin.Context) {
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
+		c.Redirect(http.StatusUnauthorized, "/spotify/login")
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+
+	session, err := service.ListeningSessionService().NewSession(user)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/session/join?joinId=%s", session.JoinId))
 }
 
 func (TemplateController) JoinSession(c *gin.Context) {

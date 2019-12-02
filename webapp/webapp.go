@@ -38,6 +38,7 @@ func setupTemplateController(baseRouter *gin.Engine) {
 	templateController := new(TemplateController)
 	baseRouter.GET("/", templateController.Index)
 	baseRouter.GET("/session/join", templateController.JoinSession)
+	baseRouter.GET("/session/new", templateController.NewListeningSession)
 }
 
 func setupSpotifyController(baseRouter *gin.Engine) {

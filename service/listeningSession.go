@@ -1,20 +1,26 @@
 package service
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/jinzhu/gorm"
+	"math/rand"
 	"sync"
 )
 
-type listeningSessionService struct{}
+type listeningSessionService struct {
+	numberRunes []rune
+}
 
 var listeningSessionServiceInstance *listeningSessionService
 var listeningSessionServiceOnce sync.Once
 
 func ListeningSessionService() *listeningSessionService {
 	listeningSessionServiceOnce.Do(func() {
-		listeningSessionServiceInstance = &listeningSessionService{}
+		listeningSessionServiceInstance = &listeningSessionService{
+			numberRunes: []rune("0123456789"),
+		}
 	})
 	return listeningSessionServiceInstance
 }
@@ -63,4 +69,46 @@ func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.
 	var sessions []model.ListeningSession
 	database.Connection.Where(model.ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
 	return sessions
+}
+
+func (s listeningSessionService) NewSession(user *model.User) (*model.ListeningSession, error) {
+	client := SpotifyService().GetAuthenticator().NewClient(user.GetToken())
+
+	joinId := s.newJoinId()
+	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("SpotiFete session %s", joinId), fmt.Sprintf("Automatic playlist for SpotiFete session %s.", joinId), false)
+	if err != nil {
+		return nil, err
+	}
+
+	listeningSession := model.ListeningSession{
+		Model:           gorm.Model{},
+		Active:          true,
+		OwnerId:         user.ID,
+		JoinId:          joinId,
+		SpotifyPlaylist: playlist.ID.String(),
+	}
+
+	database.Connection.Create(&listeningSession)
+
+	return &listeningSession, nil
+}
+
+func (s listeningSessionService) newJoinId() string {
+	for {
+		b := make([]rune, 8)
+		for i := range b {
+			b[i] = s.numberRunes[rand.Intn(len(s.numberRunes))]
+		}
+		newJoinId := string(b)
+
+		if !s.joinIdExists(newJoinId) {
+			return newJoinId
+		}
+	}
+}
+
+func (listeningSessionService) joinIdExists(joinId string) bool {
+	var count uint
+	database.Connection.Model(&model.ListeningSession{}).Where(model.ListeningSession{JoinId: joinId}).Count(&count)
+	return count > 0
 }
