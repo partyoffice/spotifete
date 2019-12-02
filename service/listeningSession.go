@@ -55,6 +55,10 @@ func (listeningSessionService) GetSessionById(id uint) *model.ListeningSession {
 }
 
 func (listeningSessionService) GetSessionByJoinId(joinId string) *model.ListeningSession {
+	if len(joinId) == 0 {
+		return nil
+	}
+
 	var sessions []model.ListeningSession
 	database.Connection.Where(model.ListeningSession{JoinId: joinId}).Find(&sessions)
 
