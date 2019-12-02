@@ -17,7 +17,7 @@ var Connection *gorm.DB
 
 func Shutdown() {
 	if Connection != nil {
-		Connection.Close()
+		_ = Connection.Close()
 	}
 }
 

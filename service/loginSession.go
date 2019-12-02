@@ -46,7 +46,7 @@ func (s loginSessionService) newSessionId() string {
 }
 
 func (loginSessionService) GetSessionBySessionId(sessionId string) *model.LoginSession {
-	sessions := []model.LoginSession{}
+	var sessions []model.LoginSession
 	database.Connection.Where(model.LoginSession{SessionId: sessionId}).Find(&sessions)
 
 	if len(sessions) == 1 {

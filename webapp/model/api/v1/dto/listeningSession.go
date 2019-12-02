@@ -8,9 +8,9 @@ type ListeningSessionDto struct {
 	JoinId  string
 }
 
-func (self ListeningSessionDto) FromDatabaseModel(databaseModel model.ListeningSession) ListeningSessionDto {
-	self.Active = databaseModel.Active
-	self.OwnerId = databaseModel.OwnerId
-	self.JoinId = *databaseModel.JoinId
-	return self
+func (dto ListeningSessionDto) FromDatabaseModel(databaseModel model.ListeningSession) ListeningSessionDto {
+	dto.Active = databaseModel.Active
+	dto.OwnerId = databaseModel.OwnerId
+	dto.JoinId = *databaseModel.JoinId
+	return dto
 }

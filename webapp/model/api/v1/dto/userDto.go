@@ -7,8 +7,8 @@ type UserDto struct {
 	SpotifyDisplayName string
 }
 
-func (self UserDto) FromDatabaseModel(databaseModel model.User) UserDto {
-	self.SpotifyId = databaseModel.SpotifyId
-	self.SpotifyDisplayName = databaseModel.SpotifyDisplayName
-	return self
+func (dto UserDto) FromDatabaseModel(databaseModel model.User) UserDto {
+	dto.SpotifyId = databaseModel.SpotifyId
+	dto.SpotifyDisplayName = databaseModel.SpotifyDisplayName
+	return dto
 }
