@@ -70,7 +70,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/session/join?joinId=%s", session.JoinId))
+	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/session/join?joinId=%s", *session.JoinId))
 }
 
 func (TemplateController) JoinSession(c *gin.Context) {
