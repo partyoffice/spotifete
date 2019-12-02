@@ -1,10 +1,12 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/jinzhu/gorm"
+	"github.com/zmb3/spotify"
 	"math/rand"
 	"sync"
 )
@@ -60,7 +62,7 @@ func (listeningSessionService) GetSessionByJoinId(joinId string) *model.Listenin
 	}
 
 	var sessions []model.ListeningSession
-	database.Connection.Where(model.ListeningSession{JoinId: joinId}).Find(&sessions)
+	database.Connection.Where(model.ListeningSession{JoinId: &joinId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -88,7 +90,7 @@ func (s listeningSessionService) NewSession(user *model.User, title string) (*mo
 		Model:           gorm.Model{},
 		Active:          true,
 		OwnerId:         user.ID,
-		JoinId:          joinId,
+		JoinId:          &joinId,
 		SpotifyPlaylist: playlist.ID.String(),
 		Title:           title,
 	}
@@ -114,6 +116,20 @@ func (s listeningSessionService) newJoinId() string {
 
 func (listeningSessionService) joinIdExists(joinId string) bool {
 	var count uint
-	database.Connection.Model(&model.ListeningSession{}).Where(model.ListeningSession{JoinId: joinId}).Count(&count)
+	database.Connection.Model(&model.ListeningSession{}).Where(model.ListeningSession{JoinId: &joinId}).Count(&count)
 	return count > 0
+}
+
+func (s listeningSessionService) CloseSession(user *model.User, joinId string) error {
+	session := s.GetSessionByJoinId(joinId)
+	if user.ID != session.OwnerId {
+		return errors.New("only the owner can close a session")
+	}
+
+	session.Active = false
+	session.JoinId = nil
+	database.Connection.Save(&session)
+
+	client := SpotifyService().authenticator.NewClient(user.GetToken())
+	return client.ReplacePlaylistTracks(spotify.ID(session.SpotifyPlaylist))
 }

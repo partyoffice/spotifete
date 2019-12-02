@@ -11,6 +11,6 @@ type ListeningSessionDto struct {
 func (self ListeningSessionDto) FromDatabaseModel(databaseModel model.ListeningSession) ListeningSessionDto {
 	self.Active = databaseModel.Active
 	self.OwnerId = databaseModel.OwnerId
-	self.JoinId = databaseModel.JoinId
+	self.JoinId = *databaseModel.JoinId
 	return self
 }

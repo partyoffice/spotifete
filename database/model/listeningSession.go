@@ -6,7 +6,7 @@ type ListeningSession struct {
 	gorm.Model
 	Active          bool
 	OwnerId         uint
-	JoinId          string
+	JoinId          *string
 	SpotifyPlaylist string
 	Title           string
 }

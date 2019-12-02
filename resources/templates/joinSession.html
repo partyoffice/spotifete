@@ -1,5 +1,12 @@
 <html>
     <h1>Spotifete</h1>
 
-    <p>Session {{ .session.JoinId}} </p>
+    <p>Session {{ .session.JoinId }} </p>
+
+    {{ if .isOwner }}
+        <form action="/session/close" method="post">
+            <input id="joinIdInput" type="hidden" name="joinId" value="{{ .session.JoinId }}" />
+            <button type="submit">Close session</button>
+        </form>
+    {{ end }}
 </html>

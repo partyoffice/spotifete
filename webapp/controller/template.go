@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/47-11/spotifete/service"
+	"github.com/47-11/spotifete/webapp/model/api/v1/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -81,7 +82,34 @@ func (TemplateController) JoinSession(c *gin.Context) {
 		return
 	}
 
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+
 	c.HTML(http.StatusOK, "joinSession.html", gin.H{
 		"session": listeningSession,
+		"isOwner": loginSession != nil && loginSession.UserId != nil && *loginSession.UserId == listeningSession.OwnerId,
 	})
+}
+
+func (TemplateController) CloseListeningSession(c *gin.Context) {
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
+		c.Redirect(http.StatusUnauthorized, "/spotify/login")
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+
+	joinId := c.PostForm("joinId")
+	if len(joinId) == 0 {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session joinId not given"})
+		return
+	}
+
+	err := service.ListeningSessionService().CloseSession(user, joinId)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusTemporaryRedirect, "/")
 }

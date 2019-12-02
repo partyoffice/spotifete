@@ -37,10 +37,12 @@ func setupTemplateController(baseRouter *gin.Engine) {
 	baseRouter.LoadHTMLGlob("resources/templates/*.html")
 	templateController := new(TemplateController)
 	baseRouter.GET("/", templateController.Index)
+	baseRouter.POST("/", templateController.Index)
 	baseRouter.GET("/session/join", templateController.JoinSession)
 	baseRouter.POST("/session/join", templateController.JoinSession)
 	baseRouter.GET("/session/new", templateController.NewListeningSession)
 	baseRouter.POST("/session/new", templateController.NewListeningSessionSubmit)
+	baseRouter.POST("session/close", templateController.CloseListeningSession)
 }
 
 func setupSpotifyController(baseRouter *gin.Engine) {
