@@ -1,7 +1,11 @@
 <html>
     <h1>Spotifete</h1>
 
-    <p>Session {{ .session.JoinId }} </p>
+    <h2>{{ .session.Title }}</h2>
+
+    <p>You can join using the code {{ .session.JoinId }}</p>
+
+    <hr/>
 
     {{ if .isOwner }}
         <form action="/session/close" method="post">

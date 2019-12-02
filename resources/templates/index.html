@@ -14,7 +14,9 @@
         <ul>
             {{ with .userSessions }}
                 {{ range . }}
-                    <li>{{.JoinId}}</li>
+                    <li>
+                        <a href="/session/join?joinId={{ .JoinId }}">{{ .Title }}</a>
+                    </li>
                 {{ end }}
             {{ end }}
         </ul>
