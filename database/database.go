@@ -26,7 +26,7 @@ func init() {
 	connectionUrl = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", c.GetString("database.host"), c.GetString("database.port"), c.GetString("database.name"), c.GetString("database.user"), c.GetString("database.password"))
 
 	db, err := gorm.Open("postgres", connectionUrl)
-	if err  != nil {
+	if err != nil {
 		panic("failed to connect to database: " + err.Error())
 	}
 
