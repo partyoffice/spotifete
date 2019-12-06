@@ -108,13 +108,22 @@ func (s spotifyService) SearchTrack(client *spotify.Client, query string, limit 
 	var tracks []dto.SearchTracksResultDto
 	for _, track := range result.Tracks.Tracks {
 		// Find image with lowest quality
+		smallestAlbumImageUrl := ""
+		smallestSize := -1
+		for _, image := range track.Album.Images {
+			currentImageSize := image.Width * image.Height
+			if smallestSize < 0 || currentImageSize < smallestSize {
+				smallestSize = currentImageSize
+				smallestAlbumImageUrl = image.URL
+			}
+		}
 
 		tracks = append(tracks, dto.SearchTracksResultDto{
 			TrackId:       track.ID.String(),
 			TrackName:     track.Name,
 			ArtistName:    track.Artists[0].Name, // TODO: Include all artist names
 			AlbumName:     track.Album.Name,
-			AlbumImageUrl: track.Album.Images[0].URL, // TODO: Find the image with the quality that is best suited
+			AlbumImageUrl: smallestAlbumImageUrl,
 		})
 	}
 
