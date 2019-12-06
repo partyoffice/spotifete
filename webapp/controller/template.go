@@ -69,10 +69,10 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/session/join?joinId=%s", *session.JoinId))
+	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/session/view/%s", *session.JoinId))
 }
 
-func (TemplateController) JoinSession(c *gin.Context) {
+func (TemplateController) ViewSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	listeningSession := service.ListeningSessionService().GetSessionByJoinId(joinId)
 
@@ -83,7 +83,7 @@ func (TemplateController) JoinSession(c *gin.Context) {
 
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 
-	c.HTML(http.StatusOK, "joinSession.html", gin.H{
+	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"session": listeningSession,
 		"isOwner": loginSession != nil && loginSession.UserId != nil && *loginSession.UserId == listeningSession.OwnerId,
 	})
