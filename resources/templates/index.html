@@ -4,6 +4,8 @@
     <link rel="stylesheet" type="text/css" href="static/css/bootstrap-4.4.1-dist/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="static/css/bootstrap-4.4.1-dist/bootstrap-grid.min.css">
     <link rel="stylesheet" type="text/css" href="static/css/bootstrap-4.4.1-dist/bootstrap-reboot.min.css">
+    <script type="text/javascript" src="static/js/jquery-3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap-4.4.1-dist/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="static/js/bootstrap-4.4.1-dist/bootstrap.min.js"></script>
     <script type="text/javascript" src="static/js/index.js"></script>
 </head>
@@ -38,11 +40,11 @@
     <h1>Spotifete</h1>
     <p>Welcome! You can join an existing session or create a new one.</p>
 
-    <form action="session/join">
+    <div>
         <label for="joinIdInput">session ID</label>
-        <input id="joinIdInput" name="joinId"/>
-        <button class="btn btn-primary" type="submit">Join</button>
-    </form>
+        <input id="joinIdInput" />
+        <button type="button" onclick="joinClicked()" class="btn btn-primary">Join</button>
+    </div>
 
     {{ if .user }}
         <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
@@ -51,7 +53,7 @@
             {{ with .userSessions }}
                 {{ range . }}
                     <li>
-                        <a href="/session/join?joinId={{ .JoinId }}">{{ .Title }}</a>
+                        <a href="/session/view/{{ .JoinId }}">{{ .Title }}</a>
                     </li>
                 {{ end }}
             {{ end }}
