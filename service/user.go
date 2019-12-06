@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
+	"github.com/47-11/spotifete/webapp/model/api/v1/dto"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -80,4 +81,14 @@ func (userService) SetToken(user *model.User, token *oauth2.Token) {
 	user.SpotifyTokenExpiry = token.Expiry
 
 	database.Connection.Save(user)
+}
+
+func (s userService) CreateDtoWithAdditionalInformation(user *model.User) dto.UserDto {
+	result := dto.UserDto{}.FromDatabaseModel(user)
+
+	for _, session := range ListeningSessionService().GetActiveSessionsByOwnerId(user.ID) {
+		result.ListeningSessions = append(result.ListeningSessions, dto.ListeningSessionDto{}.FromDatabaseModel(session))
+	}
+
+	return result
 }

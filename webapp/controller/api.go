@@ -28,13 +28,36 @@ func (controller ApiController) GetSession(c *gin.Context) {
 
 func (controller ApiController) GetUser(c *gin.Context) {
 	userId := c.Param("userId")
+	if userId == "current" {
+		controller.GetCurrentUser(c)
+		return
+	}
+
 	user := service.UserService().GetUserBySpotifyId(userId)
 
 	if user == nil {
 		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "user not found"})
 	} else {
-		c.JSON(http.StatusOK, dto.UserDto{}.FromDatabaseModel(*user))
+		c.JSON(http.StatusOK, service.UserService().CreateDtoWithAdditionalInformation(user))
 	}
+}
+
+func (controller ApiController) GetCurrentUser(c *gin.Context) {
+	loginSessionId := c.Query("sessionId")
+
+	if len(loginSessionId) == 0 {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session id not given"})
+		return
+	}
+
+	loginSession := service.LoginSessionService().GetSessionBySessionId(loginSessionId)
+	if loginSession == nil {
+		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "unknown session id"})
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+	c.JSON(http.StatusOK, service.UserService().CreateDtoWithAdditionalInformation(user))
 }
 
 func (controller ApiController) GetAuthUrl(c *gin.Context) {
