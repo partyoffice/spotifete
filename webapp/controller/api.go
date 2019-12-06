@@ -6,6 +6,7 @@ import (
 	"github.com/47-11/spotifete/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 type ApiController struct{}
@@ -113,6 +114,20 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 		return
 	}
 
+	limitPatameter := c.Query("limit")
+	var limit int = -1
+	if len(limitPatameter) > 0 {
+		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+			return
+		}
+
+		limit = int(limitParsed)
+	} else {
+		limit = 10
+	}
+
 	session := service.ListeningSessionService().GetSessionByJoinId(listeningSessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
@@ -124,7 +139,7 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	token := user.GetToken()
 	client := service.SpotifyService().GetAuthenticator().NewClient(token)
 
-	tracks, err := service.SpotifyService().SearchTrack(&client, query, 5)
+	tracks, err := service.SpotifyService().SearchTrack(&client, query, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
