@@ -123,7 +123,7 @@ func (loginSessionService) InvalidateSessionBySessionId(sessionId string) error 
 }
 
 func (loginSessionService) IsSessionValid(session model.LoginSession) bool {
-	return session.Active && session.CreatedAt.AddDate(0, 1, 0).After(time.Now())
+	return session.Active && session.CreatedAt.AddDate(0, 0, 7).After(time.Now())
 }
 
 func (loginSessionService) SetSessionCookie(c *gin.Context, sessionId string) {
