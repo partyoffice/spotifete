@@ -23,8 +23,7 @@ func Start(activeProfile string) {
 }
 
 func setupStaticController(baseRouter *gin.Engine) {
-	baseRouter.Static("/css", "./resources/static/css")
-	baseRouter.Static("/js", "./resources/static/js")
+	baseRouter.Static("/static/", "./resources/static/")
 }
 
 func setupApiController(baseRouter *gin.Engine) {
@@ -32,9 +31,9 @@ func setupApiController(baseRouter *gin.Engine) {
 	apiController := new(ApiController)
 
 	apiRouter.GET("/", apiController.Index)
-	apiRouter.GET("spotify/auth/new", apiController.GetAuthUrl)
-	apiRouter.GET("spotify/auth/authenticated", apiController.DidAuthSucceed)
-	apiRouter.PATCH("spotify/auth/invalidate", apiController.InvalidateSessionId)
+	apiRouter.GET("/spotify/auth/new", apiController.GetAuthUrl)
+	apiRouter.GET("/spotify/auth/authenticated", apiController.DidAuthSucceed)
+	apiRouter.PATCH("/spotify/auth/invalidate", apiController.InvalidateSessionId)
 	apiRouter.GET("/sessions/:sessionId", apiController.GetSession)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
 }

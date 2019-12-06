@@ -1,11 +1,19 @@
 <html>
+<head>
+    <title>Spotifete</title>
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap-4.4.1-dist/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap-4.4.1-dist/bootstrap-grid.min.css">
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap-4.4.1-dist/bootstrap-reboot.min.css">
+    <script type="text/javascript" src="static/js/bootstrap-4.4.1-dist/bootstrap.min.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap-4.4.1-dist/bootstrap.bundle.min.js"></script>
+</head>
     <h1>Spotifete</h1>
     <p>Welcome! You can join an existing session or create a new one.</p>
 
     <form action="session/join">
         <label for="joinIdInput">session ID</label>
         <input id="joinIdInput" name="joinId"/>
-        <button type="submit">Join</button>
+        <button class="btn btn-primary" type="submit">Join</button>
     </form>
 
     {{ if .user }}
