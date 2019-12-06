@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
+	database2 "github.com/47-11/spotifete/model/database"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"math/rand"
@@ -29,25 +29,25 @@ func ListeningSessionService() *listeningSessionService {
 
 func (listeningSessionService) GetTotalSessionCount() int {
 	var count int
-	database.Connection.Model(&model.ListeningSession{}).Count(&count)
+	database.Connection.Model(&database2.ListeningSession{}).Count(&count)
 	return count
 }
 
 func (listeningSessionService) GetActiveSessionCount() int {
 	var count int
-	database.Connection.Model(&model.ListeningSession{}).Where(model.ListeningSession{Active: true}).Count(&count)
+	database.Connection.Model(&database2.ListeningSession{}).Where(database2.ListeningSession{Active: true}).Count(&count)
 	return count
 }
 
-func (listeningSessionService) GetActiveSessions() []model.ListeningSession {
-	var sessions []model.ListeningSession
-	database.Connection.Where(model.ListeningSession{Active: true}).Find(&sessions)
+func (listeningSessionService) GetActiveSessions() []database2.ListeningSession {
+	var sessions []database2.ListeningSession
+	database.Connection.Where(database2.ListeningSession{Active: true}).Find(&sessions)
 	return sessions
 }
 
-func (listeningSessionService) GetSessionById(id uint) *model.ListeningSession {
-	var sessions []model.ListeningSession
-	database.Connection.Where(model.ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
+func (listeningSessionService) GetSessionById(id uint) *database2.ListeningSession {
+	var sessions []database2.ListeningSession
+	database.Connection.Where(database2.ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -56,13 +56,13 @@ func (listeningSessionService) GetSessionById(id uint) *model.ListeningSession {
 	}
 }
 
-func (listeningSessionService) GetSessionByJoinId(joinId string) *model.ListeningSession {
+func (listeningSessionService) GetSessionByJoinId(joinId string) *database2.ListeningSession {
 	if len(joinId) == 0 {
 		return nil
 	}
 
-	var sessions []model.ListeningSession
-	database.Connection.Where(model.ListeningSession{JoinId: &joinId}).Find(&sessions)
+	var sessions []database2.ListeningSession
+	database.Connection.Where(database2.ListeningSession{JoinId: &joinId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -71,13 +71,13 @@ func (listeningSessionService) GetSessionByJoinId(joinId string) *model.Listenin
 	}
 }
 
-func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.ListeningSession {
-	var sessions []model.ListeningSession
-	database.Connection.Where(model.ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
+func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []database2.ListeningSession {
+	var sessions []database2.ListeningSession
+	database.Connection.Where(database2.ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
 	return sessions
 }
 
-func (s listeningSessionService) NewSession(user *model.User, title string) (*model.ListeningSession, error) {
+func (s listeningSessionService) NewSession(user *database2.User, title string) (*database2.ListeningSession, error) {
 	client := SpotifyService().GetAuthenticator().NewClient(user.GetToken())
 
 	joinId := s.newJoinId()
@@ -86,7 +86,7 @@ func (s listeningSessionService) NewSession(user *model.User, title string) (*mo
 		return nil, err
 	}
 
-	listeningSession := model.ListeningSession{
+	listeningSession := database2.ListeningSession{
 		Model:           gorm.Model{},
 		Active:          true,
 		OwnerId:         user.ID,
@@ -116,11 +116,11 @@ func (s listeningSessionService) newJoinId() string {
 
 func (listeningSessionService) joinIdExists(joinId string) bool {
 	var count uint
-	database.Connection.Model(&model.ListeningSession{}).Where(model.ListeningSession{JoinId: &joinId}).Count(&count)
+	database.Connection.Model(&database2.ListeningSession{}).Where(database2.ListeningSession{JoinId: &joinId}).Count(&count)
 	return count > 0
 }
 
-func (s listeningSessionService) CloseSession(user *model.User, joinId string) error {
+func (s listeningSessionService) CloseSession(user *database2.User, joinId string) error {
 	session := s.GetSessionByJoinId(joinId)
 	if user.ID != session.OwnerId {
 		return errors.New("only the owner can close a session")

@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/47-11/spotifete/database/model"
+import (
+	"github.com/47-11/spotifete/model/database"
+)
 
 type UserDto struct {
 	SpotifyId          string                `json:"spotifyId"`
@@ -8,7 +10,7 @@ type UserDto struct {
 	ListeningSessions  []ListeningSessionDto `json:"listeningSessions"`
 }
 
-func (dto UserDto) FromDatabaseModel(databaseModel *model.User) UserDto {
+func (dto UserDto) FromDatabaseModel(databaseModel *database.User) UserDto {
 	dto.SpotifyId = databaseModel.SpotifyId
 	dto.SpotifyDisplayName = databaseModel.SpotifyDisplayName
 	dto.ListeningSessions = []ListeningSessionDto{}
