@@ -4,6 +4,7 @@ import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	database2 "github.com/47-11/spotifete/model/database"
+	"github.com/47-11/spotifete/model/dto"
 	"github.com/gin-contrib/sessions"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
@@ -96,13 +97,26 @@ func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 	}
 }
 
-func (s spotifyService) SearchTrack(client *spotify.Client, query string) (*spotify.SearchResult, error) {
-	result, err := client.Search(query, spotify.SearchTypeTrack)
+func (s spotifyService) SearchTrack(client *spotify.Client, query string, limit int) ([]dto.SearchTracksResultDto, error) {
+	result, err := client.SearchOpt(query, spotify.SearchTypeTrack, &spotify.Options{
+		Limit: &limit,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Refine search results
+	var tracks []dto.SearchTracksResultDto
+	for _, track := range result.Tracks.Tracks {
+		// Find image with lowest quality
 
-	return result, nil
+		tracks = append(tracks, dto.SearchTracksResultDto{
+			TrackId:       track.ID.String(),
+			TrackName:     track.Name,
+			ArtistName:    track.Artists[0].Name, // TODO: Include all artist names
+			AlbumName:     track.Album.Name,
+			AlbumImageUrl: track.Album.Images[0].URL, // TODO: Find the image with the quality that is best suited
+		})
+	}
+
+	return tracks, nil
 }

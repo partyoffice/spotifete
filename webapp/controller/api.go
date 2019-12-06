@@ -124,11 +124,14 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	token := user.GetToken()
 	client := service.SpotifyService().GetAuthenticator().NewClient(token)
 
-	result, err := service.SpotifyService().SearchTrack(&client, query)
+	tracks, err := service.SpotifyService().SearchTrack(&client, query, 5)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, SearchTracksResponse{
+		Query:   query,
+		Results: tracks,
+	})
 }

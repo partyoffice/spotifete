@@ -1,5 +1,7 @@
 package v1
 
+import "github.com/47-11/spotifete/model/dto"
+
 type ErrorResponse struct {
 	Message string `json:"message"`
 }
@@ -11,4 +13,9 @@ type GetAuthUrlResponse struct {
 
 type DidAuthSucceedResponse struct {
 	Authenticated bool `json:"authenticated"`
+}
+
+type SearchTracksResponse struct {
+	Query   string                      `json:"query"`
+	Results []dto.SearchTracksResultDto `json:"results"`
 }
