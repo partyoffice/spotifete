@@ -10,3 +10,5 @@ database:
 spotify:
   id: client-id
   secret: client-secret
+sentry:
+  dsn: https://somedsn@sentry.io/someprojectid

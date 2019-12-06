@@ -2,6 +2,7 @@ package webapp
 
 import (
 	. "github.com/47-11/spotifete/webapp/controller"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"log"
 )
@@ -9,6 +10,10 @@ import (
 func Start(activeProfile string) {
 	gin.SetMode(activeProfile)
 	baseRouter := gin.Default()
+
+	baseRouter.Use(sentrygin.New(sentrygin.Options{
+		Repanic: true,
+	}))
 
 	setupStaticController(baseRouter)
 	setupApiController(baseRouter)
