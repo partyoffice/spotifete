@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -101,7 +100,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	joinId := c.PostForm("joinId")
 	if len(joinId) == 0 {
-		c.JSON(http.StatusBadRequest, v1.ErrorResponse{Message: "session joinId not given"})
+		c.String(http.StatusBadRequest, "parameter joinId not present")
 		return
 	}
 
