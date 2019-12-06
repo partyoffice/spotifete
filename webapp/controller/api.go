@@ -119,7 +119,7 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	if len(limitPatameter) > 0 {
 		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "could not parse limit"})
 			return
 		}
 
