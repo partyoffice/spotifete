@@ -1,0 +1,5 @@
+BEGIN;
+ALTER TABLE song_requests
+    ALTER COLUMN session_id DROP NOT NULL,
+    ALTER COLUMN song_id DROP NOT NULL;
+COMMIT;
