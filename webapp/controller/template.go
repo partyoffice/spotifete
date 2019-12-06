@@ -73,7 +73,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 }
 
 func (TemplateController) JoinSession(c *gin.Context) {
-	joinId := c.Query("joinId")
+	joinId := c.Param("joinId")
 	listeningSession := service.ListeningSessionService().GetSessionByJoinId(joinId)
 
 	if listeningSession == nil {
