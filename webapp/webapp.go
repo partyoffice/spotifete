@@ -10,6 +10,7 @@ func Start(activeProfile string) {
 	gin.SetMode(activeProfile)
 	baseRouter := gin.Default()
 
+	setupStaticController(baseRouter)
 	setupApiController(baseRouter)
 	setupTemplateController(baseRouter)
 	setupSpotifyController(baseRouter)
@@ -19,6 +20,11 @@ func Start(activeProfile string) {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+}
+
+func setupStaticController(baseRouter *gin.Engine) {
+	baseRouter.Static("/css", "./resources/static/css")
+	baseRouter.Static("/js", "./resources/static/js")
 }
 
 func setupApiController(baseRouter *gin.Engine) {
