@@ -4,7 +4,7 @@ import "github.com/jinzhu/gorm"
 
 type SongRequest struct {
 	gorm.Model
-	SessionId   uint
-	RequestedBy *uint
-	SongId      string
+	SessionId uint
+	UserId    *uint
+	SongId    string
 }
