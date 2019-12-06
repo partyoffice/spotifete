@@ -95,3 +95,14 @@ func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 		return true, nil
 	}
 }
+
+func (s spotifyService) SearchTrack(client *spotify.Client, query string) (*spotify.SearchResult, error) {
+	result, err := client.Search(query, spotify.SearchTypeTrack)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Refine search results
+
+	return result, nil
+}

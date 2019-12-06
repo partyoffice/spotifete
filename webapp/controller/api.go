@@ -111,3 +111,35 @@ func (controller ApiController) InvalidateSessionId(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 }
+
+func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
+	listeningSessionJoinId := c.Query("session")
+	if len(listeningSessionJoinId) == 0 {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session not specified"})
+		return
+	}
+
+	query := c.Query("query")
+	if len(query) == 0 {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "query not given"})
+		return
+	}
+
+	session := service.ListeningSessionService().GetSessionByJoinId(listeningSessionJoinId)
+	if session == nil {
+		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
+		return
+	}
+
+	user := service.UserService().GetUserById(session.OwnerId)
+	token := user.GetToken()
+	client := service.SpotifyService().GetAuthenticator().NewClient(token)
+
+	result, err := service.SpotifyService().SearchTrack(&client, query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, shared.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
