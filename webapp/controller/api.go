@@ -16,8 +16,8 @@ func (ApiController) Index(c *gin.Context) {
 }
 
 func (ApiController) GetSession(c *gin.Context) {
-	sessionId := c.Param("sessionId")
-	session := service.ListeningSessionService().GetSessionByJoinId(sessionId)
+	sessionJoinId := c.Param("joinId")
+	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
 
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
@@ -149,4 +149,31 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 		Query:   query,
 		Results: tracks,
 	})
+}
+
+func (controller ApiController) RequestSong(c *gin.Context) {
+	requestBody := RequestSongRequest{}
+	err := c.ShouldBindJSON(&requestBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body"})
+		return
+	}
+
+	sessionJoinId := c.Param("joinId")
+	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
+		return
+	}
+	if !session.Active {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session is closed"})
+		return
+	}
+
+	err = service.ListeningSessionService().RequestSong(session, requestBody.TrackId)
+	if err == nil {
+		c.Status(http.StatusOK)
+	} else {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
 }

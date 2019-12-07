@@ -6,5 +6,5 @@ type SongRequest struct {
 	gorm.Model
 	SessionId uint
 	UserId    *uint
-	SongId    string
+	TrackId   string
 }
