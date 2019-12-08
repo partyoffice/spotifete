@@ -40,7 +40,7 @@ func setupApiController(baseRouter *gin.Engine) {
 	apiRouter.GET("/spotify/auth/authenticated", apiController.DidAuthSucceed)
 	apiRouter.PATCH("/spotify/auth/invalidate", apiController.InvalidateSessionId)
 	apiRouter.GET("/spotify/search/track", apiController.SearchSpotifyTrack)
-	apiRouter.GET("/sessions/:joindId", apiController.GetSession)
+	apiRouter.GET("/sessions/:joinId", apiController.GetSession)
 	apiRouter.POST("/sessions/:joinId/request", apiController.RequestSong)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
 }

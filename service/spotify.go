@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
-	database2 "github.com/47-11/spotifete/model/database"
+	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
 	"github.com/gin-contrib/sessions"
 	"github.com/jinzhu/gorm"
@@ -41,7 +41,7 @@ func (s spotifyService) GetAuthenticator() spotify.Authenticator {
 
 func (s spotifyService) NewAuthUrl() (string, string) {
 	sessionId := LoginSessionService().newSessionId()
-	database.Connection.Create(&database2.LoginSession{
+	database.Connection.Create(&LoginSession{
 		Model:     gorm.Model{},
 		SessionId: sessionId,
 		UserId:    nil,
