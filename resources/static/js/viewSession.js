@@ -55,3 +55,7 @@ $(document).ready(function () {
             }
         });
 });
+
+function requestTrack(trackId) {
+    alert(`Clicked ${trackId}. TODO: Send request to backend`)
+}
