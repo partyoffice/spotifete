@@ -36,7 +36,7 @@ $(document).ready(function () {
             },
             templates: {
                 suggestion: function (suggestionData) {
-                    return `<div style="cursor: pointer;" onclick="alert('Clicked ${suggestionData.trackId}. TODO: Send request to backend')">
+                    return `<div class="clickable" onclick="requestTrack(${currentSessionJoinId})">
                                 <div class="media">
                                     <img src="${suggestionData.albumImageUrl}" class="mr-3" alt="...">
                                     <div class="media-body">

@@ -1,3 +1,7 @@
 .twitter-typeahead, .tt-hint, .tt-input, .tt-menu {
     width: 100%;
 }
+
+.clickable {
+    cursor: pointer;
+}
