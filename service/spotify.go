@@ -5,12 +5,10 @@ import (
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
-	"github.com/gin-contrib/sessions"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 	"sync"
-	"time"
 )
 
 type spotifyService struct {
@@ -48,42 +46,6 @@ func (s spotifyService) NewAuthUrl() (string, string) {
 		Active:    true,
 	})
 	return s.GetAuthenticator().AuthURL(sessionId), sessionId
-}
-
-func (spotifyService) GetSpotifyTokenFromSession(session sessions.Session) (*oauth2.Token, error) {
-	accessToken := session.Get("spotifyAccessToken")
-	refreshToken := session.Get("spotifyRefreshToken")
-	tokenExpiry := session.Get("spotifyTokenExpiry")
-	tokenType := session.Get("spotifyTokenType")
-
-	if accessToken != nil && refreshToken != nil && tokenExpiry != nil && tokenType != nil {
-		tokenExpiryParsed, err := time.Parse(time.RFC3339, tokenExpiry.(string))
-		if err != nil {
-			return nil, err
-		}
-
-		return &oauth2.Token{
-			AccessToken:  accessToken.(string),
-			TokenType:    tokenType.(string),
-			RefreshToken: refreshToken.(string),
-			Expiry:       tokenExpiryParsed,
-		}, nil
-	} else {
-		return nil, nil
-	}
-}
-
-func (s spotifyService) GetSpotifyClientUserFromSession(session sessions.Session) (*spotify.Client, error) {
-	token, err := s.GetSpotifyTokenFromSession(session)
-	if token == nil {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	client := s.GetAuthenticator().NewClient(token)
-	return &client, nil
 }
 
 func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
