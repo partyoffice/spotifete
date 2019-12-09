@@ -1,12 +1,14 @@
+let currentSessionJoinId;
+
 $(document).ready(function () {
-    // Defining the local dataset
+    currentSessionJoinId = $( '#currentSessionJoinId' ).val();
 
     // Constructing the suggestion engine
     var engine = new Bloodhound({
         datumTokenizer: Bloodhound.tokenizers.whitespace,
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: `/api/v1/spotify/search/track?session=12345678&limit=5&query=%%query%%`,
+            url: `/api/v1/spotify/search/track?session=${currentSessionJoinId}&limit=5&query=%%query%%`,
             wildcard: '%%query%%',
             transform: function (response) {
                 return response.results;
