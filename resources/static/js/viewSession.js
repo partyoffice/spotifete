@@ -53,6 +53,9 @@ $(document).ready(function () {
                 },
                 notFound: function () {
                     return '<div class="card-body">No results!</div>';
+                },
+                footer: function () {
+                    return '<div class="card-footer">Search results via Spotify</div>'
                 }
             }
         });
