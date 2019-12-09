@@ -181,7 +181,7 @@ func (s listeningSessionService) CloseSession(user *User, joinId string) error {
 	database.Connection.Save(&session)
 
 	client := SpotifyService().authenticator.NewClient(user.GetToken())
-	return client.ReplacePlaylistTracks(spotify.ID(session.SpotifyPlaylist))
+	return client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
 }
 
 func (s listeningSessionService) RequestSong(session *ListeningSession, trackId string) error {
