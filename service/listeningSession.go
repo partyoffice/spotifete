@@ -15,8 +15,7 @@ import (
 )
 
 type listeningSessionService struct {
-	startPollingSessions sync.Once
-	numberRunes          []rune
+	numberRunes []rune
 }
 
 var listeningSessionServiceInstance *listeningSessionService
@@ -364,16 +363,13 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 }
 
 func (s listeningSessionService) PollSessions() {
-	s.startPollingSessions.Do(func() {
-		// TODO: Check whether we exceed the rate limit here
-		for _ = range time.Tick(5 * time.Second) {
-			for _, session := range s.GetActiveSessions() {
-				err := s.UpdateSessionIfNeccessary(&session)
-				if err != nil {
-					log.Println(err)
-					sentry.CaptureException(err)
-				}
+	for _ = range time.Tick(5 * time.Second) {
+		for _, session := range s.GetActiveSessions() {
+			err := s.UpdateSessionIfNeccessary(&session)
+			if err != nil {
+				log.Println(err)
+				sentry.CaptureException(err)
 			}
 		}
-	})
+	}
 }
