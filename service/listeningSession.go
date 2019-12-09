@@ -131,7 +131,7 @@ func (s listeningSessionService) NewSession(user *User, title string) (*Listenin
 	client := SpotifyService().GetAuthenticator().NewClient(user.GetToken())
 
 	joinId := s.newJoinId()
-	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s.", title, joinId), false)
+	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s %s.", title, joinId[0:4], joinId[4:8]), false)
 	if err != nil {
 		return nil, err
 	}
