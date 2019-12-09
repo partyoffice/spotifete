@@ -1,7 +1,7 @@
 let currentSessionJoinId;
 
 $(document).ready(function () {
-    currentSessionJoinId = $( '#currentSessionJoinId' ).val();
+    currentSessionJoinId = $('#currentSessionJoinId').val();
 
     // Constructing the suggestion engine
     var engine = new Bloodhound({
@@ -38,7 +38,7 @@ $(document).ready(function () {
             },
             templates: {
                 suggestion: function (suggestionData) {
-                    return `<div class="clickable" onclick="requestTrack(${currentSessionJoinId})">
+                    return `<div class="clickable" onclick="requestTrack('${suggestionData.trackId}')">
                                 <div class="media">
                                     <img src="${suggestionData.albumImageUrl}" class="mr-3" alt="...">
                                     <div class="media-body">
@@ -52,7 +52,7 @@ $(document).ready(function () {
                     return '<div class="card-body">Searching...</div>';
                 },
                 notFound: function () {
-                    return '<div class="card-body">No results!</div>';
+                    return '<div class="card-body">No results :/</div>';
                 },
                 footer: function () {
                     return '<div class="card-footer">Search results via Spotify</div>'
@@ -61,6 +61,24 @@ $(document).ready(function () {
         });
 });
 
-function requestTrack(trackId) {
-    alert(`Clicked ${trackId}. TODO: Send request to backend`)
+async function requestTrack(trackId) {
+    const requestBody = JSON.stringify({
+        trackId: trackId.toString()
+    });
+
+    const response = await fetch(`/api/v1/sessions/${currentSessionJoinId}/request`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: requestBody
+    });
+
+    if (response.status === 200) {
+        console.log('request success. reloading page.');
+        location.reload();
+    } else {
+        responseBody = await response.json();
+        alert(`Could not add request: ${responseBody.message}`);
+    }
 }
