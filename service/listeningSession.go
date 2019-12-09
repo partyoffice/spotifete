@@ -363,11 +363,10 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 	return nil
 }
 
-func (s listeningSessionService) InitializePollingSessions() {
+func (s listeningSessionService) PollSessions() {
 	s.startPollingSessions.Do(func() {
 		// TODO: Check whether we exceed the rate limit here
 		for _ = range time.Tick(5 * time.Second) {
-			log.Println("Polling sessions...")
 			for _, session := range s.GetActiveSessions() {
 				err := s.UpdateSessionIfNeccessary(&session)
 				if err != nil {

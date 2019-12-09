@@ -20,7 +20,7 @@ func main() {
 		}
 	}
 
-	go service.ListeningSessionService().InitializePollingSessions()
+	go service.ListeningSessionService().PollSessions()
 
 	activeProfile := config.GetActiveProfile()
 	webapp.Start(activeProfile)
