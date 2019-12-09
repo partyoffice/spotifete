@@ -1,16 +1,34 @@
 <html>
-    <h1>Spotifete</h1>
+<head>
+    <title>Spotifete</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-grid.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-reboot.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/viewSession.css">
+    <script type="text/javascript" src="/static/js/jquery-3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/typeahead-0.11.1/typeahead.bundle.min.js"></script>
+    <script type="text/javascript" src="/static/js/viewSession.js"></script>
+</head>
+<body>
+<h1>Spotifete</h1>
 
-    <h2>{{ .session.Title }}</h2>
+<h2>{{ .session.Title }}</h2>
 
-    <p>You can join using the code {{ .session.JoinId }}</p>
+<p>You can join using the code {{ .session.JoinId }}</p>
 
+<hr/>
+
+<input id="trackSearchInput" type="search" class="typeahead form-control" placeholder="Search tracks" autocomplete="off" spellcheck="false">
+
+{{ if .isOwner }}
     <hr/>
 
-    {{ if .isOwner }}
-        <form action="/session/close" method="post">
-            <input id="joinIdInput" type="hidden" name="joinId" value="{{ .session.JoinId }}" />
-            <button type="submit">Close session</button>
-        </form>
-    {{ end }}
+    <form action="/session/close" method="post">
+        <input id="joinIdInput" type="hidden" name="joinId" value="{{ .session.JoinId }}" />
+        <button type="submit">Close session</button>
+    </form>
+{{ end }}
+</body>
 </html>
