@@ -4,7 +4,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-grid.min.css">
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-reboot.min.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
+    <link rel="stylesheet" href="/static/css/index.css">
     <script type="text/javascript" src="/static/js/jquery-3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.min.js"></script>
@@ -25,7 +25,12 @@
                     <a class="nav-link" href="#">Home</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" href="#">About</a>
+                    {{ if .user }}
+
+                    <a class="nav-link" href="spotify/logout"> Logged in as ({{ .user.SpotifyDisplayName }})  Log out</a>
+                        {{ else }}
+                        <a class="nav-link" href="spotify/login">Login</a>
+                    {{ end }}
                 </li>
             </ul>
         </div>
@@ -47,17 +52,19 @@
         </ul>
         <div class="carousel-inner">
             <div class="carousel-item active">
-            <img src="/static/JoinSession.jpg">
+            <img src="/static/JoinSession.jpg" class="img-fluid" width="600" height="360">
                 <div class="carousel-caption">
-                <label for="joinIdInput">Input the ID of the session you want to join</label>
+                <h4>Join Session</h4>
+                <label for="joinIdInput">Input Session ID</label>
                 <br>
                 <input id="joinIdInput" placeholder="12345678" />
                 <button type="button" onclick="joinClicked()" class="btn btn-primary">Join</button>
                 </div>
             </div>
             <div class="carousel-item">
-                <img src="/static/JoinSession.jpg">
+                <img src="/static/CreateSession.jpeg"class="img-fluid" width="600" height="360">
                 <div class="carousel-caption">
+                    <h4>Create Session</h4>
                     {{ if .user }}
                         <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
                         <p>Your active sessions:</p>
