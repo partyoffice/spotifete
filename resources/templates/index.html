@@ -39,7 +39,12 @@
     <p class="lead">Welcome! You can join an existing session or create a new one.</p>
     </div>
     <!--JoinSessionSlide-->
-    <div id="slides" class="carousel slide">
+    <div id="slides" class="carousel slide" data-ride="carousel">
+        <ul class="carousel-indicators">
+            <li data-target="#slides" data-slide-to="0" class="active"></li>
+            <li data-target="#slided" data-slide-to="1" ></li>
+
+        </ul>
         <div class="carousel-inner">
             <div class="carousel-item active">
             <img src="/static/JoinSession.jpg">
@@ -51,69 +56,43 @@
                 </div>
             </div>
             <div class="carousel-item">
-
-            </div>
-
-        </div>
-    </div>
-<!--JoinSessionSlide-->
-<!--CreateSessionSlide-->
-<!--JoinSessionSlide-->
-<div id="slides" class="carousel slide">
-    <div class="carousel-inner">
-        <div class="carousel-item active">
-            <img src="/static/JoinSession.jpg">
-            <div class="carousel-caption">
-                {{ if .user }}
-                    <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
-                    <p>Your active sessions:</p>
-                    <ul>
-                        {{ with .userSessions }}
-                            {{ range . }}
-                                <li>
-                                    <a href="/session/view/{{ .JoinId }}">{{ .Title }}</a>
-                                </li>
+                <img src="/static/JoinSession.jpg">
+                <div class="carousel-caption">
+                    {{ if .user }}
+                        <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
+                        <p>Your active sessions:</p>
+                        <ul>
+                            {{ with .userSessions }}
+                                {{ range . }}
+                                    <li>
+                                        <a href="/session/view/{{ .JoinId }}">{{ .Title }}</a>
+                                    </li>
+                                {{ end }}
                             {{ end }}
-                        {{ end }}
-                    </ul>
+                        </ul>
 
-                    <a href="/session/new">Create new Session</a>
+                        <a href="/session/new">Create new Session</a>
 
-                    <br/>
+                        <br/>
 
-                    <a href="spotify/logout">Log out</a>
-                {{ else }}
-                    <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
-                {{ end }}
+                        <a href="spotify/logout">Log out</a>
+                    {{ else }}
+                        <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
+                    {{ end }}
+
             </div>
-        </div>
-        <div class="carousel-item">
 
         </div>
-
+            <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="sr-only">Next</span>
+            </a>
     </div>
-</div>
-    {{ if .user }}
-        <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
-        <p>Your active sessions:</p>
-        <ul>
-            {{ with .userSessions }}
-                {{ range . }}
-                    <li>
-                        <a href="/session/view/{{ .JoinId }}">{{ .Title }}</a>
-                    </li>
-                {{ end }}
-            {{ end }}
-        </ul>
-
-        <a href="/session/new">Create new Session</a>
-
-        <br/>
-
-        <a href="spotify/logout">Log out</a>
-    {{ else }}
-        <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
-    {{ end }}
+<!--JoinSessionSlide-->
 
     <p>There are {{ .activeSessionCount}} active sessions ({{ .totalSessionCount}} total)</p>
 </body>
