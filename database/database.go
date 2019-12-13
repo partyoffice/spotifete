@@ -3,13 +3,10 @@ package database
 import (
 	"fmt"
 	"github.com/47-11/spotifete/config"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"log"
 )
 
 var connectionUrl string
@@ -31,24 +28,25 @@ func init() {
 	}
 
 	// Run migrations
-	log.Println("Connection aquired. Running database migrations")
-	driver, err := postgres.WithInstance(db.DB(), &postgres.Config{})
-	if err != nil {
-		panic("could not get driver for migration from db instance: " + err.Error())
-	}
+	/*
+		log.Println("Connection aquired. Running database migrations")
+		driver, err := postgres.WithInstance(db.DB(), &postgres.Config{})
+		if err != nil {
+			panic("could not get driver for migration from db instance: " + err.Error())
+		}
 
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://resources/migrations/",
-		"postgres", driver)
-	if err != nil {
-		panic("could not prepare database migration: " + err.Error())
-	}
+		m, err := migrate.NewWithDatabaseInstance(
+			"file://resources/migrations/",
+			"postgres", driver)
+		if err != nil {
+			panic("could not prepare database migration: " + err.Error())
+		}
 
-	err = m.Up()
-	// TODO: There probably is a way to do this properly. But this works for now
-	if err != nil && "no change" != err.Error() {
-		panic("could not execute migration: " + err.Error())
-	}
-
+		err = m.Up()
+		// TODO: There probably is a way to do this properly. But this works for now
+		if err != nil && "no change" != err.Error() {
+			panic("could not execute migration: " + err.Error())
+		}
+	*/
 	Connection = db
 }

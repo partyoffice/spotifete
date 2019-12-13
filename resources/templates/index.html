@@ -4,6 +4,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-grid.min.css">
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-reboot.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
     <script type="text/javascript" src="/static/js/jquery-3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.min.js"></script>
@@ -13,7 +14,7 @@
 <!--Navigation-->
 <nav class="navbar navbar-expand-md navbar-light bg-secondary sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#"><img src="/static/SpotiFeteLogo.png"></a>
+        <a class="navbar-brand" href="#"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse"
                 data-target="#navbar-nav ml-auto">
                 <span class="navbar-toggler-icon"></span>
@@ -26,26 +27,72 @@
                 <li class="nav-item active">
                     <a class="nav-link" href="#">About</a>
                 </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Create</a>
-                </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Join</a>
-                </li>
             </ul>
         </div>
     </div>
 
 </nav>
-    <h1>Spotifete</h1>
-    <p>Welcome! You can join an existing session or create a new one.</p>
+<!--Navigation-->
 
     <div>
-        <label for="joinIdInput">session ID</label>
-        <input id="joinIdInput" />
-        <button type="button" onclick="joinClicked()" class="btn btn-primary">Join</button>
+    <h1 class="display-2">Spotifete</h1>
+    <p class="lead">Welcome! You can join an existing session or create a new one.</p>
     </div>
+    <!--JoinSessionSlide-->
+    <div id="slides" class="carousel slide">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+            <img src="/static/JoinSession.jpg">
+                <div class="carousel-caption">
+                <label for="joinIdInput">Input the ID of the session you want to join</label>
+                <br>
+                <input id="joinIdInput" placeholder="12345678" />
+                <button type="button" onclick="joinClicked()" class="btn btn-primary">Join</button>
+                </div>
+            </div>
+            <div class="carousel-item">
 
+            </div>
+
+        </div>
+    </div>
+<!--JoinSessionSlide-->
+<!--CreateSessionSlide-->
+<!--JoinSessionSlide-->
+<div id="slides" class="carousel slide">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="/static/JoinSession.jpg">
+            <div class="carousel-caption">
+                {{ if .user }}
+                    <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
+                    <p>Your active sessions:</p>
+                    <ul>
+                        {{ with .userSessions }}
+                            {{ range . }}
+                                <li>
+                                    <a href="/session/view/{{ .JoinId }}">{{ .Title }}</a>
+                                </li>
+                            {{ end }}
+                        {{ end }}
+                    </ul>
+
+                    <a href="/session/new">Create new Session</a>
+
+                    <br/>
+
+                    <a href="spotify/logout">Log out</a>
+                {{ else }}
+                    <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
+                {{ end }}
+            </div>
+        </div>
+        <div class="carousel-item">
+
+        </div>
+
+    </div>
+</div>
     {{ if .user }}
         <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
         <p>Your active sessions:</p>
@@ -68,9 +115,6 @@
         <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
     {{ end }}
 
-    <hr/>
-
-    <p>The current time is {{ .time}}</p>
     <p>There are {{ .activeSessionCount}} active sessions ({{ .totalSessionCount}} total)</p>
 </body>
 </html>
