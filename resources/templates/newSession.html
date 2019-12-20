@@ -1,4 +1,43 @@
 <html>
+<head>
+    <title>Spotifete</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-grid.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-4.4.1-dist/bootstrap-reboot.min.css">
+    <link rel="stylesheet" href="/static/css/newSession.css">
+    <script type="text/javascript" src="/static/js/jquery-3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap-4.4.1-dist/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/newSession.js"></script>
+</head>
+<body class="bg-dark text-center text-white">
+<!--Navigation-->
+<nav class="navbar navbar-expand-md navbar-light bg-secondary sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#navbar-nav ml-auto">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="../">Home</a>
+                </li>
+                <li class="nav-item active">
+                    {{ if .user }}
+
+                        <a class="nav-link" href="spotify/logout"> Logged in as ({{ .user.SpotifyDisplayName }})  Log out</a>
+                    {{ else }}
+                        <a class="nav-link" href="spotify/login">Login</a>
+                    {{ end }}
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</nav>
+<!--Navigation-->
 <h1>Spotifete</h1>
 
 <h2>New Session</h2>
@@ -8,4 +47,5 @@
     <input id="sessionTitle" name="title"/>
     <button type="submit">Create</button>
 </form>
+</body>
 </html>

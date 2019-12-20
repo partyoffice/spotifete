@@ -11,7 +11,34 @@
     <script type="text/javascript" src="/static/js/typeahead-0.11.1/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/viewSession.js"></script>
 </head>
-<body>
+<body class="bg-dark text-white text-center">
+<!--Navigation-->
+<nav class="navbar navbar-expand-md navbar-light bg-secondary sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#navbar-nav ml-auto">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="../">Home</a>
+                </li>
+                <li class="nav-item active">
+                    {{ if .user }}
+
+                        <a class="nav-link" href="spotify/logout"> Logged in as ({{ .user.SpotifyDisplayName }})  Log out</a>
+                    {{ else }}
+                        <a class="nav-link" href="spotify/login">Login</a>
+                    {{ end }}
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</nav>
+<!--Navigation-->
 <input id="currentSessionJoinId" type="hidden" value="{{ .session.JoinId }}" />
 
 <h1>Spotifete</h1>
