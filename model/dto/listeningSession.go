@@ -1,10 +1,10 @@
 package dto
 
 type ListeningSessionDto struct {
-	Owner            UserDto            `json:"owner,omitempty"`
+	Owner            UserDto            `json:"owner"`
 	JoinId           string             `json:"joinId"`
 	Title            string             `json:"title"`
-	CurrentlyPlaying TrackMetadataDto   `json:"currentlyPlaying,omitempty"`
-	UpNext           TrackMetadataDto   `json:"upNext,omitempty"`
-	Queue            []TrackMetadataDto `json:"queue,omitempty"`
+	CurrentlyPlaying TrackMetadataDto   `json:"currentlyPlaying"`
+	UpNext           TrackMetadataDto   `json:"upNext"`
+	Queue            []TrackMetadataDto `json:"queue"`
 }
