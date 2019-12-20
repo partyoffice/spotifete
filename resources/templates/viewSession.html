@@ -41,16 +41,20 @@
 <!--Navigation-->
 <input id="currentSessionJoinId" type="hidden" value="{{ .session.JoinId }}" />
 
-<h1>Spotifete</h1>
+<h1 class="display-2">Spotifete presents:</h1>
+<div>
+    <h3>{{ .session.Title }}</h3>
+    <p class="lead">You can join using the code {{ .session.JoinId }}</p>
+</div>
 
-<h2>{{ .session.Title }}</h2>
-
-<p>You can join using the code {{ .session.JoinId }}</p>
 
 <hr/>
-
-<input id="trackSearchInput" type="search" class="typeahead form-control" placeholder="Search tracks" autocomplete="off" spellcheck="false">
-
+<div class="jumbotron jumbotron-fluid bg-secondary text-center text-black-50">
+    <div class="container"></div>
+    <h4>Search your desired Songs!</h4>
+    <input id="trackSearchInput" type="search" class="typeahead form-control" placeholder="Search tracks" autocomplete="off" spellcheck="false">
+    </div>
+</div>
 {{ if eq .session.OwnerId  .user.ID }}
     <hr/>
 

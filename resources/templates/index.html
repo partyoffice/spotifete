@@ -52,9 +52,9 @@
         </ul>
         <div class="carousel-inner">
             <div class="carousel-item active">
-            <img src="/static/JoinSession.jpg" class="img-fluid" width="600" height="360">
+            <img src="/static/JoinSession.jpg" class="img" width="1000" height="500">
                 <div class="carousel-caption">
-                <h4>Join Session</h4>
+                <h3>Join an already existing Session:</h3>
                 <label for="joinIdInput">Input Session ID</label>
                 <br>
                 <input id="joinIdInput" placeholder="12345678" />
@@ -62,28 +62,27 @@
                 </div>
             </div>
             <div class="carousel-item">
-                <img src="/static/CreateSession.jpeg"class="img-fluid" width="600" height="360">
+                <img src="/static/CreateSession.jpeg"class="img" width="1000" height="500">
                 <div class="carousel-caption">
-                    <h4>Create Session</h4>
                     {{ if .user }}
-                        <p>Logged in as {{ .user.SpotifyDisplayName }}</p>
+                        <h3>Session Overview:</h3>
                         <p>Your active sessions:</p>
                         <ul>
                             {{ with .userSessions }}
                                 {{ range . }}
                                     <li>
-                                        <a href="/session/view/{{ .JoinId }}">{{ .Title }}</a>
+                                        <a href="/session/view/{{ .JoinId }}" class="btn btn-secondary" role="button">{{ .Title }}</a>
+                                        <br/>
                                     </li>
                                 {{ end }}
                             {{ end }}
                         </ul>
 
-                        <a href="/session/new">Create new Session</a>
+                        <a class="btn btn-primary" href="/session/new" role="button">Create new Session</a>
 
                         <br/>
-
-                        <a href="spotify/logout">Log out</a>
                     {{ else }}
+                        <h3>Session overview</h3>
                         <a href="spotify/login">Log in to Spotify to create a new session or view your existing ones</a>
                     {{ end }}
 
