@@ -45,7 +45,21 @@ func (TemplateController) Index(c *gin.Context) {
 }
 
 func (TemplateController) NewListeningSession(c *gin.Context) {
-	c.HTML(http.StatusOK, "newSession.html", gin.H{})
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
+		c.HTML(http.StatusOK, "newSession.html", gin.H{})
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+	if user == nil {
+		c.HTML(http.StatusOK, "newSession.html", gin.H{})
+		return
+	}
+
+	c.HTML(http.StatusOK, "newSession.html", gin.H{
+		"user": user,
+	})
 }
 
 func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
@@ -82,11 +96,26 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	}
 
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
+		c.HTML(http.StatusOK, "viewSession.html", gin.H{
+			"session": listeningSession,
+		})
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+	if user == nil {
+		c.HTML(http.StatusOK, "viewSession.html", gin.H{
+			"session": listeningSession,
+		})
+		return
+	}
 
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"session": listeningSession,
-		"isOwner": loginSession != nil && loginSession.UserId != nil && *loginSession.UserId == listeningSession.OwnerId,
+		"user":    user,
 	})
+
 }
 
 func (TemplateController) CloseListeningSession(c *gin.Context) {
