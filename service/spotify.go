@@ -69,11 +69,7 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 
 	var resultDtos []dto.TrackMetadataDto
 	for _, track := range result.Tracks.Tracks {
-		metadata, err := s.AddOrUpdateTrackMetadata(client, track.ID)
-		if err != nil {
-			return nil, err
-		}
-
+		metadata := TrackMetadata{}.SetMetadata(track)
 		resultDtos = append(resultDtos, dto.TrackMetadataDto{}.FromDatabaseModel(metadata))
 	}
 
