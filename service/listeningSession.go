@@ -263,6 +263,7 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
 	if currentlyPlayingRequestTrack.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The current track is still in progress -> NO-OP
+		return nil
 	}
 
 	upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
