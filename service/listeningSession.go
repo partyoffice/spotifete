@@ -365,7 +365,7 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 }
 
 func (s listeningSessionService) PollSessions() {
-	for _ = range time.Tick(5 * time.Second) {
+	for range time.Tick(5 * time.Second) {
 		for _, session := range s.GetActiveSessions() {
 			err := s.UpdateSessionIfNeccessary(session)
 			if err != nil {
