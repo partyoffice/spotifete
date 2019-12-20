@@ -70,8 +70,8 @@
                         <ul>
                             {{ with .userSessions }}
                                 {{ range . }}
-                                    <li>
-                                        <a href="/session/view/{{ .JoinId }}" class="btn btn-secondary" role="button">{{ .Title }}</a>
+                                    <li class="text-left">
+                                        <a href="/session/view/{{ .JoinId }}" class="btn btn-info" role="button">{{ .Title }}</a>
                                         <br/>
                                     </li>
                                 {{ end }}
