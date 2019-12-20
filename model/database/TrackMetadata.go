@@ -15,6 +15,7 @@ type TrackMetadata struct {
 }
 
 func (trackMetadata TrackMetadata) SetMetadata(spotifyTrack spotify.FullTrack) TrackMetadata {
+	trackMetadata.SpotifyTrackId = spotifyTrack.ID.String()
 	trackMetadata.TrackName = spotifyTrack.Name
 	trackMetadata.AlbumName = spotifyTrack.Album.Name
 
