@@ -244,20 +244,11 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	client := SpotifyService().GetAuthenticator().NewClient(owner.GetToken())
 	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
 	if err != nil {
-		if "EOF" == err.Error() {
-			// This could be a bug in the api wrapper library. For now just treat an EOF error as no currently playing song
-			// TODO: Do something about this when we get an update in https://github.com/zmb3/spotify/issues/109
-			currentlyPlaying = nil
-		} else {
-			return err
-		}
+		return err
 	}
 
-	if currentlyPlaying == nil {
-		// Spotify isn't currently playing anything
-		return s.UpdateSessionPlaylistIfNeccessary(session)
-	} else if currentlyPlaying.Item == nil {
-		// Advert is running -> do nothing
+	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
+		// Nothing is running -> do nothing
 		return nil
 	}
 
