@@ -40,7 +40,7 @@ $(document).ready(function () {
                 suggestion: function (suggestionData) {
                     return `<div class="clickable" onclick="requestTrack('${suggestionData.trackId}')">
                                 <div class="media">
-                                    <img src="${suggestionData.albumImageUrl}" class="mr-3" alt="...">
+                                    <img src="${suggestionData.albumImageThumbnailUrl}" class="mr-3" alt="...">
                                     <div class="media-body">
                                         <h5 class="mt-0">${suggestionData.trackName}</h5>
                                         <p>${suggestionData.artistName} - ${suggestionData.albumName}</p>

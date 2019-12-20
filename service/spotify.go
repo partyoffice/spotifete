@@ -59,7 +59,7 @@ func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 	}
 }
 
-func (s spotifyService) SearchTrack(client *spotify.Client, query string, limit int) ([]dto.SearchTracksResultDto, error) {
+func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, error) {
 	result, err := client.SearchOpt(query, spotify.SearchTypeTrack, &spotify.Options{
 		Limit: &limit,
 	})
@@ -67,27 +67,65 @@ func (s spotifyService) SearchTrack(client *spotify.Client, query string, limit 
 		return nil, err
 	}
 
-	var tracks []dto.SearchTracksResultDto
+	var resultDtos []dto.TrackMetadataDto
 	for _, track := range result.Tracks.Tracks {
-		// Find image with lowest quality
-		smallestAlbumImageUrl := ""
-		smallestSize := -1
-		for _, image := range track.Album.Images {
-			currentImageSize := image.Width * image.Height
-			if smallestSize < 0 || currentImageSize < smallestSize {
-				smallestSize = currentImageSize
-				smallestAlbumImageUrl = image.URL
-			}
+		metadata, err := s.AddOrUpdateTrackMetadata(client, track.ID)
+		if err != nil {
+			return nil, err
 		}
 
-		tracks = append(tracks, dto.SearchTracksResultDto{
-			TrackId:       track.ID.String(),
-			TrackName:     track.Name,
-			ArtistName:    track.Artists[0].Name, // TODO: Include all artist names
-			AlbumName:     track.Album.Name,
-			AlbumImageUrl: smallestAlbumImageUrl,
-		})
+		resultDtos = append(resultDtos, dto.TrackMetadataDto{}.FromDatabaseModel(metadata))
 	}
 
-	return tracks, nil
+	return resultDtos, nil
+}
+
+func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, trackId spotify.ID) (TrackMetadata, error) {
+	spotifyTrack, err := client.GetTrack(trackId)
+	if err != nil {
+		return TrackMetadata{}, err
+	}
+
+	track := s.GetTrackMetadataBySpotifyTrackId(trackId.String())
+	if track != nil {
+		updatedTrack := track.SetMetadata(*spotifyTrack)
+
+		database.Connection.Save(&updatedTrack)
+
+		return updatedTrack, nil
+	} else {
+		newTrack := TrackMetadata{
+			SpotifyTrackId: trackId.String(),
+		}
+
+		newTrack.SetMetadata(*spotifyTrack)
+
+		database.Connection.Create(&newTrack)
+
+		return newTrack, nil
+	}
+}
+
+func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackMetadata {
+	var foundTracks = []TrackMetadata{}
+	database.Connection.Where(TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
+
+	if len(foundTracks) > 0 {
+		return &foundTracks[0]
+	} else {
+		return nil
+	}
+}
+
+func (s spotifyService) GetTrackMetadataById(id uint) *TrackMetadata {
+	var foundTracks = []TrackMetadata{}
+	database.Connection.Where(TrackMetadata{Model: gorm.Model{
+		ID: id,
+	}}).Find(&foundTracks)
+
+	if len(foundTracks) > 0 {
+		return &foundTracks[0]
+	} else {
+		return nil
+	}
 }

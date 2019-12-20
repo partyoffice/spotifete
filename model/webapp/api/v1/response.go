@@ -16,6 +16,6 @@ type DidAuthSucceedResponse struct {
 }
 
 type SearchTracksResponse struct {
-	Query   string                      `json:"query"`
-	Results []dto.SearchTracksResultDto `json:"results"`
+	Query   string                 `json:"query"`
+	Results []dto.TrackMetadataDto `json:"results"`
 }

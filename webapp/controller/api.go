@@ -1,7 +1,6 @@
 package controller
 
 import (
-	. "github.com/47-11/spotifete/model/dto"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/service"
 	"github.com/gin-gonic/gin"
@@ -17,17 +16,20 @@ func (ApiController) Index(c *gin.Context) {
 
 func (ApiController) GetSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
-	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
+	resolveAdditionalInformation := c.Query("resolveAdditionalInformation")
 
+	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 	} else {
-		c.JSON(http.StatusOK, ListeningSessionDto{}.FromDatabaseModel(*session))
+		c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*session, resolveAdditionalInformation != ""))
 	}
 }
 
 func (controller ApiController) GetUser(c *gin.Context) {
 	userId := c.Param("userId")
+	resolveAdditionalInformation := c.Query("resolveAdditionalInformation")
+
 	if userId == "current" {
 		controller.GetCurrentUser(c)
 		return
@@ -37,12 +39,13 @@ func (controller ApiController) GetUser(c *gin.Context) {
 	if user == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "user not found"})
 	} else {
-		c.JSON(http.StatusOK, service.UserService().CreateDtoWithAdditionalInformation(user))
+		c.JSON(http.StatusOK, service.UserService().CreateDto(*user, resolveAdditionalInformation != ""))
 	}
 }
 
 func (ApiController) GetCurrentUser(c *gin.Context) {
 	loginSessionId := c.Query("sessionId")
+	resolveAdditionalInformation := c.Query("resolveAdditionalInformation")
 
 	if len(loginSessionId) == 0 {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
@@ -51,12 +54,12 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 
 	loginSession := service.LoginSessionService().GetSessionBySessionId(loginSessionId)
 	if loginSession == nil {
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "unknown session id"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "unknown session id"})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
-	c.JSON(http.StatusOK, service.UserService().CreateDtoWithAdditionalInformation(user))
+	c.JSON(http.StatusOK, service.UserService().CreateDto(*user, resolveAdditionalInformation != ""))
 }
 
 func (ApiController) GetAuthUrl(c *gin.Context) {
@@ -139,7 +142,7 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	token := user.GetToken()
 	client := service.SpotifyService().GetAuthenticator().NewClient(token)
 
-	tracks, err := service.SpotifyService().SearchTrack(&client, query, limit)
+	tracks, err := service.SpotifyService().SearchTrack(client, query, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return

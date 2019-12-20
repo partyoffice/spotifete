@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
+	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/getsentry/sentry-go"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
@@ -80,7 +81,7 @@ func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []Listen
 	return sessions
 }
 
-func (s listeningSessionService) GetCurrentlyPlayingAndUpNext(session *ListeningSession) (currentlyPlaying *SongRequest, upNext *SongRequest, err error) {
+func (s listeningSessionService) GetCurrentlyPlayingAndUpNext(session ListeningSession) (currentlyPlaying *SongRequest, upNext *SongRequest, err error) {
 	// Get currently playing
 	var currentlyPlayingResults []SongRequest
 	database.Connection.Where("session_id = ? AND status = 'CURRENTLY_PLAYING'", session.ID).Find(&currentlyPlayingResults)
@@ -114,7 +115,7 @@ func (s listeningSessionService) GetCurrentlyPlayingAndUpNext(session *Listening
 	return currentlyPlaying, upNext, nil
 }
 
-func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session *ListeningSession) []SongRequest {
+func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session ListeningSession) []SongRequest {
 	var requests []SongRequest
 	database.Connection.Where(SongRequest{
 		SessionId: session.ID,
@@ -187,20 +188,18 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 	sessionOwner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetAuthenticator().NewClient(sessionOwner.GetToken())
 
-	track, err := client.GetTrack(spotify.ID(trackId))
-	if err != nil {
-		return err
-	}
-
 	// Prevent duplicates
-	var duplicateRequestsForTrack []SongRequest
-	database.Connection.Where("status != 'PLAYED' AND session_id = ? AND track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
-	if len(duplicateRequestsForTrack) > 0 {
-		return errors.New("that song is already in the queue")
+	trackMetadata := SpotifyService().GetTrackMetadataBySpotifyTrackId(trackId)
+	if trackMetadata != nil {
+		var duplicateRequestsForTrack []SongRequest
+		database.Connection.Where("status != 'PLAYED' AND session_id = ? AND track_id = ?", session.ID, trackMetadata.ID).Find(&duplicateRequestsForTrack)
+		if len(duplicateRequestsForTrack) > 0 {
+			return errors.New("that song is already in the queue")
+		}
 	}
 
 	// Check if we have to add the request to the queue or play it immediately
-	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
+	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(*session)
 	if err != nil {
 		return err
 	}
@@ -217,11 +216,16 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 		newRequestStatus = IN_QUEUE
 	}
 
+	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(client, spotify.ID(trackId))
+	if err != nil {
+		return err
+	}
+
 	newSongRequest := SongRequest{
 		Model:     gorm.Model{},
 		SessionId: session.ID,
 		UserId:    nil,
-		TrackId:   track.ID.String(),
+		TrackId:   updatedTrackMetadata.ID,
 		Status:    newRequestStatus,
 	}
 
@@ -230,7 +234,7 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 	return nil
 }
 
-func (s listeningSessionService) UpdateSessionIfNeccessary(session *ListeningSession) error {
+func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSession) error {
 	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
 	if err != nil {
 		return err
@@ -257,7 +261,7 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session *ListeningSes
 		return nil
 	}
 
-	currentlyPlayingTrackId := currentlyPlaying.Item.ID.String()
+	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
 
 	if currentlyPlayingRequest == nil {
 		// No requests present
@@ -265,11 +269,13 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session *ListeningSes
 		return nil
 	}
 
-	if currentlyPlayingRequest.TrackId == currentlyPlayingTrackId {
+	currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
+	if currentlyPlayingRequestTrack.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The current track is still in progress -> NO-OP
 	}
 
-	if upNextRequest != nil && upNextRequest.TrackId == currentlyPlayingTrackId {
+	upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
+	if upNextRequest != nil && upNextRequestTrack.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
 		currentlyPlayingRequest.Status = PLAYED
 		database.Connection.Save(currentlyPlayingRequest)
@@ -288,7 +294,7 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session *ListeningSes
 	return s.UpdateSessionPlaylistIfNeccessary(session)
 }
 
-func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session *ListeningSession) error {
+func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session ListeningSession) error {
 	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
 	if err != nil {
 		return err
@@ -323,12 +329,14 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session *List
 
 	// Second, check playlist content
 	if currentlyPlayingRequest != nil {
-		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequest.TrackId {
+		currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
+		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequestTrack.SpotifyTrackId {
 			return s.updateSessionPlaylist(client, session)
 		}
 
 		if upNextRequest != nil {
-			if playlistTracks[1].Track.ID.String() != upNextRequest.TrackId {
+			upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
+			if playlistTracks[1].Track.ID.String() != upNextRequestTrack.SpotifyTrackId {
 				return s.updateSessionPlaylist(client, session)
 			}
 		}
@@ -337,7 +345,7 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session *List
 	return nil
 }
 
-func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session *ListeningSession) error {
+func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session ListeningSession) error {
 	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
 	if err != nil {
 		return err
@@ -346,14 +354,16 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 	playlistId := spotify.ID(session.SpotifyPlaylist)
 
 	// Always replace all tracks with only the current one playing first
-	err = client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.TrackId))
+	currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
+	err = client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequestTrack.SpotifyTrackId))
 	if err != nil {
 		return err
 	}
 
 	// After that, add the up next song as well if it is present
 	if upNextRequest != nil {
-		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequest.TrackId))
+		upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
+		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequestTrack.SpotifyTrackId))
 		if err != nil {
 			return err
 		}
@@ -365,11 +375,45 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 func (s listeningSessionService) PollSessions() {
 	for _ = range time.Tick(5 * time.Second) {
 		for _, session := range s.GetActiveSessions() {
-			err := s.UpdateSessionIfNeccessary(&session)
+			err := s.UpdateSessionIfNeccessary(session)
 			if err != nil {
 				log.Println(err)
 				sentry.CaptureException(err)
 			}
 		}
 	}
+}
+
+func (s listeningSessionService) CreateDto(listeningSession ListeningSession, resolveAdditionalInformation bool) dto.ListeningSessionDto {
+	result := dto.ListeningSessionDto{}
+	result.JoinId = *listeningSession.JoinId
+	result.Title = listeningSession.Title
+
+	if resolveAdditionalInformation {
+		owner := UserService().GetUserById(listeningSession.OwnerId)
+		result.Owner = UserService().CreateDto(*owner, false)
+
+		currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(listeningSession)
+		if err != nil {
+			panic(err)
+		}
+
+		if currentlyPlayingRequest != nil {
+			currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
+			result.CurrentlyPlaying = dto.TrackMetadataDto{}.FromDatabaseModel(*currentlyPlayingRequestTrack)
+		}
+
+		if upNextRequest != nil {
+			upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
+			result.UpNext = dto.TrackMetadataDto{}.FromDatabaseModel(*upNextRequestTrack)
+		}
+
+		result.Queue = []dto.TrackMetadataDto{}
+		for _, request := range s.GetSessionQueueInDemocraticOrder(listeningSession) {
+			requestTrack := SpotifyService().GetTrackMetadataById(request.TrackId)
+			result.Queue = append(result.Queue, dto.TrackMetadataDto{}.FromDatabaseModel(*requestTrack))
+		}
+	}
+
+	return result
 }
