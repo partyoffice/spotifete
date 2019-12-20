@@ -16,19 +16,17 @@ func (ApiController) Index(c *gin.Context) {
 
 func (ApiController) GetSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
-	resolveAdditionalInformation := c.Query("resolveAdditionalInformation")
 
 	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 	} else {
-		c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*session, resolveAdditionalInformation != ""))
+		c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*session, true))
 	}
 }
 
 func (controller ApiController) GetUser(c *gin.Context) {
 	userId := c.Param("userId")
-	resolveAdditionalInformation := c.Query("resolveAdditionalInformation")
 
 	if userId == "current" {
 		controller.GetCurrentUser(c)
@@ -39,13 +37,12 @@ func (controller ApiController) GetUser(c *gin.Context) {
 	if user == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "user not found"})
 	} else {
-		c.JSON(http.StatusOK, service.UserService().CreateDto(*user, resolveAdditionalInformation != ""))
+		c.JSON(http.StatusOK, service.UserService().CreateDto(*user, true))
 	}
 }
 
 func (ApiController) GetCurrentUser(c *gin.Context) {
 	loginSessionId := c.Query("sessionId")
-	resolveAdditionalInformation := c.Query("resolveAdditionalInformation")
 
 	if len(loginSessionId) == 0 {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
@@ -59,7 +56,7 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
-	c.JSON(http.StatusOK, service.UserService().CreateDto(*user, resolveAdditionalInformation != ""))
+	c.JSON(http.StatusOK, service.UserService().CreateDto(*user, true))
 }
 
 func (ApiController) GetAuthUrl(c *gin.Context) {

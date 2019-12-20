@@ -43,8 +43,7 @@ func (userService) GetUserById(id uint) *User {
 
 func (userService) GetUserBySpotifyId(spotifyId string) *User {
 	var users []User
-	var sessions []ListeningSession
-	database.Connection.Where(User{SpotifyId: spotifyId}).Find(&users).Related(&sessions)
+	database.Connection.Where(User{SpotifyId: spotifyId}).Find(&users)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -89,9 +88,11 @@ func (s userService) CreateDto(user User, resolveAdditionalInformation bool) dto
 	result.SpotifyId = user.SpotifyId
 	result.SpotifyDisplayName = user.SpotifyDisplayName
 
-	result.ListeningSessions = []dto.ListeningSessionDto{}
-	for _, session := range ListeningSessionService().GetActiveSessionsByOwnerId(user.ID) {
-		result.ListeningSessions = append(result.ListeningSessions, ListeningSessionService().CreateDto(session, resolveAdditionalInformation))
+	if resolveAdditionalInformation {
+		result.ListeningSessions = []dto.ListeningSessionDto{}
+		for _, session := range ListeningSessionService().GetActiveSessionsByOwnerId(user.ID) {
+			result.ListeningSessions = append(result.ListeningSessions, ListeningSessionService().CreateDto(session, false))
+		}
 	}
 
 	return result

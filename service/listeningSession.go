@@ -260,14 +260,7 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 		return nil
 	}
 
-	currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
-	if currentlyPlayingRequestTrack.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
-		// The current track is still in progress -> NO-OP
-		return nil
-	}
-
-	upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
-	if upNextRequest != nil && upNextRequestTrack.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
+	if upNextRequest != nil && SpotifyService().GetTrackMetadataById(upNextRequest.TrackId).SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
 		currentlyPlayingRequest.Status = PLAYED
 		database.Connection.Save(currentlyPlayingRequest)
@@ -366,6 +359,7 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 
 func (s listeningSessionService) PollSessions() {
 	for range time.Tick(5 * time.Second) {
+		log.Println("Polling Sessions")
 		for _, session := range s.GetActiveSessions() {
 			err := s.UpdateSessionIfNeccessary(session)
 			if err != nil {

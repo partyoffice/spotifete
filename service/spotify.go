@@ -90,11 +90,7 @@ func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, trackId 
 
 		return updatedTrack, nil
 	} else {
-		newTrack := TrackMetadata{
-			SpotifyTrackId: trackId.String(),
-		}
-
-		newTrack.SetMetadata(*spotifyTrack)
+		newTrack := TrackMetadata{}.SetMetadata(*spotifyTrack)
 
 		database.Connection.Create(&newTrack)
 
