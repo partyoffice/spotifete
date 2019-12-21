@@ -12,6 +12,8 @@ import (
 	"log"
 )
 
+const targetDatabaseVersion = 23
+
 var connectionUrl string
 var Connection *gorm.DB
 
@@ -31,7 +33,7 @@ func init() {
 	}
 
 	// Run migrations
-	log.Println("Connection aquired. Running database migrations")
+	log.Println("Connection aquired. Checking database version")
 	driver, err := postgres.WithInstance(db.DB(), &postgres.Config{})
 	if err != nil {
 		panic("could not get driver for migration from db instance: " + err.Error())
@@ -44,10 +46,17 @@ func init() {
 		panic("could not prepare database migration: " + err.Error())
 	}
 
-	err = m.Up()
-	// TODO: There probably is a way to do this properly. But this works for now
-	if err != nil && "no change" != err.Error() {
-		panic("could not execute migration: " + err.Error())
+	version, _, _ := m.Version()
+	if version != targetDatabaseVersion {
+		log.Printf("Database version is %d / target version is %d. Migrating!\n", version, targetDatabaseVersion)
+		err = m.Migrate(targetDatabaseVersion)
+		if err != nil {
+			panic("could not execute migration: " + err.Error())
+		}
+
+		log.Println("Migrations successful!")
+	} else {
+		log.Printf("Database is up to date! (Version %d)", version)
 	}
 
 	Connection = db
