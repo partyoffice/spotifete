@@ -76,21 +76,92 @@
         <p class="lead">You can join using the code {{ .session.JoinId }}</p>
     </div>
 
+    <br/>
 
-    <hr/>
     <div class="jumbotron jumbotron-fluid bg-secondary text-center text-black-50">
-        <div class="container"></div>
-        <h4>Search your desired Songs!</h4>
+        <div class="container">
+        <h4>Add a song to the queue!</h4>
         <input id="trackSearchInput" type="search" class="typeahead form-control" placeholder="Search tracks" autocomplete="off" spellcheck="false">
         </div>
     </div>
-    {{ if eq .session.OwnerId  .user.ID }}
-        <hr/>
+
+    <br/>
+
+    <table class="table table-striped table-dark">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Song</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ if .session.CurrentlyPlaying }}
+            <tr class="bg-info">
+                <th scope="row">
+                    Currently playing
+                </th>
+                <td>
+                    <div class="media">
+                        <img src="{{ .session.CurrentlyPlaying.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .session.CurrentlyPlaying.AlbumName }}">
+                        <div class="media-body">
+                            <h5 class="mt-0">{{ .session.CurrentlyPlaying.TrackName }}</h5>
+                            <p>{{ .session.CurrentlyPlaying.AlbumName }}</p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {{ else }}
+            <tr>
+                <td colspan="2">The queue is empty! Go ahead and request a song!</td>
+            </tr>
+        {{ end }}
+
+        {{ if .session.UpNext }}
+            <tr>
+                <th scope="row">
+                    Up next
+                </th>
+                <td>
+                    <div class="media">
+                        <img src="{{ .session.UpNext.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .session.UpNext.AlbumName }}">
+                        <div class="media-body">
+                            <h5 class="mt-0">{{ .session.UpNext.TrackName }}</h5>
+                            <p>{{ .session.UpNext.AlbumName }}</p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {{ end }}
+
+        {{ range $index, $element := .session.Queue }}
+            <tr>
+                <th scope="row">
+                    {{ $index }}
+                </th>
+                <td>
+                    <div class="media">
+                        <img src="{{ .AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .AlbumName }}">
+                        <div class="media-body">
+                            <h5 class="mt-0">{{ .TrackName }}</h5>
+                            <p>{{ .AlbumName }}</p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+
+    <!-- TODO: Find out if there is a way to do this check properly -->
+    {{ if .user }}
+        {{ if eq .session.Owner.SpotifyId  .user.SpotifyId }}
+        <br/>
 
         <form action="/session/close" method="post">
             <input id="joinIdInput" type="hidden" name="joinId" value="{{ .session.JoinId }}" />
-            <button type="submit">Close session</button>
+            <button type="submit" class="btn btn-danger">Close session</button>
         </form>
+        {{ end }}
     {{ end }}
 </body>
 </html>

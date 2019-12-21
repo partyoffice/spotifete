@@ -80,17 +80,19 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
+	ListeningSessionDto := service.ListeningSessionService().CreateDto(*listeningSession, true)
+
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
-			"session": listeningSession,
+			"session": ListeningSessionDto,
 		})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
-		"session": listeningSession,
+		"session": ListeningSessionDto,
 		"user":    user,
 	})
 
