@@ -4,39 +4,66 @@
     <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap-grid.min.css">
     <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap-reboot.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/fontawesome/css/all.min.css">
     <script type="text/javascript" src="/static/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
 </head>
 <body class="bg-dark text-center text-white">
-    <nav class="navbar navbar-expand-lg navbar-light bg-secondary sticky-top">
-        <a class="navbar-brand" href="/"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#navbar-nav ml-auto">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-            <ul class="navbar-nav ml-auto">
+<nav class="navbar navbar-expand-lg navbar-light bg-secondary sticky-top">
+    <a class="navbar-brand" href="/"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbar-nav ml-auto">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item active dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                    Get the App
+                    <span class="fas fa-mobile-alt"></span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="/app/android">
+                        <span class="fab fa-android"></span>
+                        Android
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item disabled" href="/app/ios">
+                        <span class="fab fa-apple"></span>
+                        iOS - Not available yet
+                    </a>
+                </div>
+            </li>
+            {{ if .user }}
                 <li class="nav-item active dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                        Get the App
+                        {{ .user.SpotifyDisplayName }}
+                        <span class="fab fa-spotify"></span>
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="/app/android">Android</a>
+                        <p class="dropdown-item-text">
+                            <span class="fas fa-user"></span>
+                            Logged in as spotify user {{ .user.SpotifyDisplayName }}
+                        </p>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item disabled" href="/app/ios">iOS - Not available yet</a>
+                        <a class="dropdown-item" href="/spotify/logout">
+                            <span class="fas fa-sign-out-alt"></span>
+                            Logout
+                        </a>
                     </div>
                 </li>
+            {{ else }}
                 <li class="nav-item active">
-                    {{ if .user }}
-                        <a class="nav-link" href="/spotify/logout"> Logged in as ({{ .user.SpotifyDisplayName }})  Log out</a>
-                    {{ else }}
-                        <a class="nav-link" href="/spotify/login">Login</a>
-                    {{ end }}
+                    <a class="nav-link" href="/spotify/login">
+                        Login
+                        <span class="fab fa-spotify"></span>
+                    </a>
                 </li>
-            </ul>
-        </div>
-    </nav>
+            {{ end }}
+        </ul>
+    </div>
+</nav>
 
     <h1>Spotifete</h1>
 
