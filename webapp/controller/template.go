@@ -12,7 +12,7 @@ import (
 type TemplateController struct{}
 
 func (TemplateController) Index(c *gin.Context) {
-	appUrl := config.GetConfig().Get("spotifete.appUrl")
+	androidAppUrl := config.GetConfig().Get("spotifete.app.androidUrl")
 
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
@@ -22,7 +22,7 @@ func (TemplateController) Index(c *gin.Context) {
 			"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
-			"appUrl":             appUrl,
+			"androidAppUrl":      androidAppUrl,
 		})
 		return
 	}
@@ -34,7 +34,7 @@ func (TemplateController) Index(c *gin.Context) {
 		"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
 		"user":               user,
 		"userSessions":       service.ListeningSessionService().GetActiveSessionsByOwnerId(*loginSession.UserId),
-		"appUrl":             appUrl,
+		"androidAppUrl":      androidAppUrl,
 	})
 }
 
