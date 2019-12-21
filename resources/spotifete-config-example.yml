@@ -1,5 +1,5 @@
 server:
-  activeProfile: debug
+  baseUrl: http://localhost:8410
   releaseMode: true
 database:
   host: postgres.host.de
