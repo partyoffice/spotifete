@@ -6,7 +6,10 @@ CREATE TABLE authentication_states (
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP,
-    state VARCHAR NOT NULL UNIQUE,
+    state VARCHAR NOT NULL,
     active BOOLEAN NOT NULL
 );
+
+ALTER TABLE authentication_states
+    ADD CONSTRAINT state_unique UNIQUE (state);
 COMMIT;
