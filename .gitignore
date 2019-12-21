@@ -93,7 +93,7 @@ fabric.properties
 *.db
 
 # Config files
-config/*.yml
+spotifete-config.yml
 
 # GoLand DataSource config
 .idea/**/dataSources.xml

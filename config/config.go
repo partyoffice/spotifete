@@ -11,9 +11,9 @@ func GetConfig() *viper.Viper {
 		var err error
 		config = viper.New()
 		config.SetConfigType("yaml")
-		config.SetConfigName("spotifete")
-		config.AddConfigPath("../config/")
-		config.AddConfigPath("config/")
+		config.SetConfigName("spotifete-config")
+		config.AddConfigPath("/etc/spotifete")
+		config.AddConfigPath(".")
 		err = config.ReadInConfig()
 		if err != nil {
 			panic("Could not read config file.")
