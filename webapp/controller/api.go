@@ -92,7 +92,7 @@ func (controller ApiController) InvalidateSessionId(c *gin.Context) {
 		return
 	}
 
-	err = service.LoginSessionService().InvalidateSessionBySessionId(requestBody.SessionId)
+	err = service.LoginSessionService().InvalidateSessionBySessionId(requestBody.LoginSessionId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 		return
@@ -176,4 +176,42 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
+}
+
+func (controller ApiController) CreateListeningSession(c *gin.Context) {
+	requestBody := CreateListeningSessionRequest{}
+	err := c.ShouldBindJSON(&requestBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid request body"})
+		return
+	}
+
+	if requestBody.LoginSessionId == nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "required parameter loginSessionId not present"})
+		return
+	}
+
+	if requestBody.ListeningSessionTitle == nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "required parameter listeningSessionTitle not present"})
+		return
+	}
+
+	loginSession := service.LoginSessionService().GetSessionBySessionId(*requestBody.LoginSessionId)
+	if loginSession == nil {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "invalid login session"})
+		return
+	}
+
+	if loginSession.UserId == nil {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "login session is not authorized to spotify yet"})
+		return
+	}
+
+	createdSession, err := service.ListeningSessionService().NewSession(service.UserService().GetUserById(*loginSession.UserId), *requestBody.ListeningSessionTitle)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*createdSession, true))
 }

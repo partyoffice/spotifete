@@ -42,6 +42,7 @@ func setupApiController(baseRouter *gin.Engine) {
 	apiRouter.GET("/spotify/search/track", apiController.SearchSpotifyTrack)
 	apiRouter.GET("/sessions/:joinId", apiController.GetSession)
 	apiRouter.POST("/sessions/:joinId/request", apiController.RequestSong)
+	apiRouter.POST("/sessions", apiController.CreateListeningSession)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
 }
 

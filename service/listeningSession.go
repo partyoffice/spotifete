@@ -128,6 +128,10 @@ func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session Listen
 }
 
 func (s listeningSessionService) NewSession(user *User, title string) (*ListeningSession, error) {
+	if len(title) == 0 {
+		return nil, errors.New("title must not be empty")
+	}
+
 	client := SpotifyService().GetAuthenticator().NewClient(user.GetToken())
 
 	joinId := s.newJoinId()
