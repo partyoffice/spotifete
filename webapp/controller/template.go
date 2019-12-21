@@ -12,8 +12,6 @@ import (
 type TemplateController struct{}
 
 func (TemplateController) Index(c *gin.Context) {
-	androidAppUrl := config.GetConfig().Get("spotifete.app.androidUrl")
-
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
@@ -22,7 +20,6 @@ func (TemplateController) Index(c *gin.Context) {
 			"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
-			"androidAppUrl":      androidAppUrl,
 		})
 		return
 	}
@@ -34,25 +31,19 @@ func (TemplateController) Index(c *gin.Context) {
 		"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
 		"user":               user,
 		"userSessions":       service.ListeningSessionService().GetActiveSessionsByOwnerId(*loginSession.UserId),
-		"androidAppUrl":      androidAppUrl,
 	})
 }
 
 func (TemplateController) NewListeningSession(c *gin.Context) {
-	androidAppUrl := config.GetConfig().Get("spotifete.app.androidUrl")
-
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.HTML(http.StatusOK, "newSession.html", gin.H{
-			"androidAppUrl": androidAppUrl,
-		})
+		c.HTML(http.StatusOK, "newSession.html", gin.H{})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
-		"user":          user,
-		"androidAppUrl": androidAppUrl,
+		"user": user,
 	})
 }
 
@@ -89,22 +80,18 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
-	androidAppUrl := config.GetConfig().Get("spotifete.app.androidUrl")
-
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
-			"session":       listeningSession,
-			"androidAppUrl": androidAppUrl,
+			"session": listeningSession,
 		})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
-		"session":       listeningSession,
-		"user":          user,
-		"androidAppUrl": androidAppUrl,
+		"session": listeningSession,
+		"user":    user,
 	})
 
 }
@@ -131,4 +118,8 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
+}
+
+func (TemplateController) GetApp(c *gin.Context) {
+	c.Redirect(http.StatusTemporaryRedirect, config.GetConfig().GetString("spotifete.app.androidUrl"))
 }
