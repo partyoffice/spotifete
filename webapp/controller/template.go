@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 type TemplateController struct{}
 
 func (TemplateController) Index(c *gin.Context) {
+	appUrl := config.GetConfig().Get("spotifete.appUrl")
+
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
@@ -19,28 +22,19 @@ func (TemplateController) Index(c *gin.Context) {
 			"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
+			"appUrl":             appUrl,
 		})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
-	if user == nil {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"time":               time.Now(),
-			"activeSessionCount": service.ListeningSessionService().GetActiveSessionCount(),
-			"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
-			"user":               nil,
-			"userSessions":       nil,
-		})
-		return
-	}
-
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
 		"activeSessionCount": service.ListeningSessionService().GetActiveSessionCount(),
 		"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
 		"user":               user,
 		"userSessions":       service.ListeningSessionService().GetActiveSessionsByOwnerId(*loginSession.UserId),
+		"appUrl":             appUrl,
 	})
 }
 
