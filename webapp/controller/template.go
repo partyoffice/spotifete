@@ -120,6 +120,10 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
-func (TemplateController) GetApp(c *gin.Context) {
+func (TemplateController) GetAppAndroid(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, config.GetConfig().GetString("spotifete.app.androidUrl"))
+}
+
+func (TemplateController) GetAppIOS(c *gin.Context) {
+	c.String(http.StatusNotFound, "Sorry, the iOS app is not available yet!")
 }

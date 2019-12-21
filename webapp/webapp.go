@@ -62,7 +62,7 @@ func setupTemplateController(baseRouter *gin.Engine) {
 	baseRouter.GET("/session/new", templateController.NewListeningSession)
 	baseRouter.POST("/session/new", templateController.NewListeningSessionSubmit)
 	baseRouter.POST("/session/close", templateController.CloseListeningSession)
-	baseRouter.GET("/app", templateController.GetApp)
+	baseRouter.GET("/app/android", templateController.GetAppAndroid)
 }
 
 func setupSpotifyController(baseRouter *gin.Engine) {

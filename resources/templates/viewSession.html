@@ -12,9 +12,9 @@
     <script type="text/javascript" src="/static/js/viewSession.js"></script>
 </head>
 <body class="bg-dark text-white text-center">
-<!--Navigation-->
-<nav class="navbar navbar-expand-md navbar-light bg-secondary sticky-top">
-    <div class="container-fluid">
+    <input id="currentSessionJoinId" type="hidden" value="{{ .session.JoinId }}" />
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-secondary sticky-top">
         <a class="navbar-brand" href="/"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse"
                 data-target="#navbar-nav ml-auto">
@@ -22,12 +22,18 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="/app">Get the App</a>
+                <li class="nav-item active dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                        Get the App
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="/app/android">Android</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item disabled" href="/app/ios">iOS - Not available yet</a>
+                    </div>
                 </li>
                 <li class="nav-item active">
                     {{ if .user }}
-
                         <a class="nav-link" href="/spotify/logout"> Logged in as ({{ .user.SpotifyDisplayName }})  Log out</a>
                     {{ else }}
                         <a class="nav-link" href="/spotify/login">Login</a>
@@ -35,33 +41,29 @@
                 </li>
             </ul>
         </div>
+    </nav>
+
+    <h1 class="display-2">Spotifete presents:</h1>
+    <div>
+        <h3>{{ .session.Title }}</h3>
+        <p class="lead">You can join using the code {{ .session.JoinId }}</p>
     </div>
 
-</nav>
-<!--Navigation-->
-<input id="currentSessionJoinId" type="hidden" value="{{ .session.JoinId }}" />
 
-<h1 class="display-2">Spotifete presents:</h1>
-<div>
-    <h3>{{ .session.Title }}</h3>
-    <p class="lead">You can join using the code {{ .session.JoinId }}</p>
-</div>
-
-
-<hr/>
-<div class="jumbotron jumbotron-fluid bg-secondary text-center text-black-50">
-    <div class="container"></div>
-    <h4>Search your desired Songs!</h4>
-    <input id="trackSearchInput" type="search" class="typeahead form-control" placeholder="Search tracks" autocomplete="off" spellcheck="false">
-    </div>
-</div>
-{{ if eq .session.OwnerId  .user.ID }}
     <hr/>
+    <div class="jumbotron jumbotron-fluid bg-secondary text-center text-black-50">
+        <div class="container"></div>
+        <h4>Search your desired Songs!</h4>
+        <input id="trackSearchInput" type="search" class="typeahead form-control" placeholder="Search tracks" autocomplete="off" spellcheck="false">
+        </div>
+    </div>
+    {{ if eq .session.OwnerId  .user.ID }}
+        <hr/>
 
-    <form action="/session/close" method="post">
-        <input id="joinIdInput" type="hidden" name="joinId" value="{{ .session.JoinId }}" />
-        <button type="submit">Close session</button>
-    </form>
-{{ end }}
+        <form action="/session/close" method="post">
+            <input id="joinIdInput" type="hidden" name="joinId" value="{{ .session.JoinId }}" />
+            <button type="submit">Close session</button>
+        </form>
+    {{ end }}
 </body>
 </html>
