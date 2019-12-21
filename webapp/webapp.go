@@ -1,14 +1,20 @@
 package webapp
 
 import (
+	"github.com/47-11/spotifete/config"
 	. "github.com/47-11/spotifete/webapp/controller"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"log"
 )
 
-func Start(activeProfile string) {
-	gin.SetMode(activeProfile)
+func Initialize() {
+	if config.IsReleaseMode() {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+
 	baseRouter := gin.Default()
 
 	baseRouter.Use(sentrygin.New(sentrygin.Options{

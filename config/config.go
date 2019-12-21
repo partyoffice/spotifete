@@ -23,11 +23,7 @@ func GetConfig() *viper.Viper {
 	return config
 }
 
-func GetActiveProfile() string {
+func IsReleaseMode() bool {
 	c := GetConfig()
-	if c.IsSet("server.activeProfile") {
-		return c.GetString("server.activeProfile")
-	} else {
-		return "debug"
-	}
+	return c.GetBool("server.releaseMode")
 }
