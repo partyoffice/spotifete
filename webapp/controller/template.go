@@ -39,20 +39,20 @@ func (TemplateController) Index(c *gin.Context) {
 }
 
 func (TemplateController) NewListeningSession(c *gin.Context) {
+	androidAppUrl := config.GetConfig().Get("spotifete.app.androidUrl")
+
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.HTML(http.StatusOK, "newSession.html", gin.H{})
+		c.HTML(http.StatusOK, "newSession.html", gin.H{
+			"androidAppUrl": androidAppUrl,
+		})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
-	if user == nil {
-		c.HTML(http.StatusOK, "newSession.html", gin.H{})
-		return
-	}
-
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
-		"user": user,
+		"user":          user,
+		"androidAppUrl": androidAppUrl,
 	})
 }
 
@@ -89,25 +89,22 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
+	androidAppUrl := config.GetConfig().Get("spotifete.app.androidUrl")
+
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
-			"session": listeningSession,
+			"session":       listeningSession,
+			"androidAppUrl": androidAppUrl,
 		})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
-	if user == nil {
-		c.HTML(http.StatusOK, "viewSession.html", gin.H{
-			"session": listeningSession,
-		})
-		return
-	}
-
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
-		"session": listeningSession,
-		"user":    user,
+		"session":       listeningSession,
+		"user":          user,
+		"androidAppUrl": androidAppUrl,
 	})
 
 }
