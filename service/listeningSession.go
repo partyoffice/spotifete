@@ -388,13 +388,13 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 		}
 
 		if currentlyPlayingRequest != nil {
-			currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
-			result.CurrentlyPlaying = dto.TrackMetadataDto{}.FromDatabaseModel(*currentlyPlayingRequestTrack)
+			currentlyPlayingRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId))
+			result.CurrentlyPlaying = &currentlyPlayingRequestTrack
 		}
 
 		if upNextRequest != nil {
-			upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
-			result.UpNext = dto.TrackMetadataDto{}.FromDatabaseModel(*upNextRequestTrack)
+			upNextRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataById(upNextRequest.TrackId))
+			result.UpNext = &upNextRequestTrack
 		}
 
 		result.Queue = []dto.TrackMetadataDto{}
