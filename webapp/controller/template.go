@@ -120,6 +120,10 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
+func (TemplateController) GetApp(c *gin.Context) {
+	c.Redirect(http.StatusTemporaryRedirect, "/app/android")
+}
+
 func (TemplateController) GetAppAndroid(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, config.GetConfig().GetString("spotifete.app.androidUrl"))
 }
