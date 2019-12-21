@@ -68,7 +68,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("/session/view/%s", *session.JoinId))
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s", *session.JoinId))
 }
 
 func (TemplateController) ViewSession(c *gin.Context) {
@@ -117,7 +117,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusTemporaryRedirect, "/")
+	c.Redirect(http.StatusSeeOther, "/")
 }
 
 func (TemplateController) GetApp(c *gin.Context) {
