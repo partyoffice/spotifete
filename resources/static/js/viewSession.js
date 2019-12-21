@@ -22,7 +22,7 @@ $(document).ready(function () {
             highlight: true,
             minLength: 3,
             classNames: {
-                menu: 'card',
+                menu: 'card text-left',
                 dataset: 'list-group list-group-flush',
                 suggestion: 'list-group-item',
                 empty: ''
