@@ -231,7 +231,7 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 
 	database.Connection.Create(&newSongRequest)
 
-	return nil
+	return s.UpdateSessionPlaylistIfNeccessary(*session)
 }
 
 func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSession) error {
