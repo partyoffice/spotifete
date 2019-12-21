@@ -22,8 +22,3 @@ func GetConfig() *viper.Viper {
 
 	return config
 }
-
-func IsReleaseMode() bool {
-	c := GetConfig()
-	return c.GetBool("server.releaseMode")
-}

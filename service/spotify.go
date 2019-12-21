@@ -21,7 +21,7 @@ var spotifyServiceOnce sync.Once
 func SpotifyService() *spotifyService {
 	spotifyServiceOnce.Do(func() {
 		c := config.GetConfig()
-		callbackUrl := c.GetString("server.baseUrl") + "/spotify/callback"
+		callbackUrl := c.GetString("spotifete.baseUrl") + "/spotify/callback"
 
 		newAuth := spotify.NewAuthenticator(callbackUrl, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPrivate, spotify.ScopeUserLibraryRead, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadCurrentlyPlaying)
 		newAuth.SetAuthInfo(c.GetString("spotify.id"), c.GetString("spotify.secret"))

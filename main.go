@@ -12,7 +12,7 @@ import (
 func main() {
 	defer database.Shutdown()
 
-	releaseMode := config.IsReleaseMode()
+	releaseMode := config.GetConfig().GetBool("spotifete.releaseMode")
 	if releaseMode {
 		log.Println("Starting SpotiFete in release mode...")
 	} else {
