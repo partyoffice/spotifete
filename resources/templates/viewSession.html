@@ -105,7 +105,7 @@
                         <img src="{{ .session.CurrentlyPlaying.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .session.CurrentlyPlaying.AlbumName }}">
                         <div class="media-body">
                             <h5 class="mt-0">{{ .session.CurrentlyPlaying.TrackName }}</h5>
-                            <p>{{ .session.CurrentlyPlaying.AlbumName }}</p>
+                            <p>{{ .session.CurrentlyPlaying.ArtistName }} - {{ .session.CurrentlyPlaying.AlbumName }}</p>
                         </div>
                     </div>
                 </td>
@@ -126,7 +126,7 @@
                         <img src="{{ .session.UpNext.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .session.UpNext.AlbumName }}">
                         <div class="media-body">
                             <h5 class="mt-0">{{ .session.UpNext.TrackName }}</h5>
-                            <p>{{ .session.UpNext.AlbumName }}</p>
+                            <p>{{ .session.UpNext.ArtistName }} - {{ .session.UpNext.AlbumName }}</p>
                         </div>
                     </div>
                 </td>
@@ -143,7 +143,7 @@
                         <img src="{{ .AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .AlbumName }}">
                         <div class="media-body">
                             <h5 class="mt-0">{{ .TrackName }}</h5>
-                            <p>{{ .AlbumName }}</p>
+                            <p>{{ .ArtistName }} - {{ .AlbumName }}</p>
                         </div>
                     </div>
                 </td>
