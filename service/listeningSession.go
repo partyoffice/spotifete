@@ -120,9 +120,9 @@ func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session Listen
 	database.Connection.Where(SongRequest{
 		SessionId: session.ID,
 		Status:    IN_QUEUE,
-	}).Find(&requests)
+	}).Order("created_at asc").Find(&requests)
 
-	// TODO: Do something smart here
+	// TODO: Do something smarter than just using the request order here
 
 	return requests
 }
