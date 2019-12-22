@@ -25,7 +25,12 @@ func Shutdown() {
 
 func init() {
 	c := config.GetConfig()
-	connectionUrl = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", c.GetString("database.host"), c.GetString("database.port"), c.GetString("database.name"), c.GetString("database.user"), c.GetString("database.password"))
+
+	disableSsl := ""
+	if c.GetBool("database.disableSsl") {
+		disableSsl = " sslmode=disable"
+	}
+	connectionUrl = fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s %s", c.GetString("database.host"), c.GetString("database.port"), c.GetString("database.name"), c.GetString("database.user"), c.GetString("database.password"), disableSsl)
 
 	db, err := gorm.Open("postgres", connectionUrl)
 	if err != nil {

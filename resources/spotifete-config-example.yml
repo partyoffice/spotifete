@@ -9,6 +9,7 @@ database:
   name: database-name
   user: database-user
   password: database-password
+  disableSsl: false
 spotify:
   id: client-id
   secret: client-secret
