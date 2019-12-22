@@ -399,3 +399,17 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 
 	return result
 }
+
+func (s listeningSessionService) GetQueueLastUpdated(session ListeningSession) time.Time {
+	lastUpdatedSongRequest := SongRequest{}
+	database.Connection.Where(SongRequest{
+		SessionId: session.ID,
+	}).Order("updated_at desc").First(&lastUpdatedSongRequest)
+
+	if lastUpdatedSongRequest.ID != 0 {
+		return lastUpdatedSongRequest.UpdatedAt
+	} else {
+		// No requests found -> Use creation of session
+		return session.UpdatedAt
+	}
+}

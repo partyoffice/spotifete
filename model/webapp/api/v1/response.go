@@ -1,6 +1,9 @@
 package v1
 
-import "github.com/47-11/spotifete/model/dto"
+import (
+	"github.com/47-11/spotifete/model/dto"
+	"time"
+)
 
 type ErrorResponse struct {
 	Message string `json:"message"`
@@ -18,4 +21,8 @@ type DidAuthSucceedResponse struct {
 type SearchTracksResponse struct {
 	Query   string                 `json:"query"`
 	Results []dto.TrackMetadataDto `json:"results"`
+}
+
+type QueueLastUpdatedResponse struct {
+	QueueLastUpdated time.Time `json:"queueLastUpdated"`
 }

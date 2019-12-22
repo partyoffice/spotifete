@@ -178,6 +178,17 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	}
 }
 
+func (controller ApiController) QueueLastUpdated(c *gin.Context) {
+	sessionJoinId := c.Param("joinId")
+	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: service.ListeningSessionService().GetQueueLastUpdated(*session)})
+}
+
 func (controller ApiController) CreateListeningSession(c *gin.Context) {
 	requestBody := CreateListeningSessionRequest{}
 	err := c.ShouldBindJSON(&requestBody)
