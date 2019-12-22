@@ -193,13 +193,10 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 	client := SpotifyService().GetAuthenticator().NewClient(sessionOwner.GetToken())
 
 	// Prevent duplicates
-	trackMetadata := SpotifyService().GetTrackMetadataBySpotifyTrackId(trackId)
-	if trackMetadata != nil {
-		var duplicateRequestsForTrack []SongRequest
-		database.Connection.Where("status != 'PLAYED' AND session_id = ? AND track_id = ?", session.ID, trackMetadata.ID).Find(&duplicateRequestsForTrack)
-		if len(duplicateRequestsForTrack) > 0 {
-			return errors.New("that song is already in the queue")
-		}
+	var duplicateRequestsForTrack []SongRequest
+	database.Connection.Where("status != 'PLAYED' AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
+	if len(duplicateRequestsForTrack) > 0 {
+		return errors.New("that song is already in the queue")
 	}
 
 	// Check if we have to add the request to the queue or play it immediately
