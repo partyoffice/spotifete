@@ -82,18 +82,21 @@ func (TemplateController) ViewSession(c *gin.Context) {
 
 	ListeningSessionDto := service.ListeningSessionService().CreateDto(*listeningSession, true)
 
+	queueLastUpdated := service.ListeningSessionService().GetQueueLastUpdated(*listeningSession).UTC().Format(time.RFC3339Nano)
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
-			"session": ListeningSessionDto,
+			"queueLastUpdated": queueLastUpdated,
+			"session":          ListeningSessionDto,
 		})
 		return
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
-		"session": ListeningSessionDto,
-		"user":    user,
+		"queueLastUpdated": queueLastUpdated,
+		"session":          ListeningSessionDto,
+		"user":             user,
 	})
 
 }

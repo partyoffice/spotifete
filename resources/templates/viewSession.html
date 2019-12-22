@@ -13,7 +13,8 @@
     <script type="text/javascript" src="/static/js/viewSession.js"></script>
 </head>
 <body class="bg-dark text-white text-center">
-    <input id="currentSessionJoinId" type="hidden" value="{{ .session.JoinId }}" />
+    <input id="currentSessionJoinId" type="hidden" hidden="hidden" value="{{ .session.JoinId }}" />
+    <input id="queueLastUpdated" type="hidden" hidden="hidden" value="{{ .queueLastUpdated }}"/>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-secondary sticky-top">
         <a class="navbar-brand" href="/"><img src="/static/SpotiFeteLogo.png" class="img-fluid" width="50" height="50"></a>

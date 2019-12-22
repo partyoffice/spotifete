@@ -1,7 +1,11 @@
 let currentSessionJoinId;
+let queueLastUpdated;
 
 $(document).ready(function () {
     currentSessionJoinId = $('#currentSessionJoinId').val();
+    queueLastUpdated = $('#queueLastUpdated').val();
+
+    pollQueueLastUpdated();
 
     // Constructing the suggestion engine
     var engine = new Bloodhound({
@@ -81,4 +85,22 @@ async function requestTrack(trackId) {
         responseBody = await response.json();
         alert(`Could not add request: ${responseBody.message}`);
     }
+}
+
+function pollQueueLastUpdated() {
+    $.ajax({
+        url: `/api/v1/sessions/${currentSessionJoinId}/queuelastupdated`
+    }).done(function(data) {
+        if (Date.parse(data.queueLastUpdated) > Date.parse(queueLastUpdated)) {
+            location.reload();
+        } else {
+            setTimeout(function(){
+                pollQueueLastUpdated();
+            }, 2000);
+        }
+    }).fail(function () {
+        setTimeout(function(){
+            pollQueueLastUpdated();
+        }, 2000);
+    });
 }
