@@ -59,7 +59,7 @@ $(document).ready(function () {
                     return '<div class="card-body">No results :/</div>';
                 },
                 footer: function () {
-                    return '<div class="card-footer">Search results via Spotify</div>'
+                    return '<div class="card-footer">Search results via Spotify <span class="fab fa-spotify"></span></div>'
                 }
             }
         });
