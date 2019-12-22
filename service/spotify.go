@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+	"strings"
 	"sync"
 )
 
@@ -60,7 +61,8 @@ func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
 }
 
 func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, error) {
-	result, err := client.SearchOpt(query, spotify.SearchTypeTrack, &spotify.Options{
+	cleanedQuery := strings.TrimSpace(query) + "*"
+	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypeTrack, &spotify.Options{
 		Limit: &limit,
 	})
 	if err != nil {
