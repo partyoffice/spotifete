@@ -24,7 +24,7 @@ $(document).ready(function () {
     $('.typeahead').typeahead({
             hint: false,
             highlight: true,
-            minLength: 3,
+            minLength: 2,
             classNames: {
                 menu: 'card text-left',
                 dataset: 'list-group list-group-flush',
