@@ -12,7 +12,7 @@ $(document).ready(function () {
         datumTokenizer: Bloodhound.tokenizers.whitespace,
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: `/api/v1/spotify/search/track?session=${currentSessionJoinId}&limit=5&query=%%query%%`,
+            url: `/api/v1/spotify/search/track?session=${currentSessionJoinId}&limit=50&query=%%query%%`,
             wildcard: '%%query%%',
             transform: function (response) {
                 return response.results;
@@ -35,7 +35,7 @@ $(document).ready(function () {
         {
             name: 'api-search',
             source: engine,
-            limit: 10,
+            limit: 100,
             display: function () {
                 // Clear search input when selecting a suggestion
                 return ''
