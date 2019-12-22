@@ -110,16 +110,3 @@ func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackM
 		return nil
 	}
 }
-
-func (s spotifyService) GetTrackMetadataById(id uint) *TrackMetadata {
-	var foundTracks = []TrackMetadata{}
-	database.Connection.Where(TrackMetadata{Model: gorm.Model{
-		ID: id,
-	}}).Find(&foundTracks)
-
-	if len(foundTracks) > 0 {
-		return &foundTracks[0]
-	} else {
-		return nil
-	}
-}

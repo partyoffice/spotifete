@@ -4,10 +4,10 @@ import "github.com/jinzhu/gorm"
 
 type SongRequest struct {
 	gorm.Model
-	SessionId uint
-	UserId    *uint
-	TrackId   uint
-	Status    SongRequestStatus
+	SessionId      uint
+	UserId         *uint
+	SpotifyTrackId string
+	Status         SongRequestStatus
 }
 
 type SongRequestStatus string

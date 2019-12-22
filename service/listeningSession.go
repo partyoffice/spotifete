@@ -226,11 +226,11 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 	}
 
 	newSongRequest := SongRequest{
-		Model:     gorm.Model{},
-		SessionId: session.ID,
-		UserId:    nil,
-		TrackId:   updatedTrackMetadata.ID,
-		Status:    newRequestStatus,
+		Model:          gorm.Model{},
+		SessionId:      session.ID,
+		UserId:         nil,
+		SpotifyTrackId: updatedTrackMetadata.SpotifyTrackId,
+		Status:         newRequestStatus,
 	}
 
 	database.Connection.Create(&newSongRequest)
@@ -264,7 +264,7 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 		return nil
 	}
 
-	if upNextRequest != nil && SpotifyService().GetTrackMetadataById(upNextRequest.TrackId).SpotifyTrackId == currentlyPlayingSpotifyTrackId {
+	if upNextRequest != nil && upNextRequest.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
 		currentlyPlayingRequest.Status = PLAYED
 		database.Connection.Save(currentlyPlayingRequest)
@@ -318,14 +318,12 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 
 	// Second, check playlist content
 	if currentlyPlayingRequest != nil {
-		currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
-		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequestTrack.SpotifyTrackId {
+		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequest.SpotifyTrackId {
 			return s.updateSessionPlaylist(client, session)
 		}
 
 		if upNextRequest != nil {
-			upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
-			if playlistTracks[1].Track.ID.String() != upNextRequestTrack.SpotifyTrackId {
+			if playlistTracks[1].Track.ID.String() != upNextRequest.SpotifyTrackId {
 				return s.updateSessionPlaylist(client, session)
 			}
 		}
@@ -343,16 +341,14 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 	playlistId := spotify.ID(session.SpotifyPlaylist)
 
 	// Always replace all tracks with only the current one playing first
-	currentlyPlayingRequestTrack := SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId)
-	err = client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequestTrack.SpotifyTrackId))
+	err = client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.SpotifyTrackId))
 	if err != nil {
 		return err
 	}
 
 	// After that, add the up next song as well if it is present
 	if upNextRequest != nil {
-		upNextRequestTrack := SpotifyService().GetTrackMetadataById(upNextRequest.TrackId)
-		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequestTrack.SpotifyTrackId))
+		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequest.SpotifyTrackId))
 		if err != nil {
 			return err
 		}
@@ -388,18 +384,18 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 		}
 
 		if currentlyPlayingRequest != nil {
-			currentlyPlayingRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataById(currentlyPlayingRequest.TrackId))
+			currentlyPlayingRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataBySpotifyTrackId(currentlyPlayingRequest.SpotifyTrackId))
 			result.CurrentlyPlaying = &currentlyPlayingRequestTrack
 		}
 
 		if upNextRequest != nil {
-			upNextRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataById(upNextRequest.TrackId))
+			upNextRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataBySpotifyTrackId(upNextRequest.SpotifyTrackId))
 			result.UpNext = &upNextRequestTrack
 		}
 
 		result.Queue = []dto.TrackMetadataDto{}
 		for _, request := range s.GetSessionQueueInDemocraticOrder(listeningSession) {
-			requestTrack := SpotifyService().GetTrackMetadataById(request.TrackId)
+			requestTrack := SpotifyService().GetTrackMetadataBySpotifyTrackId(request.SpotifyTrackId)
 			result.Queue = append(result.Queue, dto.TrackMetadataDto{}.FromDatabaseModel(*requestTrack))
 		}
 	}
