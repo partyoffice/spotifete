@@ -14,8 +14,7 @@ isJoinIdInputValid = () => {
 };
 
 getJoinIdInputValue = () => {
-    // TODO: Refactor this after splitting into 8 separate inputs
-    return $( '#joinIdInput' ).val();
+    return $( '#joinIdInput' ).val().replace(/[ -]/g, '');
 };
 
 $( document ).ready(function() {
