@@ -57,7 +57,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 
 	// Get or create the database entry for the current user
 	user := service.UserService().GetOrCreateUser(spotifyUser)
-	service.UserService().SetToken(user, token)
+	service.UserService().SetToken(*user, *token)
 
 	// Associate user with current session
 	service.LoginSessionService().SetUserForSession(*session, *user)
