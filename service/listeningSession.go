@@ -359,7 +359,7 @@ func (s listeningSessionService) PollSessions() {
 		for _, session := range s.GetActiveSessions() {
 			err := s.UpdateSessionIfNeccessary(session)
 			if err != nil {
-				log.Println(err)
+				log.Println("error for session " + *session.JoinId + ": " + err.Error())
 				sentry.CaptureException(err)
 			}
 		}
