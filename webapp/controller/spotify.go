@@ -80,7 +80,12 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 func (controller SpotifyController) Logout(c *gin.Context) {
 	_ = service.LoginSessionService().InvalidateSession(c)
 
-	c.Redirect(http.StatusTemporaryRedirect, "/")
+	redirectTo := c.Query("redirectTo")
+	if len(redirectTo) == 0 || redirectTo[0:1] != "/" {
+		redirectTo = "/" + redirectTo
+	}
+
+	c.Redirect(http.StatusTemporaryRedirect, redirectTo)
 }
 
 func (SpotifyController) ApiCallback(c *gin.Context) {
