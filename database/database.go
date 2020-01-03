@@ -12,7 +12,7 @@ import (
 	"log"
 )
 
-const targetDatabaseVersion = 24
+const targetDatabaseVersion = 25
 
 var connectionUrl string
 var Connection *gorm.DB
