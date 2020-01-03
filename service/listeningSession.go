@@ -368,12 +368,19 @@ func (s listeningSessionService) PollSessions() {
 
 func (s listeningSessionService) CreateDto(listeningSession ListeningSession, resolveAdditionalInformation bool) dto.ListeningSessionDto {
 	result := dto.ListeningSessionDto{}
-	result.JoinId = *listeningSession.JoinId
+	if listeningSession.JoinId == nil {
+		result.JoinId = ""
+	} else {
+		result.JoinId = *listeningSession.JoinId
+
+	}
+	result.JoinIdHumanReadable = fmt.Sprintf("%s %s", result.JoinId[0:4], result.JoinId[4:8])
 	result.Title = listeningSession.Title
 
 	if resolveAdditionalInformation {
 		owner := UserService().GetUserById(listeningSession.OwnerId)
 		result.Owner = UserService().CreateDto(*owner, false)
+		result.SpotifyPlaylistId = listeningSession.SpotifyPlaylist
 
 		currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(listeningSession)
 		if err != nil {
@@ -395,6 +402,8 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 			requestTrack := SpotifyService().GetTrackMetadataBySpotifyTrackId(request.SpotifyTrackId)
 			result.Queue = append(result.Queue, dto.TrackMetadataDto{}.FromDatabaseModel(*requestTrack))
 		}
+
+		result.QueueLastUpdated = s.GetQueueLastUpdated(listeningSession)
 	}
 
 	return result

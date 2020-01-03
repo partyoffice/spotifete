@@ -1,16 +1,17 @@
 package dto
 
-import "fmt"
+import (
+	"time"
+)
 
 type ListeningSessionDto struct {
-	Owner            UserDto            `json:"owner"`
-	JoinId           string             `json:"joinId"`
-	Title            string             `json:"title"`
-	CurrentlyPlaying *TrackMetadataDto  `json:"currentlyPlaying"`
-	UpNext           *TrackMetadataDto  `json:"upNext"`
-	Queue            []TrackMetadataDto `json:"queue"`
-}
-
-func (listeningSessionDto ListeningSessionDto) GetJoinIdHumanReadable() string {
-	return fmt.Sprintf("%s %s", listeningSessionDto.JoinId[0:4], listeningSessionDto.JoinId[4:8])
+	Owner               UserDto            `json:"owner"`
+	JoinId              string             `json:"joinId"`
+	JoinIdHumanReadable string             `json:"joinIdHumanReadable"`
+	Title               string             `json:"title"`
+	CurrentlyPlaying    *TrackMetadataDto  `json:"currentlyPlaying"`
+	UpNext              *TrackMetadataDto  `json:"upNext"`
+	Queue               []TrackMetadataDto `json:"queue"`
+	QueueLastUpdated    time.Time          `json:"queueLastUpdated"`
+	SpotifyPlaylistId   string             `json:"spotifyPlaylist"`
 }
