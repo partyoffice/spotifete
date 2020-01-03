@@ -13,7 +13,8 @@ import (
 )
 
 type spotifyService struct {
-	authenticator *spotify.Authenticator
+	Authenticator spotify.Authenticator
+	Clients       map[string]*spotify.Client
 }
 
 var spotifyServiceInstance *spotifyService
@@ -28,14 +29,36 @@ func SpotifyService() *spotifyService {
 		newAuth.SetAuthInfo(c.GetString("spotify.id"), c.GetString("spotify.secret"))
 
 		spotifyServiceInstance = &spotifyService{
-			authenticator: &newAuth,
+			Authenticator: newAuth,
+			Clients:       map[string]*spotify.Client{},
 		}
 	})
 	return spotifyServiceInstance
 }
 
-func (s spotifyService) GetAuthenticator() spotify.Authenticator {
-	return *s.authenticator
+func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.Client {
+	if client, ok := s.Clients[spotifyUserId]; ok {
+		return client
+	}
+
+	user := UserService().GetUserBySpotifyId(spotifyUserId)
+	return s.GetClientForUser(*user)
+}
+
+func (s spotifyService) GetClientForUser(user User) *spotify.Client {
+	if client, ok := s.Clients[user.SpotifyId]; ok {
+		return client
+	}
+
+	token := user.GetToken()
+	if token == nil {
+		return nil
+	}
+
+	client := s.Authenticator.NewClient(token)
+	s.Clients[user.SpotifyId] = &client
+
+	return &client
 }
 
 func (s spotifyService) NewAuthUrl() (string, string) {
@@ -46,11 +69,11 @@ func (s spotifyService) NewAuthUrl() (string, string) {
 		UserId:    nil,
 		Active:    true,
 	})
-	return s.GetAuthenticator().AuthURL(sessionId), sessionId
+	return s.Authenticator.AuthURL(sessionId), sessionId
 }
 
 func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
-	client := s.GetAuthenticator().NewClient(token)
+	client := s.Authenticator.NewClient(token)
 	user, err := client.CurrentUser()
 	if err != nil && user == nil {
 		// TODO actually verify that the token is invalid and not some other error occurred

@@ -134,12 +134,10 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 		return
 	}
 
-	// TODO: Cache spotify clients (#7)
 	user := service.UserService().GetUserById(session.OwnerId)
-	token := user.GetToken()
-	client := service.SpotifyService().GetAuthenticator().NewClient(token)
+	client := service.SpotifyService().GetClientForUser(*user)
 
-	tracks, err := service.SpotifyService().SearchTrack(client, query, limit)
+	tracks, err := service.SpotifyService().SearchTrack(*client, query, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
@@ -218,7 +216,8 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 		return
 	}
 
-	createdSession, err := service.ListeningSessionService().NewSession(service.UserService().GetUserById(*loginSession.UserId), *requestBody.ListeningSessionTitle)
+	owner := service.UserService().GetUserById(*loginSession.UserId)
+	createdSession, err := service.ListeningSessionService().NewSession(*owner, *requestBody.ListeningSessionTitle)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return

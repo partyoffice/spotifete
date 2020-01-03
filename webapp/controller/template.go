@@ -55,6 +55,10 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
+	if user == nil {
+		c.String(http.StatusNotFound, "user not found")
+		return
+	}
 
 	title := c.PostForm("title")
 	if len(title) == 0 {
@@ -62,7 +66,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	session, err := service.ListeningSessionService().NewSession(user, title)
+	session, err := service.ListeningSessionService().NewSession(*user, title)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -109,6 +113,10 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
+	if user == nil {
+		c.String(http.StatusNotFound, "user not found")
+		return
+	}
 
 	joinId := c.PostForm("joinId")
 	if len(joinId) == 0 {
@@ -116,7 +124,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	err := service.ListeningSessionService().CloseSession(user, joinId)
+	err := service.ListeningSessionService().CloseSession(*user, joinId)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return

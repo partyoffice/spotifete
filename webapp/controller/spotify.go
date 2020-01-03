@@ -36,7 +36,7 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	}
 
 	// Fetch the token
-	token, err := service.SpotifyService().GetAuthenticator().Token(state, c.Request)
+	token, err := service.SpotifyService().Authenticator.Token(state, c.Request)
 	if err != nil {
 		c.String(http.StatusUnauthorized, "Could not get token: "+err.Error())
 		log.Println(err.Error())
@@ -44,13 +44,16 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	}
 
 	// Get the spotify user for the token
-	client := service.SpotifyService().GetAuthenticator().NewClient(token)
+	client := service.SpotifyService().Authenticator.NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
 		log.Println(err.Error())
 		return
 	}
+
+	// Cache the created client
+	service.SpotifyService().Clients[spotifyUser.ID] = &client
 
 	// Get or create the database entry for the current user
 	user := service.UserService().GetOrCreateUser(spotifyUser)

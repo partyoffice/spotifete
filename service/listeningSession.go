@@ -127,12 +127,12 @@ func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session Listen
 	return requests
 }
 
-func (s listeningSessionService) NewSession(user *User, title string) (*ListeningSession, error) {
+func (s listeningSessionService) NewSession(user User, title string) (*ListeningSession, error) {
 	if len(title) == 0 {
 		return nil, errors.New("title must not be empty")
 	}
 
-	client := SpotifyService().GetAuthenticator().NewClient(user.GetToken())
+	client := SpotifyService().GetClientForUser(user)
 
 	joinId := s.newJoinId()
 	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s %s.", title, joinId[0:4], joinId[4:8]), false)
@@ -174,7 +174,7 @@ func (listeningSessionService) joinIdExists(joinId string) bool {
 	return count > 0
 }
 
-func (s listeningSessionService) CloseSession(user *User, joinId string) error {
+func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	session := s.GetSessionByJoinId(joinId)
 	if user.ID != session.OwnerId {
 		return errors.New("only the owner can close a session")
@@ -184,13 +184,13 @@ func (s listeningSessionService) CloseSession(user *User, joinId string) error {
 	session.JoinId = nil
 	database.Connection.Save(&session)
 
-	client := SpotifyService().authenticator.NewClient(user.GetToken())
+	client := SpotifyService().GetClientForUser(user)
 	return client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
 }
 
 func (s listeningSessionService) RequestSong(session *ListeningSession, trackId string) error {
 	sessionOwner := UserService().GetUserById(session.OwnerId)
-	client := SpotifyService().GetAuthenticator().NewClient(sessionOwner.GetToken())
+	client := SpotifyService().GetClientForUser(*sessionOwner)
 
 	// Prevent duplicates
 	var duplicateRequestsForTrack []SongRequest
@@ -217,7 +217,7 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 		newRequestStatus = IN_QUEUE
 	}
 
-	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(client, spotify.ID(trackId))
+	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(*client, spotify.ID(trackId))
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	}
 
 	owner := UserService().GetUserById(session.OwnerId)
-	client := SpotifyService().GetAuthenticator().NewClient(owner.GetToken())
+	client := SpotifyService().GetClientForUser(*owner)
 	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
 	if err != nil {
 		return err
@@ -291,7 +291,7 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 	}
 
 	owner := UserService().GetUserById(session.OwnerId)
-	client := SpotifyService().GetAuthenticator().NewClient(owner.GetToken())
+	client := SpotifyService().GetClientForUser(*owner)
 
 	playlist, err := client.GetPlaylist(spotify.ID(session.SpotifyPlaylist))
 	if err != nil {
@@ -302,26 +302,26 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 
 	// First, check playlist length
 	if currentlyPlayingRequest != nil && upNextRequest != nil && len(playlistTracks) != 2 {
-		return s.updateSessionPlaylist(client, session)
+		return s.updateSessionPlaylist(*client, session)
 	}
 
 	if currentlyPlayingRequest != nil && upNextRequest == nil && len(playlistTracks) != 1 {
-		return s.updateSessionPlaylist(client, session)
+		return s.updateSessionPlaylist(*client, session)
 	}
 
 	if currentlyPlayingRequest == nil && upNextRequest == nil && len(playlistTracks) != 0 {
-		return s.updateSessionPlaylist(client, session)
+		return s.updateSessionPlaylist(*client, session)
 	}
 
 	// Second, check playlist content
 	if currentlyPlayingRequest != nil {
 		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequest.SpotifyTrackId {
-			return s.updateSessionPlaylist(client, session)
+			return s.updateSessionPlaylist(*client, session)
 		}
 
 		if upNextRequest != nil {
 			if playlistTracks[1].Track.ID.String() != upNextRequest.SpotifyTrackId {
-				return s.updateSessionPlaylist(client, session)
+				return s.updateSessionPlaylist(*client, session)
 			}
 		}
 	}
