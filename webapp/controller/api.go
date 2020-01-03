@@ -170,7 +170,7 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 
 	err = service.ListeningSessionService().RequestSong(session, requestBody.TrackId)
 	if err == nil {
-		c.Status(http.StatusOK)
+		c.Status(http.StatusNoContent)
 	} else {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
