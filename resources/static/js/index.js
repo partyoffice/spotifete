@@ -23,4 +23,11 @@ $( document ).ready(function() {
             window.location.href='/app/android';
         }
     }
+    $('#joinIdInput').keyup(function () {
+        console.log('change');
+        const inputValue = $( '#joinIdInput' ).val();
+        if(inputValue.length===4) {
+            $( '#joinIdInput' ).val(inputValue+'-')
+        }
+    })
 });
