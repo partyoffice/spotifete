@@ -1,10 +1,12 @@
 package service
 
 import (
+	"errors"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
+	"github.com/getsentry/sentry-go"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -38,6 +40,7 @@ func SpotifyService() *spotifyService {
 
 func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.Client {
 	if client, ok := s.Clients[spotifyUserId]; ok {
+		go s.updateTokenForSpotifyUserIfNeccessary(spotifyUserId, *client)
 		return client
 	}
 
@@ -47,6 +50,7 @@ func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.C
 
 func (s spotifyService) GetClientForUser(user User) *spotify.Client {
 	if client, ok := s.Clients[user.SpotifyId]; ok {
+		go s.updateTokenForUserIfNeccessary(user, *client)
 		return client
 	}
 
@@ -59,6 +63,29 @@ func (s spotifyService) GetClientForUser(user User) *spotify.Client {
 	s.Clients[user.SpotifyId] = &client
 
 	return &client
+}
+
+func (s spotifyService) updateTokenForSpotifyUserIfNeccessary(spotifyUserId string, client spotify.Client) {
+	user := UserService().GetUserBySpotifyId(spotifyUserId)
+	s.updateTokenForUserIfNeccessary(*user, client)
+}
+
+func (s spotifyService) updateTokenForUserIfNeccessary(user User, client spotify.Client) {
+	// Do a basic request, this should make the library refresh the access token if neccessary
+	_, _ = client.CurrentUser()
+	token, err := client.Token()
+	if token == nil {
+		err = errors.New("client token is nil")
+	}
+	if err != nil {
+		sentry.CaptureException(err)
+		return
+	}
+
+	if token.AccessToken != user.SpotifyAccessToken {
+		// Token was updated, persist to database
+		UserService().SetToken(user, *token)
+	}
 }
 
 func (s spotifyService) NewAuthUrl() (string, string) {
