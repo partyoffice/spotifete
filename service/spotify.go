@@ -88,13 +88,14 @@ func (s spotifyService) updateTokenForUserIfNeccessary(user User, client spotify
 	}
 }
 
-func (s spotifyService) NewAuthUrl() (string, string) {
-	sessionId := LoginSessionService().newSessionId()
+func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
+	sessionId = LoginSessionService().newSessionId()
 	database.Connection.Create(&LoginSession{
-		Model:     gorm.Model{},
-		SessionId: sessionId,
-		UserId:    nil,
-		Active:    true,
+		Model:            gorm.Model{},
+		SessionId:        sessionId,
+		UserId:           nil,
+		Active:           true,
+		CallbackRedirect: callbackRedirectUrl,
 	})
 	return s.Authenticator.AuthURL(sessionId), sessionId
 }

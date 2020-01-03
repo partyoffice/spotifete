@@ -60,7 +60,7 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 }
 
 func (ApiController) GetAuthUrl(c *gin.Context) {
-	url, sessionId := service.SpotifyService().NewAuthUrl()
+	url, sessionId := service.SpotifyService().NewAuthUrl("/spotify/apicallback")
 	c.JSON(http.StatusOK, GetAuthUrlResponse{
 		Url:       url,
 		SessionId: sessionId,

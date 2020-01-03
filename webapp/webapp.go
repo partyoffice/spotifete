@@ -65,6 +65,7 @@ func setupTemplateController(baseRouter *gin.Engine) {
 	baseRouter.GET("/app", templateController.GetApp)
 	baseRouter.GET("/app/android", templateController.GetAppAndroid)
 	baseRouter.GET("/app/ios", templateController.GetAppIOS)
+	baseRouter.GET("/apicallback")
 }
 
 func setupSpotifyController(baseRouter *gin.Engine) {
@@ -74,4 +75,5 @@ func setupSpotifyController(baseRouter *gin.Engine) {
 	spotifyRouter.GET("/login", spotifyController.Login)
 	spotifyRouter.GET("/callback", spotifyController.Callback)
 	spotifyRouter.GET("/logout", spotifyController.Logout)
+	spotifyRouter.GET("/apicallback", spotifyController.ApiCallback)
 }

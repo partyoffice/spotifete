@@ -10,7 +10,12 @@ import (
 type SpotifyController struct{}
 
 func (controller SpotifyController) Login(c *gin.Context) {
-	authUrl, _ := service.SpotifyService().NewAuthUrl()
+	redirectTo := c.Query("redirectTo")
+	if len(redirectTo) == 0 {
+		redirectTo = "/"
+	}
+
+	authUrl, _ := service.SpotifyService().NewAuthUrl(redirectTo)
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
@@ -65,11 +70,19 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	// Set or update session cookie
 	service.LoginSessionService().SetSessionCookie(c, session.SessionId)
 
-	c.Redirect(http.StatusTemporaryRedirect, "/")
+	redirectTo := session.CallbackRedirect
+	if redirectTo[0:1] != "/" {
+		redirectTo = "/" + redirectTo
+	}
+	c.Redirect(http.StatusSeeOther, redirectTo)
 }
 
 func (controller SpotifyController) Logout(c *gin.Context) {
 	_ = service.LoginSessionService().InvalidateSession(c)
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
+}
+
+func (SpotifyController) ApiCallback(c *gin.Context) {
+	c.String(http.StatusOK, "Logged in successfully! You can close this window.")
 }
