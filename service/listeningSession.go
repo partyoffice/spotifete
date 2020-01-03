@@ -249,8 +249,8 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	}
 
 	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
-		// Nothing is running -> do nothing
-		return nil
+		// Nothing is running -> still update the playlist if neccessary
+		return s.UpdateSessionPlaylistIfNeccessary(session)
 	}
 
 	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
