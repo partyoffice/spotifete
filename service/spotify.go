@@ -82,10 +82,8 @@ func (s spotifyService) updateTokenForUserIfNeccessary(user User, client spotify
 		return
 	}
 
-	if token.AccessToken != user.SpotifyAccessToken {
-		// Token was updated, persist to database
-		UserService().SetToken(user, *token)
-	}
+	// Token was updated, persist to database
+	UserService().SetToken(user, *token)
 }
 
 func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
