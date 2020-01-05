@@ -3,7 +3,9 @@ package controller
 import (
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/service"
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/logger"
 	"net/http"
 	"strconv"
 )
@@ -51,7 +53,7 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 
 	loginSession := service.LoginSessionService().GetSessionBySessionId(loginSessionId)
 	if loginSession == nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "unknown session id"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "login session not found"})
 		return
 	}
 
@@ -70,14 +72,18 @@ func (ApiController) GetAuthUrl(c *gin.Context) {
 func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 	sessionId := c.Query("sessionId")
 	if sessionId == "" {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "parameter sessionId not found."})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
 		return
 	}
 
 	session := service.LoginSessionService().GetSessionBySessionId(sessionId)
-	if session == nil || session.UserId == nil || !service.LoginSessionService().IsSessionValid(*session) {
-		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "login session not found"})
 		return
+	}
+
+	if session.UserId == nil || !service.LoginSessionService().IsSessionValid(*session) {
+		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
 	} else {
 		c.JSON(http.StatusOK, DidAuthSucceedResponse{Authenticated: true})
 	}
@@ -88,13 +94,13 @@ func (controller ApiController) InvalidateSessionId(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given."})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
 		return
 	}
 
 	err = service.LoginSessionService().InvalidateSessionBySessionId(requestBody.LoginSessionId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
@@ -119,7 +125,7 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	if len(limitPatameter) > 0 {
 		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "could not parse limit"})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invaid limit"})
 			return
 		}
 
@@ -139,6 +145,8 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 
 	tracks, err := service.SpotifyService().SearchTrack(*client, query, limit)
 	if err != nil {
+		go sentry.CaptureException(err)
+		go logger.Error(err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -153,7 +161,8 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	requestBody := RequestSongRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body"})
+		go logger.Info("Invalid request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
 		return
 	}
 
@@ -172,6 +181,8 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	if err == nil {
 		c.Status(http.StatusNoContent)
 	} else {
+		go sentry.CaptureException(err)
+		go logger.Error(err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
 }
@@ -191,7 +202,8 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 	requestBody := CreateListeningSessionRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid request body"})
+		go logger.Info("Invalid request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
 		return
 	}
 
@@ -219,6 +231,8 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 	owner := service.UserService().GetUserById(*loginSession.UserId)
 	createdSession, err := service.ListeningSessionService().NewSession(*owner, *requestBody.ListeningSessionTitle)
 	if err != nil {
+		go sentry.CaptureException(err)
+		go logger.Error(err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
 	}

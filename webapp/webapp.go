@@ -5,7 +5,9 @@ import (
 	. "github.com/47-11/spotifete/webapp/controller"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/google/logger"
+	"io"
+	"os"
 )
 
 func Initialize() {
@@ -17,19 +19,29 @@ func Initialize() {
 
 	baseRouter := gin.Default()
 
+	// Setup logging for gin
+	logFile, err := os.OpenFile("gin.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	if err != nil {
+		logger.Fatalf("Failed to open gin log file: %v", err)
+	}
+	defer logFile.Close()
+	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
+
 	baseRouter.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))
 
+	// Setup routers
 	setupStaticController(baseRouter)
 	setupApiController(baseRouter)
 	setupTemplateController(baseRouter)
 	setupSpotifyController(baseRouter)
 
-	err := baseRouter.Run(":8410")
+	// Run on port 8410
+	err = baseRouter.Run(":8410")
 
 	if err != nil {
-		log.Fatalln(err.Error())
+		logger.Fatal(err)
 	}
 }
 

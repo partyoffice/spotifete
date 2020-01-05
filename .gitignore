@@ -97,3 +97,6 @@ spotifete-config.yml
 
 # GoLand DataSource config
 .idea/**/dataSources.xml
+
+# Log files
+*.log

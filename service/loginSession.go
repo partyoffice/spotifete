@@ -119,7 +119,7 @@ func (loginSessionService) InvalidateSessionBySessionId(sessionId string) error 
 	if rowsAffected > 0 {
 		return nil
 	} else {
-		return errors.New("session id not found")
+		return errors.New("session not found")
 	}
 }
 

@@ -6,35 +6,49 @@ import (
 	"github.com/47-11/spotifete/service"
 	"github.com/47-11/spotifete/webapp"
 	"github.com/getsentry/sentry-go"
+	"github.com/google/logger"
 	"log"
+	"os"
 )
 
 func main() {
 	defer database.Shutdown()
 
+	// Setup logger
+	logFile, err := os.OpenFile("spotifete.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	if err != nil {
+		logger.Fatalf("Failed to open log file: %v", err)
+	}
+	defer logFile.Close()
+	defer logger.Init("Spotifete", true, true, logFile).Close()
+	logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
 	releaseMode := config.GetConfig().GetBool("spotifete.releaseMode")
 	if releaseMode {
-		log.Println("Starting SpotiFete in release mode...")
+		logger.Info("Starting SpotiFete in release mode...")
 	} else {
-		log.Println("Starting SpotiFete in debug mode! To enable release mode, set server.releaseMode to true in config file.")
+		logger.Warning("Starting SpotiFete in debug mode! To enable release mode, set server.releaseMode to true in config file.")
 	}
 
+	// Initialize sentry
 	if releaseMode && config.GetConfig().IsSet("sentry.dsn") {
-		log.Println("Initializing sentry...")
+		logger.Info("Initializing sentry...")
 
 		err := sentry.Init(sentry.ClientOptions{
-			Dsn: config.GetConfig().GetString("sentry.dsn"),
+			Dsn:              config.GetConfig().GetString("sentry.dsn"),
+			AttachStacktrace: true,
 		})
 
 		if err != nil {
-			panic("Sentry initialization failed: " + err.Error())
+			logger.Fatalf("Sentry initialization failed: " + err.Error())
 		} else {
-			log.Println("Sentry initialization successful.")
+			logger.Info("Sentry initialization successful.")
 		}
 	} else {
-		log.Println("Skipping sentry initialization!")
+		logger.Warning("Skipping sentry initialization!")
 	}
 
+	// Start polling sessions
 	go service.ListeningSessionService().PollSessions()
 
 	webapp.Initialize()
