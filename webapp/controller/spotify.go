@@ -89,5 +89,6 @@ func (controller SpotifyController) Logout(c *gin.Context) {
 }
 
 func (SpotifyController) ApiCallback(c *gin.Context) {
+	// TODO: Do something nicer here
 	c.String(http.StatusOK, "Logged in successfully! You can close this window.")
 }
