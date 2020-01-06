@@ -7,9 +7,9 @@ import (
 	. "github.com/47-11/spotifete/model/database"
 	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/getsentry/sentry-go"
+	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
-	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -81,45 +81,39 @@ func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []Listen
 	return sessions
 }
 
-func (s listeningSessionService) GetCurrentlyPlayingAndUpNext(session ListeningSession) (currentlyPlaying *SongRequest, upNext *SongRequest, err error) {
-	// Get currently playing
-	var currentlyPlayingResults []SongRequest
-	database.Connection.Where("session_id = ? AND status = 'CURRENTLY_PLAYING'", session.ID).Find(&currentlyPlayingResults)
+func (s listeningSessionService) GetCurrentlyPlayingRequest(session ListeningSession) *SongRequest {
+	var requests []SongRequest
+	database.Connection.Where(SongRequest{
+		SessionId: session.ID,
+		Status:    StatusCurrentlyPlaying,
+	}, session.ID).Find(&requests)
 
-	switch len(currentlyPlayingResults) {
-	case 0:
-		currentlyPlaying = nil
-		break
-	case 1:
-		currentlyPlaying = &currentlyPlayingResults[0]
-		break
-	default:
-		return nil, nil, errors.New(fmt.Sprintf("found invalid number of request with status CURRENTLY_PLAYING: %d", len(currentlyPlayingResults)))
+	if len(requests) > 0 {
+		return &requests[0]
+	} else {
+		return nil
 	}
+}
 
-	// Get up next
-	var upNextResults []SongRequest
-	database.Connection.Where("session_id = ? AND status = 'UP_NEXT'", session.ID).Find(&upNextResults)
+func (s listeningSessionService) GetUpNextRequest(session ListeningSession) *SongRequest {
+	var requests []SongRequest
+	database.Connection.Where(SongRequest{
+		SessionId: session.ID,
+		Status:    StatusUpNext,
+	}, session.ID).Find(&requests)
 
-	switch len(upNextResults) {
-	case 0:
-		upNext = nil
-		break
-	case 1:
-		upNext = &upNextResults[0]
-		break
-	default:
-		return nil, nil, errors.New(fmt.Sprintf("found invalid number of request with status UP_NEXT: %d", len(upNextResults)))
+	if len(requests) > 0 {
+		return &requests[0]
+	} else {
+		return nil
 	}
-
-	return currentlyPlaying, upNext, nil
 }
 
 func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session ListeningSession) []SongRequest {
 	var requests []SongRequest
 	database.Connection.Where(SongRequest{
 		SessionId: session.ID,
-		Status:    IN_QUEUE,
+		Status:    StatusInQueue,
 	}).Order("created_at asc").Find(&requests)
 
 	// TODO: Do something smarter than just using the request order here
@@ -188,7 +182,7 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	return client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
 }
 
-func (s listeningSessionService) RequestSong(session *ListeningSession, trackId string) error {
+func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) error {
 	sessionOwner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetClientForUser(*sessionOwner)
 
@@ -200,25 +194,25 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 	}
 
 	// Check if we have to add the request to the queue or play it immediately
-	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(*session)
-	if err != nil {
-		return err
-	}
+	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
+	upNextRequest := s.GetUpNextRequest(session)
 
 	var newRequestStatus SongRequestStatus
 	if currentlyPlayingRequest == nil {
 		// No song is playing, that means the queue is empty -> Set this to play immediately
-		newRequestStatus = CURRENTLY_PLAYING
+		newRequestStatus = StatusCurrentlyPlaying
 	} else if upNextRequest == nil {
 		// A song is currently playing, but no follow up song is present -> Set this as the next song
-		newRequestStatus = UP_NEXT
+		newRequestStatus = StatusUpNext
 	} else {
 		// A song is currently playing and a follow up song is present. -> Just add this song to the normal queue
-		newRequestStatus = IN_QUEUE
+		newRequestStatus = StatusInQueue
 	}
 
 	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(*client, spotify.ID(trackId))
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		return err
 	}
 
@@ -232,19 +226,19 @@ func (s listeningSessionService) RequestSong(session *ListeningSession, trackId 
 
 	database.Connection.Create(&newSongRequest)
 
-	return s.UpdateSessionPlaylistIfNeccessary(*session)
+	return s.UpdateSessionPlaylistIfNeccessary(session)
 }
 
 func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSession) error {
-	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
-	if err != nil {
-		return err
-	}
+	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
+	upNextRequest := s.GetUpNextRequest(session)
 
 	owner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetClientForUser(*owner)
 	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		return err
 	}
 
@@ -263,16 +257,16 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 
 	if upNextRequest != nil && upNextRequest.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
-		currentlyPlayingRequest.Status = PLAYED
+		currentlyPlayingRequest.Status = StatusPlayed
 		database.Connection.Save(currentlyPlayingRequest)
 
-		upNextRequest.Status = CURRENTLY_PLAYING
+		upNextRequest.Status = StatusCurrentlyPlaying
 		database.Connection.Save(upNextRequest)
 
 		queue := s.GetSessionQueueInDemocraticOrder(session)
 		if len(queue) > 0 {
 			newUpNext := queue[0]
-			newUpNext.Status = UP_NEXT
+			newUpNext.Status = StatusUpNext
 			database.Connection.Save(&newUpNext)
 		}
 	}
@@ -281,10 +275,8 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 }
 
 func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session ListeningSession) error {
-	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
-	if err != nil {
-		return err
-	}
+	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
+	upNextRequest := s.GetUpNextRequest(session)
 
 	if currentlyPlayingRequest == nil && upNextRequest == nil {
 		return nil
@@ -295,6 +287,8 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 
 	playlist, err := client.GetPlaylist(spotify.ID(session.SpotifyPlaylist))
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		return err
 	}
 
@@ -330,16 +324,16 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 }
 
 func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session ListeningSession) error {
-	currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(session)
-	if err != nil {
-		return err
-	}
+	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
+	upNextRequest := s.GetUpNextRequest(session)
 
 	playlistId := spotify.ID(session.SpotifyPlaylist)
 
 	// Always replace all tracks with only the current one playing first
-	err = client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.SpotifyTrackId))
+	err := client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.SpotifyTrackId))
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		return err
 	}
 
@@ -347,6 +341,8 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 	if upNextRequest != nil {
 		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequest.SpotifyTrackId))
 		if err != nil {
+			logger.Error(err)
+			sentry.CaptureException(err)
 			return err
 		}
 	}
@@ -359,7 +355,7 @@ func (s listeningSessionService) PollSessions() {
 		for _, session := range s.GetActiveSessions() {
 			err := s.UpdateSessionIfNeccessary(session)
 			if err != nil {
-				log.Println("error for session " + *session.JoinId + ": " + err.Error())
+				logger.Errorf("error while polling session %s: %s", *session.JoinId, err.Error())
 				sentry.CaptureException(err)
 			}
 		}
@@ -382,10 +378,8 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 		result.Owner = UserService().CreateDto(*owner, false)
 		result.SpotifyPlaylistId = listeningSession.SpotifyPlaylist
 
-		currentlyPlayingRequest, upNextRequest, err := s.GetCurrentlyPlayingAndUpNext(listeningSession)
-		if err != nil {
-			panic(err)
-		}
+		currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(listeningSession)
+		upNextRequest := s.GetUpNextRequest(listeningSession)
 
 		if currentlyPlayingRequest != nil {
 			currentlyPlayingRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataBySpotifyTrackId(currentlyPlayingRequest.SpotifyTrackId))

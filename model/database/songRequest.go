@@ -13,8 +13,8 @@ type SongRequest struct {
 type SongRequestStatus string
 
 const (
-	PLAYED            SongRequestStatus = "PLAYED"
-	CURRENTLY_PLAYING SongRequestStatus = "CURRENTLY_PLAYING"
-	UP_NEXT           SongRequestStatus = "UP_NEXT"
-	IN_QUEUE          SongRequestStatus = "IN_QUEUE"
+	StatusPlayed           SongRequestStatus = "PLAYED"
+	StatusCurrentlyPlaying SongRequestStatus = "CURRENTLY_PLAYING"
+	StatusUpNext           SongRequestStatus = "UP_NEXT"
+	StatusInQueue          SongRequestStatus = "IN_QUEUE"
 )
