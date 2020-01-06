@@ -52,12 +52,12 @@ func (userService) GetUserBySpotifyId(spotifyId string) *User {
 	}
 }
 
-func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *User {
+func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) User {
 	var users []User
 	database.Connection.Where(User{SpotifyId: spotifyUser.ID}).Find(&users)
 
 	if len(users) == 1 {
-		return &users[0]
+		return users[0]
 	} else {
 		// No user found -> Create new
 		newUser := User{
@@ -69,7 +69,7 @@ func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *User {
 		database.Connection.NewRecord(newUser)
 		database.Connection.Create(&newUser)
 
-		return &newUser
+		return newUser
 	}
 }
 
