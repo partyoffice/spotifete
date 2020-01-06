@@ -7,9 +7,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"log"
 )
 
 const targetDatabaseVersion = 25
@@ -34,34 +34,34 @@ func Initialize() {
 
 	db, err := gorm.Open("postgres", connectionUrl)
 	if err != nil {
-		panic("failed to connect to database: " + err.Error())
+		logger.Fatalf("failed to connect to database: %s", err.Error())
 	}
 
 	// Run migrations
-	log.Println("Connection aquired. Checking database version")
+	logger.Info("Connection aquired. Checking database version")
 	driver, err := postgres.WithInstance(db.DB(), &postgres.Config{})
 	if err != nil {
-		panic("could not get driver for migration from db instance: " + err.Error())
+		logger.Fatalf("could not get driver for migration from db instance: %s", err.Error())
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://resources/migrations/",
 		"postgres", driver)
 	if err != nil {
-		panic("could not prepare database migration: " + err.Error())
+		logger.Fatalf("could not prepare database migration: " + err.Error())
 	}
 
 	version, _, _ := m.Version()
 	if version != targetDatabaseVersion {
-		log.Printf("Database version is %d / target version is %d. Migrating!\n", version, targetDatabaseVersion)
+		logger.Infof("Database version is %d / target version is %d. Migrating!\n", version, targetDatabaseVersion)
 		err = m.Migrate(targetDatabaseVersion)
 		if err != nil {
-			panic("could not execute migration: " + err.Error())
+			logger.Fatalf("could not execute migration: %s", err.Error())
 		}
 
-		log.Println("Migrations successful!")
+		logger.Info("Migrations successful!")
 	} else {
-		log.Printf("Database is up to date! (Version %d)", version)
+		logger.Infof("Database is up to date! (Version %d)", version)
 	}
 
 	Connection = db
