@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/service"
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/logger"
 	"net/http"
 	"time"
 )
@@ -55,10 +57,6 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	}
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
-	if user == nil {
-		c.String(http.StatusNotFound, "user not found")
-		return
-	}
 
 	title := c.PostForm("title")
 	if len(title) == 0 {
@@ -68,6 +66,8 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 
 	session, err := service.ListeningSessionService().NewSession(*user, title)
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -106,18 +106,6 @@ func (TemplateController) ViewSession(c *gin.Context) {
 }
 
 func (TemplateController) CloseListeningSession(c *gin.Context) {
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
-		c.Redirect(http.StatusUnauthorized, "/spotify/login")
-		return
-	}
-
-	user := service.UserService().GetUserById(*loginSession.UserId)
-	if user == nil {
-		c.String(http.StatusNotFound, "user not found")
-		return
-	}
-
 	joinId := c.PostForm("joinId")
 	if len(joinId) == 0 {
 		c.String(http.StatusBadRequest, "parameter joinId not present")
@@ -134,6 +122,8 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	err := service.ListeningSessionService().CloseSession(*user, joinId)
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}

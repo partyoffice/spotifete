@@ -2,8 +2,9 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/service"
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/google/logger"
 	"net/http"
 )
 
@@ -43,8 +44,9 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	// Fetch the token
 	token, err := service.SpotifyService().Authenticator.Token(state, c.Request)
 	if err != nil {
-		c.String(http.StatusUnauthorized, "Could not get token: "+err.Error())
-		log.Println(err.Error())
+		logger.Error(err)
+		sentry.CaptureException(err)
+		c.String(http.StatusInternalServerError, "Could not get token: "+err.Error())
 		return
 	}
 
@@ -52,8 +54,9 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	client := service.SpotifyService().Authenticator.NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
+		logger.Error(err)
+		sentry.CaptureException(err)
 		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
-		log.Println(err.Error())
 		return
 	}
 
