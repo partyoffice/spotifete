@@ -3,6 +3,7 @@ package webapp
 import (
 	"github.com/47-11/spotifete/config"
 	. "github.com/47-11/spotifete/webapp/controller"
+	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
@@ -41,6 +42,7 @@ func Initialize() {
 	err = baseRouter.Run(":8410")
 
 	if err != nil {
+		sentry.CaptureException(err)
 		logger.Fatal(err)
 	}
 }
