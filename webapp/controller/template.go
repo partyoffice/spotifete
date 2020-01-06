@@ -37,7 +37,7 @@ func (TemplateController) Index(c *gin.Context) {
 func (TemplateController) NewListeningSession(c *gin.Context) {
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.HTML(http.StatusOK, "newSession.html", gin.H{})
+		c.Redirect(http.StatusSeeOther, "/spotify/login?redirectTo=/session/new")
 		return
 	}
 
@@ -50,7 +50,7 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.Redirect(http.StatusUnauthorized, "/spotify/login")
+		c.Redirect(http.StatusSeeOther, "/spotify/login?redirectTo=/session/new")
 		return
 	}
 
@@ -123,6 +123,14 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 		c.String(http.StatusBadRequest, "parameter joinId not present")
 		return
 	}
+
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
+		c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/spotify/login?redirectTo=/session/view/%s", joinId))
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
 
 	err := service.ListeningSessionService().CloseSession(*user, joinId)
 	if err != nil {
