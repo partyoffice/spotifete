@@ -3,6 +3,7 @@ package database
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
+	"strings"
 )
 
 type TrackMetadata struct {
@@ -19,7 +20,12 @@ func (trackMetadata TrackMetadata) SetMetadata(spotifyTrack spotify.FullTrack) T
 	trackMetadata.TrackName = spotifyTrack.Name
 	trackMetadata.AlbumName = spotifyTrack.Album.Name
 
-	trackMetadata.ArtistName = spotifyTrack.Artists[0].Name // TODO: add all artists
+	var artistNames []string
+	for _, artist := range spotifyTrack.Artists {
+		artistNames = append(artistNames, artist.Name)
+	}
+
+	trackMetadata.ArtistName = strings.Join(artistNames, ", ")
 
 	// Find image with lowest quality
 	smallestSize := -1
