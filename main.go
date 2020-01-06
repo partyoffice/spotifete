@@ -46,8 +46,8 @@ func main() {
 		logger.Warning("Skipping sentry initialization!")
 	}
 
-	// TODO: refactor this
-	database.Initialize()
+	// Initialize database connection
+	database.GetConnection()
 	defer database.Shutdown()
 
 	// Start polling sessions

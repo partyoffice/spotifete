@@ -10,20 +10,31 @@ import (
 	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"sync"
 )
 
 const targetDatabaseVersion = 25
 
 var connectionUrl string
-var Connection *gorm.DB
+var connection *gorm.DB
+var once sync.Once
 
 func Shutdown() {
-	if Connection != nil {
-		_ = Connection.Close()
+	if connection != nil {
+		err := connection.Close()
+		logger.Error(err)
 	}
 }
 
-func Initialize() {
+func GetConnection() *gorm.DB {
+	once.Do(func() {
+		initialize()
+	})
+
+	return connection
+}
+
+func initialize() {
 	c := config.GetConfig()
 
 	disableSsl := ""
@@ -64,5 +75,5 @@ func Initialize() {
 		logger.Infof("Database is up to date! (Version %d)", version)
 	}
 
-	Connection = db
+	connection = db
 }

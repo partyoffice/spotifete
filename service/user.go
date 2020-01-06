@@ -24,13 +24,13 @@ func UserService() *userService {
 
 func (userService) GetTotalUserCount() int {
 	var count int
-	database.Connection.Model(&User{}).Count(&count)
+	database.GetConnection().Model(&User{}).Count(&count)
 	return count
 }
 
 func (userService) GetUserById(id uint) *User {
 	var users []User
-	database.Connection.Where(User{
+	database.GetConnection().Where(User{
 		Model: gorm.Model{ID: id},
 	}).Find(&users)
 
@@ -43,7 +43,7 @@ func (userService) GetUserById(id uint) *User {
 
 func (userService) GetUserBySpotifyId(spotifyId string) *User {
 	var users []User
-	database.Connection.Where(User{SpotifyId: spotifyId}).Find(&users)
+	database.GetConnection().Where(User{SpotifyId: spotifyId}).Find(&users)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -54,7 +54,7 @@ func (userService) GetUserBySpotifyId(spotifyId string) *User {
 
 func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) User {
 	var users []User
-	database.Connection.Where(User{SpotifyId: spotifyUser.ID}).Find(&users)
+	database.GetConnection().Where(User{SpotifyId: spotifyUser.ID}).Find(&users)
 
 	if len(users) == 1 {
 		return users[0]
@@ -66,15 +66,15 @@ func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) User {
 			SpotifyDisplayName: spotifyUser.DisplayName,
 		}
 
-		database.Connection.NewRecord(newUser)
-		database.Connection.Create(&newUser)
+		database.GetConnection().NewRecord(newUser)
+		database.GetConnection().Create(&newUser)
 
 		return newUser
 	}
 }
 
 func (userService) SetToken(user User, token oauth2.Token) {
-	database.Connection.Model(&user).Updates(User{
+	database.GetConnection().Model(&user).Updates(User{
 		SpotifyAccessToken:  token.AccessToken,
 		SpotifyRefreshToken: token.RefreshToken,
 		SpotifyTokenType:    token.TokenType,

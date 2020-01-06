@@ -33,25 +33,25 @@ func ListeningSessionService() *listeningSessionService {
 
 func (listeningSessionService) GetTotalSessionCount() int {
 	var count int
-	database.Connection.Model(&ListeningSession{}).Count(&count)
+	database.GetConnection().Model(&ListeningSession{}).Count(&count)
 	return count
 }
 
 func (listeningSessionService) GetActiveSessionCount() int {
 	var count int
-	database.Connection.Model(&ListeningSession{}).Where(ListeningSession{Active: true}).Count(&count)
+	database.GetConnection().Model(&ListeningSession{}).Where(ListeningSession{Active: true}).Count(&count)
 	return count
 }
 
 func (listeningSessionService) GetActiveSessions() []ListeningSession {
 	var sessions []ListeningSession
-	database.Connection.Where(ListeningSession{Active: true}).Find(&sessions)
+	database.GetConnection().Where(ListeningSession{Active: true}).Find(&sessions)
 	return sessions
 }
 
 func (listeningSessionService) GetSessionById(id uint) *ListeningSession {
 	var sessions []ListeningSession
-	database.Connection.Where(ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
+	database.GetConnection().Where(ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -66,7 +66,7 @@ func (listeningSessionService) GetSessionByJoinId(joinId string) *ListeningSessi
 	}
 
 	var sessions []ListeningSession
-	database.Connection.Where(ListeningSession{JoinId: &joinId}).Find(&sessions)
+	database.GetConnection().Where(ListeningSession{JoinId: &joinId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -77,13 +77,13 @@ func (listeningSessionService) GetSessionByJoinId(joinId string) *ListeningSessi
 
 func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []ListeningSession {
 	var sessions []ListeningSession
-	database.Connection.Where(ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
+	database.GetConnection().Where(ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
 	return sessions
 }
 
 func (s listeningSessionService) GetCurrentlyPlayingRequest(session ListeningSession) *SongRequest {
 	var requests []SongRequest
-	database.Connection.Where(SongRequest{
+	database.GetConnection().Where(SongRequest{
 		SessionId: session.ID,
 		Status:    StatusCurrentlyPlaying,
 	}, session.ID).Find(&requests)
@@ -97,7 +97,7 @@ func (s listeningSessionService) GetCurrentlyPlayingRequest(session ListeningSes
 
 func (s listeningSessionService) GetUpNextRequest(session ListeningSession) *SongRequest {
 	var requests []SongRequest
-	database.Connection.Where(SongRequest{
+	database.GetConnection().Where(SongRequest{
 		SessionId: session.ID,
 		Status:    StatusUpNext,
 	}, session.ID).Find(&requests)
@@ -111,7 +111,7 @@ func (s listeningSessionService) GetUpNextRequest(session ListeningSession) *Son
 
 func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session ListeningSession) []SongRequest {
 	var requests []SongRequest
-	database.Connection.Where(SongRequest{
+	database.GetConnection().Where(SongRequest{
 		SessionId: session.ID,
 		Status:    StatusInQueue,
 	}).Order("created_at asc").Find(&requests)
@@ -143,7 +143,7 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 		Title:           title,
 	}
 
-	database.Connection.Create(&listeningSession)
+	database.GetConnection().Create(&listeningSession)
 
 	return &listeningSession, nil
 }
@@ -164,7 +164,7 @@ func (s listeningSessionService) newJoinId() string {
 
 func (listeningSessionService) joinIdExists(joinId string) bool {
 	var count uint
-	database.Connection.Model(&ListeningSession{}).Where(ListeningSession{JoinId: &joinId}).Count(&count)
+	database.GetConnection().Model(&ListeningSession{}).Where(ListeningSession{JoinId: &joinId}).Count(&count)
 	return count > 0
 }
 
@@ -176,7 +176,7 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 
 	session.Active = false
 	session.JoinId = nil
-	database.Connection.Save(&session)
+	database.GetConnection().Save(&session)
 
 	client := SpotifyService().GetClientForUser(user)
 	return client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
@@ -188,7 +188,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 
 	// Prevent duplicates
 	var duplicateRequestsForTrack []SongRequest
-	database.Connection.Where("status != 'PLAYED' AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
+	database.GetConnection().Where("status != 'PLAYED' AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
 	if len(duplicateRequestsForTrack) > 0 {
 		return errors.New("that song is already in the queue")
 	}
@@ -224,7 +224,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 		Status:         newRequestStatus,
 	}
 
-	database.Connection.Create(&newSongRequest)
+	database.GetConnection().Create(&newSongRequest)
 
 	return s.UpdateSessionPlaylistIfNeccessary(session)
 }
@@ -258,16 +258,16 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	if upNextRequest != nil && upNextRequest.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
 		currentlyPlayingRequest.Status = StatusPlayed
-		database.Connection.Save(currentlyPlayingRequest)
+		database.GetConnection().Save(currentlyPlayingRequest)
 
 		upNextRequest.Status = StatusCurrentlyPlaying
-		database.Connection.Save(upNextRequest)
+		database.GetConnection().Save(upNextRequest)
 
 		queue := s.GetSessionQueueInDemocraticOrder(session)
 		if len(queue) > 0 {
 			newUpNext := queue[0]
 			newUpNext.Status = StatusUpNext
-			database.Connection.Save(&newUpNext)
+			database.GetConnection().Save(&newUpNext)
 		}
 	}
 
@@ -405,7 +405,7 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 
 func (s listeningSessionService) GetQueueLastUpdated(session ListeningSession) time.Time {
 	lastUpdatedSongRequest := SongRequest{}
-	database.Connection.Where(SongRequest{
+	database.GetConnection().Where(SongRequest{
 		SessionId: session.ID,
 	}).Order("updated_at desc").First(&lastUpdatedSongRequest)
 

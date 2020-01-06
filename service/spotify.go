@@ -95,7 +95,7 @@ func (s spotifyService) updateTokenForUserIfNeccessary(user User, client spotify
 
 func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
 	sessionId = LoginSessionService().newSessionId()
-	database.Connection.Create(&LoginSession{
+	database.GetConnection().Create(&LoginSession{
 		Model:            gorm.Model{},
 		SessionId:        sessionId,
 		UserId:           nil,
@@ -144,13 +144,13 @@ func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, trackId 
 	if track != nil {
 		updatedTrack := track.SetMetadata(*spotifyTrack)
 
-		database.Connection.Save(&updatedTrack)
+		database.GetConnection().Save(&updatedTrack)
 
 		return updatedTrack, nil
 	} else {
 		newTrack := TrackMetadata{}.SetMetadata(*spotifyTrack)
 
-		database.Connection.Create(&newTrack)
+		database.GetConnection().Create(&newTrack)
 
 		return newTrack, nil
 	}
@@ -158,7 +158,7 @@ func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, trackId 
 
 func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackMetadata {
 	var foundTracks = []TrackMetadata{}
-	database.Connection.Where(TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
+	database.GetConnection().Where(TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
 
 	if len(foundTracks) > 0 {
 		return &foundTracks[0]
