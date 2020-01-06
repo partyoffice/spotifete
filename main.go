@@ -12,8 +12,6 @@ import (
 )
 
 func main() {
-	defer database.Shutdown()
-
 	// Setup logger
 	logFile, err := os.OpenFile("spotifete.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
@@ -47,6 +45,10 @@ func main() {
 	} else {
 		logger.Warning("Skipping sentry initialization!")
 	}
+
+	// TODO: refactor this
+	database.Initialize()
+	defer database.Shutdown()
 
 	// Start polling sessions
 	go service.ListeningSessionService().PollSessions()

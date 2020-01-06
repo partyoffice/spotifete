@@ -23,7 +23,7 @@ func Shutdown() {
 	}
 }
 
-func init() {
+func Initialize() {
 	c := config.GetConfig()
 
 	disableSsl := ""
