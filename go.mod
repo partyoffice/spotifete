@@ -22,7 +22,7 @@ require (
 	github.com/zmb3/spotify v0.0.0-20191213135453-f2845aa57886
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
-	golang.org/x/sys v0.0.0-20200106114638-5f8ca72cd632 // indirect
+	golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/ini.v1 v1.51.1 // indirect
