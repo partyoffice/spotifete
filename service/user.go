@@ -74,12 +74,12 @@ func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) *User {
 }
 
 func (userService) SetToken(user User, token oauth2.Token) {
-	user.SpotifyAccessToken = token.AccessToken
-	user.SpotifyRefreshToken = token.RefreshToken
-	user.SpotifyTokenType = token.TokenType
-	user.SpotifyTokenExpiry = token.Expiry
-
-	database.Connection.Save(user)
+	database.Connection.Model(&user).Updates(User{
+		SpotifyAccessToken:  token.AccessToken,
+		SpotifyRefreshToken: token.RefreshToken,
+		SpotifyTokenType:    token.TokenType,
+		SpotifyTokenExpiry:  token.Expiry,
+	})
 }
 
 func (s userService) CreateDto(user User, resolveAdditionalInformation bool) dto.UserDto {

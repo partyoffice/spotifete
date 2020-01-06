@@ -1,12 +1,12 @@
 package service
 
 import (
-	"errors"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
 	"github.com/getsentry/sentry-go"
+	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -72,18 +72,25 @@ func (s spotifyService) updateTokenForSpotifyUserIfNeccessary(spotifyUserId stri
 
 func (s spotifyService) updateTokenForUserIfNeccessary(user User, client spotify.Client) {
 	// Do a basic request, this should make the library refresh the access token if neccessary
-	_, _ = client.CurrentUser()
-	token, err := client.Token()
-	if token == nil {
-		err = errors.New("client token is nil")
-	}
+	_, err := client.CurrentUser()
 	if err != nil {
+		// Could not fetch current user. This eiter means the network is unavailable for some reason, or the token is invalid and could not be refreshed.
+		// TODO: If the error happens because the token is no longer valid and could not be refreshed, we should clear the value in the database so we don't have to try again
+		logger.Warning(err)
+		return
+	}
+
+	token, err := client.Token()
+	if err != nil {
+		logger.Error(err)
 		sentry.CaptureException(err)
 		return
 	}
 
-	// Token was updated, persist to database
-	UserService().SetToken(user, *token)
+	if !token.Expiry.After(user.SpotifyTokenExpiry) {
+		// Token was updated, persist to database
+		UserService().SetToken(user, *token)
+	}
 }
 
 func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
