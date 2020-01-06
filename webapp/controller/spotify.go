@@ -25,19 +25,14 @@ func (controller SpotifyController) Callback(c *gin.Context) {
 	state := c.Request.FormValue("state")
 
 	// Check that this state exists and was not used in a callback before
-	session := service.LoginSessionService().GetSessionBySessionId(state)
+	session := service.LoginSessionService().GetSessionBySessionId(state, true)
 	if session == nil {
-		c.String(http.StatusUnauthorized, "Unknown state.")
+		c.String(http.StatusUnauthorized, "invalid state.")
 		return
 	}
 
 	if session.UserId != nil {
 		c.String(http.StatusUnauthorized, "State has already been used.")
-		return
-	}
-
-	if !service.LoginSessionService().IsSessionValid(*session) {
-		c.String(http.StatusUnauthorized, "Session is no longer valid.")
 		return
 	}
 

@@ -51,9 +51,9 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionBySessionId(loginSessionId)
+	loginSession := service.LoginSessionService().GetSessionBySessionId(loginSessionId, true)
 	if loginSession == nil {
-		c.JSON(http.StatusNotFound, ErrorResponse{Message: "login session not found"})
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "invalid login session"})
 		return
 	}
 
@@ -76,13 +76,13 @@ func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 		return
 	}
 
-	session := service.LoginSessionService().GetSessionBySessionId(sessionId)
+	session := service.LoginSessionService().GetSessionBySessionId(sessionId, false)
 	if session == nil {
-		c.JSON(http.StatusNotFound, ErrorResponse{Message: "login session not found"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	if session.UserId == nil || !service.LoginSessionService().IsSessionValid(*session) {
+	if session.UserId == nil {
 		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
 	} else {
 		c.JSON(http.StatusOK, DidAuthSucceedResponse{Authenticated: true})
@@ -217,7 +217,7 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionBySessionId(*requestBody.LoginSessionId)
+	loginSession := service.LoginSessionService().GetSessionBySessionId(*requestBody.LoginSessionId, true)
 	if loginSession == nil {
 		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "invalid login session"})
 		return

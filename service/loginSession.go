@@ -46,12 +46,17 @@ func (s loginSessionService) newSessionId() string {
 	}
 }
 
-func (loginSessionService) GetSessionBySessionId(sessionId string) *LoginSession {
+func (s loginSessionService) GetSessionBySessionId(sessionId string, requireValid bool) *LoginSession {
 	var sessions []LoginSession
 	database.Connection.Where(LoginSession{SessionId: sessionId}).Find(&sessions)
 
 	if len(sessions) == 1 {
-		return &sessions[0]
+		session := sessions[0]
+		if requireValid && !s.IsSessionValid(session) {
+			return nil
+		} else {
+			return &session
+		}
 	}
 	return nil
 }
@@ -64,19 +69,12 @@ func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *LoginSession 
 	}
 
 	// Cookie found
-	session := s.GetSessionBySessionId(sessionId)
+	session := s.GetSessionBySessionId(sessionId, true)
 	if session != nil {
 		// Sesssion found in database
-		if s.IsSessionValid(*session) {
-			return session
-		} else {
-			return nil
-		}
-
+		return session
 	} else {
-		// The session id from the cookie could not be found in database -> this normally should not happen and
-		// could be an indicator for a malicious attack. For now just remove the cookie and return nil
-		// TODO: Do something smart when this happens
+		// Session not found or not valid
 		_ = s.InvalidateSession(c)
 		return nil
 	}
@@ -105,13 +103,13 @@ func (loginSessionService) SetUserForSession(session LoginSession, user User) {
 }
 
 func (s loginSessionService) InvalidateSession(c *gin.Context) error {
-	sessionId, err := c.Cookie("SESSIONID")
-	if err == nil {
+	sessionId, _ := c.Cookie("SESSIONID")
+	if sessionId == "" {
+		return nil
+	} else {
 		c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
 		return s.InvalidateSessionBySessionId(sessionId)
 	}
-
-	return errors.New("session cookie not present")
 }
 
 func (loginSessionService) InvalidateSessionBySessionId(sessionId string) error {
