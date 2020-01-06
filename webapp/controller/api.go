@@ -145,8 +145,8 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 
 	tracks, err := service.SpotifyService().SearchTrack(*client, query, limit)
 	if err != nil {
-		go sentry.CaptureException(err)
-		go logger.Error(err)
+		sentry.CaptureException(err)
+		logger.Error(err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -161,7 +161,7 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	requestBody := RequestSongRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		go logger.Info("Invalid request body: " + err.Error())
+		logger.Info("Invalid request body: " + err.Error())
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
 		return
 	}
@@ -181,8 +181,8 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	if err == nil {
 		c.Status(http.StatusNoContent)
 	} else {
-		go sentry.CaptureException(err)
-		go logger.Error(err)
+		sentry.CaptureException(err)
+		logger.Error(err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
 }
@@ -202,7 +202,7 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 	requestBody := CreateListeningSessionRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		go logger.Info("Invalid request body: " + err.Error())
+		logger.Info("Invalid request body: " + err.Error())
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
 		return
 	}
@@ -231,8 +231,8 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 	owner := service.UserService().GetUserById(*loginSession.UserId)
 	createdSession, err := service.ListeningSessionService().NewSession(*owner, *requestBody.ListeningSessionTitle)
 	if err != nil {
-		go sentry.CaptureException(err)
-		go logger.Error(err)
+		sentry.CaptureException(err)
+		logger.Error(err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
 	}
