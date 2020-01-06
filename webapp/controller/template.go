@@ -150,5 +150,5 @@ func (TemplateController) GetAppAndroid(c *gin.Context) {
 }
 
 func (TemplateController) GetAppIOS(c *gin.Context) {
-	c.String(http.StatusNotFound, "Sorry, the iOS app is not available yet!")
+	c.String(http.StatusNotImplemented, "Sorry, the iOS app is not available yet!")
 }
