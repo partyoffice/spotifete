@@ -78,7 +78,6 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 func (TemplateController) ViewSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	listeningSession := service.ListeningSessionService().GetSessionByJoinId(joinId)
-
 	if listeningSession == nil {
 		c.String(http.StatusNotFound, "session not found")
 		return
@@ -86,12 +85,15 @@ func (TemplateController) ViewSession(c *gin.Context) {
 
 	ListeningSessionDto := service.ListeningSessionService().CreateDto(*listeningSession, true)
 
+	displayError := c.Query("displayError")
+
 	queueLastUpdated := service.ListeningSessionService().GetQueueLastUpdated(*listeningSession).UTC().Format(time.RFC3339Nano)
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
 			"queueLastUpdated": queueLastUpdated,
 			"session":          ListeningSessionDto,
+			"displayError":     displayError,
 		})
 		return
 	}
@@ -101,8 +103,26 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		"queueLastUpdated": queueLastUpdated,
 		"session":          ListeningSessionDto,
 		"user":             user,
+		"displayError":     displayError,
 	})
+}
 
+func (TemplateController) RequestTrack(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := service.ListeningSessionService().GetSessionByJoinId(joinId)
+	if session == nil {
+		c.String(http.StatusNotFound, "session not found")
+		return
+	}
+
+	trackId := c.PostForm("trackId")
+
+	err := service.ListeningSessionService().RequestSong(*session, trackId)
+	if err == nil {
+		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
+	} else {
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s/?displayError=%s", joinId, err.Error()))
+	}
 }
 
 func (TemplateController) CloseListeningSession(c *gin.Context) {

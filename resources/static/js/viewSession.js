@@ -65,26 +65,9 @@ $(document).ready(function () {
         });
 });
 
-async function requestTrack(trackId) {
-    const requestBody = JSON.stringify({
-        trackId: trackId.toString()
-    });
-
-    const response = await fetch(`/api/v1/sessions/${currentSessionJoinId}/request`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: requestBody
-    });
-
-    if (response.status === 200) {
-        console.log('request success. reloading page.');
-        location.reload();
-    } else {
-        responseBody = await response.json();
-        alert(`Could not add request: ${responseBody.message}`);
-    }
+function requestTrack(trackId) {
+    $('#requestTrackIdInput').val(trackId);
+    $('#submitRequestForm').submit();
 }
 
 function pollQueueLastUpdated() {

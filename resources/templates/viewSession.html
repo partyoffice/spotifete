@@ -78,6 +78,15 @@
 
     <br/>
 
+    {{ if .displayError }}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error: </strong> {{ .displayError }}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    {{ end }}
+
     <div class="jumbotron jumbotron-fluid bg-info text-center text-dark">
         <div class="container">
         <h4>Add songs to the queue!</h4>
@@ -183,5 +192,9 @@
 
         {{ end }}
     {{ end }}
+
+    <form id="submitRequestForm" action="/session/view/{{ .session.JoinId }}/request" method="post">
+        <input id="requestTrackIdInput" name="trackId" type="hidden" hidden="hidden" />
+    </form>
 </body>
 </html>
