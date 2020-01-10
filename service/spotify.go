@@ -5,11 +5,9 @@ import (
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
-	"github.com/getsentry/sentry-go"
 	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
 	"strings"
 	"sync"
 )
@@ -40,7 +38,7 @@ func SpotifyService() *spotifyService {
 
 func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.Client {
 	if client, ok := s.Clients[spotifyUserId]; ok {
-		go s.updateTokenForSpotifyUserIfNeccessary(spotifyUserId, *client)
+		s.refreshAndSaveTokenForSpotifyUserIfNeccessary(*client, spotifyUserId)
 		return client
 	}
 
@@ -50,7 +48,7 @@ func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.C
 
 func (s spotifyService) GetClientForUser(user User) *spotify.Client {
 	if client, ok := s.Clients[user.SpotifyId]; ok {
-		go s.updateTokenForUserIfNeccessary(user, *client)
+		s.refreshAndSaveTokenForUserIfNeccessary(*client, user)
 		return client
 	}
 
@@ -60,36 +58,27 @@ func (s spotifyService) GetClientForUser(user User) *spotify.Client {
 	}
 
 	client := s.Authenticator.NewClient(token)
+	s.refreshAndSaveTokenForUserIfNeccessary(client, user)
 	s.Clients[user.SpotifyId] = &client
 
 	return &client
 }
 
-func (s spotifyService) updateTokenForSpotifyUserIfNeccessary(spotifyUserId string, client spotify.Client) {
+func (s spotifyService) refreshAndSaveTokenForSpotifyUserIfNeccessary(client spotify.Client, spotifyUserId string) {
 	user := UserService().GetUserBySpotifyId(spotifyUserId)
-	s.updateTokenForUserIfNeccessary(*user, client)
+	s.refreshAndSaveTokenForUserIfNeccessary(client, *user)
 }
 
-func (s spotifyService) updateTokenForUserIfNeccessary(user User, client spotify.Client) {
-	// Do a basic request, this should make the library refresh the access token if neccessary
-	_, err := client.CurrentUser()
+func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user User) {
+	newToken, err := client.Token() // This should refresh the token if neccessary: https://github.com/zmb3/spotify/issues/108#issuecomment-568899119
 	if err != nil {
-		// Could not fetch current user. This eiter means the network is unavailable for some reason, or the token is invalid and could not be refreshed.
-		// TODO: If the error happens because the token is no longer valid and could not be refreshed, we should clear the value in the database so we don't have to try again
 		logger.Warning(err)
 		return
 	}
 
-	token, err := client.Token()
-	if err != nil {
-		logger.Error(err)
-		sentry.CaptureException(err)
-		return
-	}
-
-	if !token.Expiry.After(user.SpotifyTokenExpiry) {
+	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
 		// Token was updated, persist to database
-		UserService().SetToken(user, *token)
+		UserService().SetToken(user, *newToken)
 	}
 }
 
@@ -103,17 +92,6 @@ func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, 
 		CallbackRedirect: callbackRedirectUrl,
 	})
 	return s.Authenticator.AuthURL(sessionId), sessionId
-}
-
-func (s spotifyService) CheckTokenValidity(token *oauth2.Token) (bool, error) {
-	client := s.Authenticator.NewClient(token)
-	user, err := client.CurrentUser()
-	if err != nil && user == nil {
-		// TODO actually verify that the token is invalid and not some other error occurred
-		return false, err
-	} else {
-		return true, nil
-	}
 }
 
 func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, error) {
