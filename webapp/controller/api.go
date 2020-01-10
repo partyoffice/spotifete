@@ -57,6 +57,11 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
+	if loginSession.UserId == nil {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "not authenticated to spotify yet"})
+		return
+	}
+
 	user := service.UserService().GetUserById(*loginSession.UserId)
 	c.JSON(http.StatusOK, service.UserService().CreateDto(*user, true))
 }
@@ -224,7 +229,7 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 	}
 
 	if loginSession.UserId == nil {
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "login session is not authorized to spotify yet"})
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "not authenticated to spotify yet"})
 		return
 	}
 
