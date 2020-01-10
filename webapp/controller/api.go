@@ -82,10 +82,10 @@ func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 		return
 	}
 
-	if session.UserId == nil {
-		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
-	} else {
+	if service.LoginSessionService().IsSessionValid(*session) && session.Active {
 		c.JSON(http.StatusOK, DidAuthSucceedResponse{Authenticated: true})
+	} else {
+		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
 	}
 }
 
