@@ -179,7 +179,37 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	database.GetConnection().Save(&session)
 
 	client := SpotifyService().GetClientForUser(user)
-	return client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
+	err := client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
+	if err != nil {
+		return err
+	}
+
+	rewindPlaylist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s Rewind - SpotiFete", session.Title), fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title), false)
+	if err != nil {
+		return err
+	}
+
+	page := []spotify.ID{}
+	for _, track := range s.GetDistinctRequestedTracks(*session) {
+		page = append(page, track)
+
+		if len(page) == 100 {
+			_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+			if err != nil {
+				return err
+			}
+			page = []spotify.ID{}
+		}
+	}
+
+	if len(page) > 0 {
+		_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
 }
 
 func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) error {
@@ -415,4 +445,21 @@ func (s listeningSessionService) GetQueueLastUpdated(session ListeningSession) t
 		// No requests found -> Use creation of session
 		return session.UpdatedAt
 	}
+}
+
+func (s listeningSessionService) GetDistinctRequestedTracks(session ListeningSession) (trackIds []spotify.ID) {
+	type Result struct {
+		SpotifyTrackId string
+	}
+
+	var results []Result
+	database.GetConnection().Table("song_requests").Select("distinct spotify_track_id").Where(SongRequest{
+		SessionId: session.ID,
+	}).Scan(&results)
+
+	for _, result := range results {
+		trackIds = append(trackIds, spotify.ID(result.SpotifyTrackId))
+	}
+
+	return
 }
