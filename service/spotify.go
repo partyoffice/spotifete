@@ -77,8 +77,8 @@ func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Cl
 	}
 
 	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
-		// Token was updated, persist to database
-		UserService().SetToken(user, *newToken)
+		// At this point the client's token should be updated. It should be no problem to update the database entry in a goroutine
+		go UserService().SetToken(user, *newToken)
 	}
 }
 
