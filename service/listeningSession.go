@@ -138,8 +138,7 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 	}
 
 	// Generate QR code for this session
-	// TODO: Generate the real link
-	qrCode, err := qrcode.New(fmt.Sprintf("join app link for session %s", joinId), qrcode.Medium)
+	qrCode, err := qrcode.New(fmt.Sprintf("spotifete://session/%s", joinId), qrcode.Medium)
 	if err != nil {
 		return nil, err
 	}
