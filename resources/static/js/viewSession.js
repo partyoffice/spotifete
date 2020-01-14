@@ -63,6 +63,9 @@ $(document).ready(function () {
                 }
             }
         });
+
+    // After initializing, focus the input again
+    $('#trackSearchInput').focus();
 });
 
 function requestTrack(trackId) {
