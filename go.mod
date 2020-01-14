@@ -14,6 +14,7 @@ require (
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.11 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
