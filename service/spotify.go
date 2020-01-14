@@ -25,7 +25,7 @@ func SpotifyService() *spotifyService {
 		c := config.GetConfig()
 		callbackUrl := c.GetString("spotifete.baseUrl") + "/spotify/callback"
 
-		newAuth := spotify.NewAuthenticator(callbackUrl, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPrivate, spotify.ScopeUserLibraryRead, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadCurrentlyPlaying)
+		newAuth := spotify.NewAuthenticator(callbackUrl, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPrivate, spotify.ScopeImageUpload, spotify.ScopeUserLibraryRead, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadCurrentlyPlaying)
 		newAuth.SetAuthInfo(c.GetString("spotify.id"), c.GetString("spotify.secret"))
 
 		spotifyServiceInstance = &spotifyService{
