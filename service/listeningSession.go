@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/47-11/spotifete/database"
@@ -9,7 +10,9 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
+	"image/jpeg"
 	"math/rand"
 	"sync"
 	"time"
@@ -129,11 +132,35 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 	client := SpotifyService().GetClientForUser(user)
 
 	joinId := s.newJoinId()
-	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s %s.", title, joinId[0:4], joinId[4:8]), false)
+	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s-%s or by installing our app and scanning the QR code in the playlist image.", title, joinId[0:4], joinId[4:8]), false)
 	if err != nil {
 		return nil, err
 	}
 
+	// Generate QR code for this session
+	// TODO: Generate the real link
+	qrCode, err := qrcode.New(fmt.Sprintf("join app link for session %s", joinId), qrcode.Medium)
+	if err != nil {
+		return nil, err
+	}
+
+	// Encode QR code as jpeg
+	jpegBuffer := new(bytes.Buffer)
+	err = jpeg.Encode(jpegBuffer, qrCode.Image(512), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set QR code as playlist image in background
+	go func() {
+		err := client.SetPlaylistImage(playlist.ID, jpegBuffer)
+		if err != nil {
+			logger.Error(err)
+			sentry.CaptureException(err)
+		}
+	}()
+
+	// Create database entry
 	listeningSession := ListeningSession{
 		Model:           gorm.Model{},
 		Active:          true,
