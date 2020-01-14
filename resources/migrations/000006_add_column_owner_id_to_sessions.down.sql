@@ -1,2 +1,4 @@
+BEGIN;
 ALTER TABLE sessions
-    DROP COLUMN IF EXISTS owner_id;
+    DROP COLUMN owner_id;
+COMMIT;

@@ -1,5 +1,4 @@
 BEGIN;
-
 DROP TABLE song_requests;
 
 CREATE TABLE song_requests(
@@ -12,5 +11,4 @@ CREATE TABLE song_requests(
     track_id VARCHAR,
     status VARCHAR
 );
-
 COMMIT;

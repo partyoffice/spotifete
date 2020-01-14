@@ -1,1 +1,4 @@
-ALTER TABLE IF EXISTS sessions RENAME TO listening_sessions;
+BEGIN;
+ALTER TABLE sessions
+    RENAME TO listening_sessions;
+COMMIT;

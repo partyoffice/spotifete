@@ -1,5 +1,5 @@
 BEGIN;
-DELETE FROM song_requests;
+DELETE FROM song_requests WHERE 1=1;
 ALTER TABLE song_requests
     ALTER COLUMN session_id SET NOT NULL,
     ALTER COLUMN song_id SET NOT NULL;

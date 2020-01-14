@@ -1,3 +1,4 @@
+BEGIN;
 CREATE TABLE song_requests(
    id serial PRIMARY KEY,
    created_at TIMESTAMP,
@@ -7,3 +8,4 @@ CREATE TABLE song_requests(
    requested_by INTEGER REFERENCES users(id),
    song_id VARCHAR
 );
+COMMIT;

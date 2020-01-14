@@ -1,1 +1,3 @@
-DROP TABLE IF EXISTS spotify_users;
+BEGIN;
+DROP TABLE spotify_users;
+COMMIT;

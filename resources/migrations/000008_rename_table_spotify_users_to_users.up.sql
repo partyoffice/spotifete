@@ -1,2 +1,4 @@
-ALTER TABLE IF EXISTS spotify_users
+BEGIN;
+ALTER TABLE spotify_users
     RENAME TO users;
+COMMIT;

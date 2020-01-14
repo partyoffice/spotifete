@@ -1,1 +1,3 @@
-DROP TABLE IF EXISTS sessions;
+BEGIN;
+DROP TABLE sessions;
+COMMIT;

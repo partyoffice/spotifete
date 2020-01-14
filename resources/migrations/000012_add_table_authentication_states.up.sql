@@ -1,3 +1,4 @@
+BEGIN;
 CREATE TABLE authentication_states(
     id serial PRIMARY KEY,
     created_at TIMESTAMP,
@@ -6,3 +7,4 @@ CREATE TABLE authentication_states(
     state VARCHAR,
     active BOOLEAN NOT NULL
 );
+COMMIT;

@@ -1,3 +1,4 @@
+BEGIN;
 CREATE TABLE track_metadata(
    id serial PRIMARY KEY,
    created_at TIMESTAMP,
@@ -9,3 +10,4 @@ CREATE TABLE track_metadata(
    album_name VARCHAR,
    album_image_thumbnail_url VARCHAR
 );
+COMMIT;
