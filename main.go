@@ -18,7 +18,7 @@ func main() {
 		logger.Fatalf("Failed to open log file: %v", err)
 	}
 	defer logFile.Close()
-	defer logger.Init("Spotifete", true, true, logFile).Close()
+	defer logger.Init("spotifete", true, false, logFile).Close()
 	logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	releaseMode := config.GetConfig().GetBool("spotifete.releaseMode")
