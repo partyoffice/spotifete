@@ -35,6 +35,7 @@ func main() {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:              config.GetConfig().GetString("sentry.dsn"),
 			AttachStacktrace: true,
+			IgnoreErrors:     []string{"The access token expired"},
 		})
 
 		if err != nil {
