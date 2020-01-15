@@ -8,6 +8,7 @@ import (
 	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
+	"golang.org/x/oauth2"
 	"strings"
 	"sync"
 )
@@ -76,11 +77,15 @@ func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Cl
 		return
 	}
 
+	go s.saveTokenIfNeccessary(*newToken, user)
+}
+
+func (spotifyService) saveTokenIfNeccessary(token oauth2.Token, user User) {
 	// Checking the token expiry seems not to work properly (maybe because of timezones?)
 	// So just compare the access token itself and update the database entry if it was changed
-	if newToken.AccessToken != user.SpotifyAccessToken || newToken.RefreshToken != user.SpotifyRefreshToken {
+	if token.AccessToken != user.SpotifyAccessToken || token.RefreshToken != user.SpotifyRefreshToken {
 		// Token was updated, persist to database
-		UserService().SetToken(user, *newToken)
+		UserService().SetToken(user, token)
 	}
 }
 
