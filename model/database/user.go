@@ -28,10 +28,3 @@ func (u User) GetToken() *oauth2.Token {
 		return nil
 	}
 }
-
-func (u User) SetToken(token *oauth2.Token) {
-	u.SpotifyAccessToken = token.AccessToken
-	u.SpotifyRefreshToken = token.RefreshToken
-	u.SpotifyTokenType = token.TokenType
-	u.SpotifyTokenExpiry = token.Expiry
-}
