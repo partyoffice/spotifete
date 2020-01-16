@@ -82,9 +82,9 @@
                     <h3>Join an existing Session:</h3>
 
                     <div class="form-group">
-                        <input type="joinId" id="joinIdInput" class="form-control text-center" placeholder="1234 5678" maxlength="9"/>
+                        <input type="joinId" id="joinIdInput" class="form-control text-center" placeholder="1234 5678" />
                     </div>
-                    <button type="button" onclick="joinClicked()" class="btn btn-primary btn-lg">
+                    <button type="button" id="joinIdConfirmButton" onclick="joinClicked()" disabled="disabled" title="Enter a valid join id first." class="btn btn-primary btn-lg">
                         <span class="fas fa-sign-in-alt"></span>
                         Join
                     </button>

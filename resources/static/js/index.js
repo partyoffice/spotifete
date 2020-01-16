@@ -23,4 +23,15 @@ $( document ).ready(function() {
             window.location.href='/app/android';
         }
     }
+
+    $('#joinIdInput').on('input', function () {
+        const joinIdConfirmButton = $('#joinIdConfirmButton');
+        if (isJoinIdInputValid()) {
+            joinIdConfirmButton.removeAttr('disabled');
+            joinIdConfirmButton.removeAttr('title')
+        } else {
+            joinIdConfirmButton.attr('disabled', 'disabled');
+            joinIdConfirmButton.attr('title', 'Enter a valid join id first.');
+        }
+    })
 });
