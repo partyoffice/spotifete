@@ -78,7 +78,9 @@ func (userService) SetToken(user User, token oauth2.Token) {
 		SpotifyAccessToken:  token.AccessToken,
 		SpotifyRefreshToken: token.RefreshToken,
 		SpotifyTokenType:    token.TokenType,
-		SpotifyTokenExpiry:  token.Expiry,
+		// Save the expiry date as UTC because we don't save the timezone in the database and get the timetamp back as UTC when querying which confuses oauth2
+		// TODO: Remove this once we figure out a way to properly handle timezones
+		SpotifyTokenExpiry: token.Expiry.UTC(),
 	})
 }
 
