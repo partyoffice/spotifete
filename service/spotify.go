@@ -76,9 +76,7 @@ func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Cl
 		return
 	}
 
-	// Checking the token expiry seems not to work properly (maybe because of timezones?)
-	// So just compare the access token itself and update the database entry if it was changed
-	if newToken.AccessToken != user.SpotifyAccessToken || newToken.RefreshToken != user.SpotifyRefreshToken {
+	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
 		// Token was updated, persist to database
 		UserService().SetToken(user, *newToken)
 	}
