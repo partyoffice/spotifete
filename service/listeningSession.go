@@ -210,32 +210,36 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 		return err
 	}
 
-	rewindPlaylist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s Rewind - SpotiFete", session.Title), fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title), false)
-	if err != nil {
-		return err
-	}
+	// Create rewind playlist if any tracks were requested
+	distinctRequestedTracks := s.GetDistinctRequestedTracks(*session)
+	if len(distinctRequestedTracks) > 0 {
+		rewindPlaylist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s Rewind - SpotiFete", session.Title), fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title), false)
+		if err != nil {
+			return err
+		}
 
-	page := []spotify.ID{}
-	for _, track := range s.GetDistinctRequestedTracks(*session) {
-		page = append(page, track)
+		var page []spotify.ID
+		for _, track := range distinctRequestedTracks {
+			page = append(page, track)
 
-		if len(page) == 100 {
+			if len(page) == 100 {
+				_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+				if err != nil {
+					return err
+				}
+				page = []spotify.ID{}
+			}
+		}
+
+		if len(page) > 0 {
 			_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
 			if err != nil {
 				return err
 			}
-			page = []spotify.ID{}
 		}
 	}
 
-	if len(page) > 0 {
-		_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
-		if err != nil {
-			return err
-		}
-	}
-
-	return err
+	return nil
 }
 
 func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) error {
