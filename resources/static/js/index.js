@@ -14,7 +14,7 @@ isJoinIdInputValid = () => {
 };
 
 getJoinIdInputValue = () => {
-    return $( '#joinIdInput' ).val().replace(/[\s-]/g, '');
+    return $( '#joinIdInput' ).val().replace(/[\D]/g, '');
 };
 
 $( document ).ready(function() {
