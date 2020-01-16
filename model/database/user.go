@@ -22,7 +22,8 @@ func (u User) GetToken() *oauth2.Token {
 			AccessToken:  u.SpotifyAccessToken,
 			TokenType:    u.SpotifyTokenType,
 			RefreshToken: u.SpotifyRefreshToken,
-			Expiry:       u.SpotifyTokenExpiry,
+			// TODO: Find a proper fix instead of this horrible hack
+			Expiry: u.SpotifyTokenExpiry.Add(-1 * time.Hour).UTC(),
 		}
 	} else {
 		return nil
