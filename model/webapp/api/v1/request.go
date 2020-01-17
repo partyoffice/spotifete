@@ -12,3 +12,7 @@ type CreateListeningSessionRequest struct {
 	LoginSessionId        *string `json:"loginSessionId"`
 	ListeningSessionTitle *string `json:"listeningSessionTitle"`
 }
+
+type CloseListeningSessionRequest struct {
+	LoginSessionId *string `json:"loginSessionId"`
+}

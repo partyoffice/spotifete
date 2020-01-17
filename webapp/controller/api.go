@@ -244,3 +244,35 @@ func (controller ApiController) CreateListeningSession(c *gin.Context) {
 
 	c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*createdSession, true))
 }
+
+func (ApiController) CloseListeningSession(c *gin.Context) {
+	sessionJoinId := c.Param("joinId")
+
+	var request = CloseListeningSessionRequest{}
+	err := c.BindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Invalid request body"})
+		return
+	}
+
+	loginSessionId := request.LoginSessionId
+	if loginSessionId == nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Login session id not given"})
+		return
+	}
+
+	loginSession := service.LoginSessionService().GetSessionBySessionId(*loginSessionId, true)
+	if loginSession == nil {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "Invalid login session"})
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+
+	err = service.ListeningSessionService().CloseSession(*user, sessionJoinId)
+	if err == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
+}
