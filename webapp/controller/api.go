@@ -1,14 +1,11 @@
 package controller
 
 import (
-	"bytes"
-	"encoding/base64"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/service"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
-	"image/jpeg"
 	"net/http"
 	"strconv"
 	"strings"
@@ -284,8 +281,20 @@ func (ApiController) CloseListeningSession(c *gin.Context) {
 func (ApiController) CreateQrCodeForListeningSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	disableBorder := strings.EqualFold("true", c.Query("disableBorder"))
+	sizeOverride := c.Query("size")
 
-	qrCodeImage, err := service.ListeningSessionService().GenerateQrCodeForSession(joinId, disableBorder)
+	size := 512
+	if len(sizeOverride) > 0 {
+		parsed, err := strconv.Atoi(sizeOverride)
+		if err != nil || parsed <= 0 {
+			c.JSON(http.StatusBadRequest, "Invalid size")
+			return
+		}
+
+		size = parsed
+	}
+
+	qrCode, err := service.ListeningSessionService().GenerateQrCodeForSession(joinId, disableBorder)
 	if err != nil {
 		sentry.CaptureException(err)
 		logger.Error(err)
@@ -293,9 +302,13 @@ func (ApiController) CreateQrCodeForListeningSession(c *gin.Context) {
 		return
 	}
 
-	jpegBuffer := new(bytes.Buffer)
-	err = jpeg.Encode(jpegBuffer, qrCodeImage, nil)
-	qrCodeImageBase64 := base64.StdEncoding.EncodeToString(jpegBuffer.Bytes())
+	qrCodeImageBytes, err := qrCode.PNG(size)
+	if err != nil {
+		sentry.CaptureException(err)
+		logger.Error(err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		return
+	}
 
-	c.String(http.StatusOK, qrCodeImageBase64)
+	c.Data(http.StatusOK, "image/png", qrCodeImageBytes)
 }

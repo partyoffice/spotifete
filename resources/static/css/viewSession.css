@@ -5,3 +5,12 @@
 .clickable {
     cursor: pointer;
 }
+
+#qrCodeImage {
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    padding: 5%;
+}
+
+.no-js #qrCodeLoadingSpinner { display: none; }

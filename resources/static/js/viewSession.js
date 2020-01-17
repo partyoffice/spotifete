@@ -97,14 +97,15 @@ function shareClicked() {
     shareModal.modal();
 
     if (!qrCodeLoaded) {
-        $.ajax({
-            url: `/api/v1/sessions/${currentSessionJoinId}/qrcode`
-        }).done(function(data) {
-            $('#qrCodeLoadingSpinner').remove();
-            $('#qrCodeImage').attr('src', `data:image/png;base64, ${data}`);
-            qrCodeLoaded = true;
-        }).fail(function (data) {
-            alert('Could not get QR code.')
+        const qrCodeImage = $('#qrCodeImage');
+
+        // Remove spinner and display image when it has finished loading
+        qrCodeImage.on('load', function () {
+            $('#qrCodeLoadingSpinner').attr('hidden', 'hidden');
+            qrCodeImage.removeAttr('hidden');
         });
+
+        qrCodeImage.attr('src', `/api/v1/sessions/${currentSessionJoinId}/qrcode?size=5120&disableBorder=true`);
+        qrCodeLoaded = true;
     }
 }
