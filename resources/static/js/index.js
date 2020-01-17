@@ -17,6 +17,17 @@ getJoinIdInputValue = () => {
     return $( '#joinIdInput' ).val().replace(/[\D]/g, '');
 };
 
+function disableJoinIdConfirmButtonIfNeccessary() {
+    const joinIdConfirmButton = $('#joinIdConfirmButton');
+    if (isJoinIdInputValid()) {
+        joinIdConfirmButton.removeAttr('disabled');
+        joinIdConfirmButton.removeAttr('title')
+    } else {
+        joinIdConfirmButton.attr('disabled', 'disabled');
+        joinIdConfirmButton.attr('title', 'Enter a valid join id first.');
+    }
+}
+
 $( document ).ready(function() {
     if(navigator.userAgent.toLowerCase().indexOf('android') > -1) {
         if (window.confirm('Hey there!\n\nIt looks like you are using an android device.\n\nDo you want to install our App?')) {
@@ -25,13 +36,7 @@ $( document ).ready(function() {
     }
 
     $('#joinIdInput').on('input', function () {
-        const joinIdConfirmButton = $('#joinIdConfirmButton');
-        if (isJoinIdInputValid()) {
-            joinIdConfirmButton.removeAttr('disabled');
-            joinIdConfirmButton.removeAttr('title')
-        } else {
-            joinIdConfirmButton.attr('disabled', 'disabled');
-            joinIdConfirmButton.attr('title', 'Enter a valid join id first.');
-        }
-    })
+        disableJoinIdConfirmButtonIfNeccessary();
+    });
+    disableJoinIdConfirmButtonIfNeccessary();
 });
