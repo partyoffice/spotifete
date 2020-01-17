@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap-grid.min.css">
     <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap-reboot.min.css">
     <link rel="stylesheet" type="text/css" href="/static/fontawesome/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/index.css">
     <script type="text/javascript" src="/static/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/index.js"></script>
@@ -75,42 +76,42 @@
             <li data-target="#slides" data-slide-to="0" class="active"></li>
             <li data-target="#slided" data-slide-to="1" ></li>
         </ul>
-        <div class="carousel-inner">
+        <div class="carousel-inner text-center">
             <div class="carousel-item active">
-            <img src="/static/joinSession.jpg" class="img" width="1000" height="500">
+            <img src="/static/joinSession.jpg" class="img" width="1200" height="600">
                 <div class="carousel-caption">
                     <h3>Join an existing Session:</h3>
 
-                    <div class="form-group">
-                        <input type="joinId" id="joinIdInput" class="form-control text-center" placeholder="1234 5678" />
+                    <div class="form-group w-50 text-center mx-auto">
+                        <input type="joinId" id="joinIdInput" class="form-control text-center" placeholder="1234 5678" maxlength="9"/>
                     </div>
-                    <button type="button" id="joinIdConfirmButton" onclick="joinClicked()" disabled="disabled" title="Enter a valid join id first." class="btn btn-primary btn-lg">
+                    <button type="button" onclick="joinClicked()" class="btn btn-primary btn-lg">
                         <span class="fas fa-sign-in-alt"></span>
                         Join
                     </button>
                 </div>
             </div>
             <div class="carousel-item">
-                <img src="/static/CreateSession.jpeg"class="img" width="1000" height="500">
+                <img src="/static/CreateSession.jpeg"class="img" width="1200" height="600">
                 <div class="carousel-caption">
                     {{ if .user }}
                         <h3>Your sessions</h3>
-                        <ul>
+                        <div class="session_links">
+                        <ul class="session_list mx-auto">
                             {{ with .userSessions }}
                                 {{ range . }}
-                                    <li class="text-left">
+                                    <li class="align-items-lg-baseline">
                                         <a href="/session/view/{{ .JoinId }}" class="btn btn-info" role="button">{{ .Title }}</a>
                                         <br/>
                                     </li>
                                 {{ end }}
                             {{ end }}
                         </ul>
-
+                        </div>
                         <a class="btn btn-primary btn-lg" href="/session/new" role="button">
                             <span class="fas fa-plus"></span>
                             Create new Session
                         </a>
-
                         <br/>
                     {{ else }}
                         <h3>Your Sessions</h3>
