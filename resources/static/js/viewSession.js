@@ -90,3 +90,21 @@ function pollQueueLastUpdated() {
         }, 2000);
     });
 }
+
+let qrCodeLoaded = false;
+function shareClicked() {
+    const shareModal = $('#shareSessionModal');
+    shareModal.modal();
+
+    if (!qrCodeLoaded) {
+        $.ajax({
+            url: `/api/v1/sessions/${currentSessionJoinId}/qrcode`
+        }).done(function(data) {
+            $('#qrCodeLoadingSpinner').remove();
+            $('#qrCodeImage').attr('src', `data:image/png;base64, ${data}`);
+            qrCodeLoaded = true;
+        }).fail(function (data) {
+            alert('Could not get QR code.')
+        });
+    }
+}

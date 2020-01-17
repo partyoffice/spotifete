@@ -73,7 +73,8 @@
     <h1 class="display-2">Spotifete presents:</h1>
     <div>
         <h3>{{ .session.Title }}</h3>
-        <p class="lead">You can join using the code {{ .session.JoinIdHumanReadable }}</p>
+        <span class="lead">You can join using the code {{ .session.JoinIdHumanReadable }}</span>
+        <button type="button" title="show qr code" class="btn btn-primary" onclick="shareClicked()"><span class="fas fa-share-square"></span></button>
     </div>
 
     <br/>
@@ -192,6 +193,26 @@
 
         {{ end }}
     {{ end }}
+
+    <div id="shareSessionModal" class="modal text-dark" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ .session.Title }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>You can join using the code <strong>{{ .session.JoinIdHumanReadable }}</strong> or by scanning the QR Code with the App:</p>
+                    <div id="qrCodeLoadingSpinner" class="spinner-border" role="status">
+                        <span class="sr-only">Loading QR Code...</span>
+                    </div>
+                    <img id="qrCodeImage" />
+                </div>
+            </div>
+        </div>
+    </div>
 
     <form id="submitRequestForm" action="/session/view/{{ .session.JoinId }}/request" method="post">
         <input id="requestTrackIdInput" name="trackId" type="hidden" hidden="hidden" />
