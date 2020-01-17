@@ -90,22 +90,3 @@ function pollQueueLastUpdated() {
         }, 2000);
     });
 }
-
-let qrCodeLoaded = false;
-function shareClicked() {
-    const shareModal = $('#shareSessionModal');
-    shareModal.modal();
-
-    if (!qrCodeLoaded) {
-        const qrCodeImage = $('#qrCodeImage');
-
-        // Remove spinner and display image when it has finished loading
-        qrCodeImage.on('load', function () {
-            $('#qrCodeLoadingSpinner').attr('hidden', 'hidden');
-            qrCodeImage.removeAttr('hidden');
-        });
-
-        qrCodeImage.attr('src', `/api/v1/sessions/${currentSessionJoinId}/qrcode?size=512&disableBorder=true`);
-        qrCodeLoaded = true;
-    }
-}

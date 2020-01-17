@@ -74,7 +74,7 @@
     <div>
         <h3>{{ .session.Title }}</h3>
         <span class="lead">You can join using the code {{ .session.JoinIdHumanReadable }}</span>
-        <button type="button" title="show qr code" class="btn btn-primary" onclick="shareClicked()"><span class="fas fa-share-square"></span></button>
+        <button type="button" title="show qr code" class="btn btn-primary" onclick="$('#shareSessionModal').modal();"><span class="fas fa-share-square"></span></button>
     </div>
 
     <br/>
@@ -205,10 +205,7 @@
                 </div>
                 <div class="modal-body">
                     <p>You can join using the code <strong>{{ .session.JoinIdHumanReadable }}</strong> or by scanning the QR Code with the App:</p>
-                    <div id="qrCodeLoadingSpinner" class="spinner-border" role="status">
-                        <span class="sr-only">Loading QR Code...</span>
-                    </div>
-                    <img id="qrCodeImage" hidden="hidden"/>
+                    <img id="qrCodeImage" src="/api/v1/sessions/{{ .session.JoinId }}/qrcode?size=512&disableBorder=true" alt="Scan this QR code with your phone to join this session." />
                 </div>
             </div>
         </div>
