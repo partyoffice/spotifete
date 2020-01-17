@@ -65,6 +65,7 @@ func setupApiController(baseRouter *gin.Engine) {
 	apiRouter.DELETE("sessions/:joinId", apiController.CloseListeningSession)
 	apiRouter.POST("/sessions/:joinId/request", apiController.RequestSong)
 	apiRouter.GET("/sessions/:joinId/queuelastupdated", apiController.QueueLastUpdated)
+	apiRouter.GET("/sessions/:joinId/qrcode", apiController.CreateQrCodeForListeningSession)
 	apiRouter.POST("/sessions", apiController.CreateListeningSession)
 	apiRouter.GET("/users/:userId", apiController.GetUser)
 }

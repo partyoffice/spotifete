@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/gorm"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
+	"image"
 	"image/jpeg"
 	"math/rand"
 	"sync"
@@ -138,14 +139,11 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 	}
 
 	// Generate QR code for this session
-	qrCode, err := qrcode.New(fmt.Sprintf("spotifete://session/%s", joinId), qrcode.Medium)
-	if err != nil {
-		return nil, err
-	}
+	qrCodeImage, err := s.GenerateQrCodeForSession(joinId, false)
 
 	// Encode QR code as jpeg
 	jpegBuffer := new(bytes.Buffer)
-	err = jpeg.Encode(jpegBuffer, qrCode.Image(512), nil)
+	err = jpeg.Encode(jpegBuffer, qrCodeImage, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -492,4 +490,16 @@ func (s listeningSessionService) GetDistinctRequestedTracks(session ListeningSes
 	}
 
 	return
+}
+
+func (listeningSessionService) GenerateQrCodeForSession(joinId string, disableBorder bool) (image.Image, error) {
+	// Generate QR code for this session
+	qrCode, err := qrcode.New(fmt.Sprintf("spotifete://session/%s", joinId), qrcode.Medium)
+	if err != nil {
+		return nil, err
+	}
+
+	qrCode.DisableBorder = disableBorder
+
+	return qrCode.Image(512), nil
 }

@@ -1,13 +1,17 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/base64"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/service"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
+	"image/jpeg"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type ApiController struct{}
@@ -275,4 +279,23 @@ func (ApiController) CloseListeningSession(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
+}
+
+func (ApiController) CreateQrCodeForListeningSession(c *gin.Context) {
+	joinId := c.Param("joinId")
+	disableBorder := strings.EqualFold("true", c.Query("disableBorder"))
+
+	qrCodeImage, err := service.ListeningSessionService().GenerateQrCodeForSession(joinId, disableBorder)
+	if err != nil {
+		sentry.CaptureException(err)
+		logger.Error(err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	jpegBuffer := new(bytes.Buffer)
+	err = jpeg.Encode(jpegBuffer, qrCodeImage, nil)
+	qrCodeImageBase64 := base64.StdEncoding.EncodeToString(jpegBuffer.Bytes())
+
+	c.String(http.StatusOK, qrCodeImageBase64)
 }
