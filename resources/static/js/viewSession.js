@@ -105,7 +105,7 @@ function shareClicked() {
             qrCodeImage.removeAttr('hidden');
         });
 
-        qrCodeImage.attr('src', `/api/v1/sessions/${currentSessionJoinId}/qrcode?size=5120&disableBorder=true`);
+        qrCodeImage.attr('src', `/api/v1/sessions/${currentSessionJoinId}/qrcode?size=512&disableBorder=true`);
         qrCodeLoaded = true;
     }
 }
