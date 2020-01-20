@@ -242,10 +242,10 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	return nil
 }
 
-func (s listeningSessionService) CanRequestSong(session ListeningSession, trackId string) bool {
+func (s listeningSessionService) IsTrackInQueue(session ListeningSession, trackId string) bool {
 	var duplicateRequestsForTrack []SongRequest
 	database.GetConnection().Where("status != 'PLAYED' AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
-	return len(duplicateRequestsForTrack) == 0
+	return len(duplicateRequestsForTrack) > 0
 }
 
 func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) error {
@@ -253,7 +253,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 	client := SpotifyService().GetClientForUser(*sessionOwner)
 
 	// Prevent duplicates
-	if !s.CanRequestSong(session, trackId) {
+	if s.IsTrackInQueue(session, trackId) {
 		return errors.New("that song is already in the queue")
 	}
 
