@@ -271,8 +271,6 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 
 	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(*client, spotify.ID(trackId))
 	if err != nil {
-		logger.Error(err)
-		sentry.CaptureException(err)
 		return err
 	}
 
@@ -347,8 +345,6 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 
 	playlist, err := client.GetPlaylist(spotify.ID(session.SpotifyPlaylist))
 	if err != nil {
-		logger.Error(err)
-		sentry.CaptureException(err)
 		return err
 	}
 
