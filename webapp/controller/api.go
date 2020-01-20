@@ -183,6 +183,11 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 		return
 	}
 
+	if !service.ListeningSessionService().CanRequestSong(*session, requestBody.TrackId) {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "that song is already in the queue"})
+		return
+	}
+
 	err = service.ListeningSessionService().RequestSong(*session, requestBody.TrackId)
 	if err == nil {
 		c.Status(http.StatusNoContent)
