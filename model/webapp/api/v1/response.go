@@ -23,6 +23,11 @@ type SearchTracksResponse struct {
 	Results []dto.TrackMetadataDto `json:"results"`
 }
 
+type SearchPlaylistResponse struct {
+	Query   string                    `json:"query"`
+	Results []dto.PlaylistMetadataDto `json:"results"`
+}
+
 type QueueLastUpdatedResponse struct {
 	QueueLastUpdated time.Time `json:"queueLastUpdated"`
 }

@@ -163,6 +163,56 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	})
 }
 
+func (controller ApiController) SearchSpotifyPlaylist(c *gin.Context) {
+	listeningSessionJoinId := c.Query("session")
+	if len(listeningSessionJoinId) == 0 {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
+		return
+	}
+
+	query := c.Query("query")
+	if len(query) == 0 {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "query not given"})
+		return
+	}
+
+	limitPatameter := c.Query("limit")
+	var limit int
+	if len(limitPatameter) > 0 {
+		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invaid limit"})
+			return
+		}
+
+		limit = int(limitParsed)
+	} else {
+		limit = 10
+	}
+
+	session := service.ListeningSessionService().GetSessionByJoinId(listeningSessionJoinId)
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
+		return
+	}
+
+	user := service.UserService().GetUserById(session.OwnerId)
+	client := service.SpotifyService().GetClientForUser(*user)
+
+	playlists, err := service.SpotifyService().SearchPlaylist(*client, query, limit)
+	if err != nil {
+		sentry.CaptureException(err)
+		logger.Error(err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, SearchPlaylistResponse{
+		Query:   query,
+		Results: playlists,
+	})
+}
+
 func (controller ApiController) RequestSong(c *gin.Context) {
 	requestBody := RequestSongRequest{}
 	err := c.ShouldBindJSON(&requestBody)

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/47-11/spotifete/util"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"strings"
@@ -26,16 +27,7 @@ func (trackMetadata TrackMetadata) SetMetadata(spotifyTrack spotify.FullTrack) T
 	}
 
 	trackMetadata.ArtistName = strings.Join(artistNames, ", ")
-
-	// Find image with lowest quality
-	smallestSize := -1
-	for _, image := range spotifyTrack.Album.Images {
-		currentImageSize := image.Width * image.Height
-		if smallestSize < 0 || currentImageSize < smallestSize {
-			smallestSize = currentImageSize
-			trackMetadata.AlbumImageThumbnailUrl = image.URL
-		}
-	}
+	trackMetadata.AlbumImageThumbnailUrl = util.FindSmallestImage(spotifyTrack.Album.Images).URL
 
 	return trackMetadata
 }
