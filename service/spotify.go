@@ -153,11 +153,22 @@ func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, trackId 
 }
 
 func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackMetadata {
-	var foundTracks = []TrackMetadata{}
+	var foundTracks []TrackMetadata
 	database.GetConnection().Where(TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
 
 	if len(foundTracks) > 0 {
 		return &foundTracks[0]
+	} else {
+		return nil
+	}
+}
+
+func (s spotifyService) GetPlaylistMetadataBySpotifyPlaylistId(playlistId string) *PlaylistMetadata {
+	var foundPlaylists []PlaylistMetadata
+	database.GetConnection().Where(PlaylistMetadata{SpotifyPlaylistId: playlistId}).Find(&foundPlaylists)
+
+	if len(foundPlaylists) > 0 {
+		return &foundPlaylists[0]
 	} else {
 		return nil
 	}

@@ -438,14 +438,19 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 		result.Owner = UserService().CreateDto(*owner, false)
 		result.QueuePlaylistId = listeningSession.QueuePlaylist
 
-		currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(listeningSession)
-		upNextRequest := s.GetUpNextRequest(listeningSession)
+		if listeningSession.FallbackPlaylist != nil {
+			fallbackPlaylist := SpotifyService().GetPlaylistMetadataBySpotifyPlaylistId(*listeningSession.FallbackPlaylist)
+			fallbackPlaylistDto := dto.PlaylistMetadataDto{}.FromDatabaseModel(*fallbackPlaylist)
+			result.FallbackPlaylist = &fallbackPlaylistDto
+		}
 
+		currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(listeningSession)
 		if currentlyPlayingRequest != nil {
 			currentlyPlayingRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataBySpotifyTrackId(currentlyPlayingRequest.SpotifyTrackId))
 			result.CurrentlyPlaying = &currentlyPlayingRequestTrack
 		}
 
+		upNextRequest := s.GetUpNextRequest(listeningSession)
 		if upNextRequest != nil {
 			upNextRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*SpotifyService().GetTrackMetadataBySpotifyTrackId(upNextRequest.SpotifyTrackId))
 			result.UpNext = &upNextRequestTrack
