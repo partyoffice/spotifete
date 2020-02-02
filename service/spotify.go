@@ -127,7 +127,7 @@ func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limi
 	for _, playlist := range result.Playlists.Playlists {
 		resultDtos = append(resultDtos, dto.PlaylistMetadataDto{
 			SpotifyPLaylistId:         playlist.ID.String(),
-			PLaylistName:              playlist.Name,
+			PlaylistName:              playlist.Name,
 			TrackCount:                playlist.Tracks.Total,
 			PlaylistImageThumbnailUrl: util.FindSmallestImage(playlist.Images).URL,
 			CreatedByName:             playlist.Owner.DisplayName,
