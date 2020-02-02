@@ -8,19 +8,29 @@ import (
 
 type PlaylistMetadata struct {
 	gorm.Model
-	SpotifyPlaylistId         string
-	PlaylistName              string
-	TrackCount                uint
-	PlaylistImageThumbnailUrl string
-	CreatedByName             string
+	SpotifyPlaylistId string
+	Name              string
+	TrackCount        uint
+	ImageThumbnailUrl string
+	OwnerName         string
 }
 
-func (playlistMetadata PlaylistMetadata) SetMetadata(spotifyPlaylist spotify.FullPlaylist) PlaylistMetadata {
-	playlistMetadata.SpotifyPlaylistId = spotifyPlaylist.ID.String()
-	playlistMetadata.PlaylistName = spotifyPlaylist.Name
-	playlistMetadata.TrackCount = uint(spotifyPlaylist.Tracks.Total)
-	playlistMetadata.PlaylistImageThumbnailUrl = util.FindSmallestImage(spotifyPlaylist.Images).URL
-	playlistMetadata.CreatedByName = spotifyPlaylist.Owner.DisplayName
+func (playlistMetadata PlaylistMetadata) FromFullPlaylist(fullPlaylist spotify.FullPlaylist) PlaylistMetadata {
+	playlistMetadata.SpotifyPlaylistId = fullPlaylist.ID.String()
+	playlistMetadata.Name = fullPlaylist.Name
+	playlistMetadata.TrackCount = uint(fullPlaylist.Tracks.Total)
+	playlistMetadata.ImageThumbnailUrl = util.FindSmallestImage(fullPlaylist.Images).URL
+	playlistMetadata.OwnerName = fullPlaylist.Owner.DisplayName
+
+	return playlistMetadata
+}
+
+func (playlistMetadata PlaylistMetadata) FromSimplePlaylist(simplePlaylist spotify.SimplePlaylist) PlaylistMetadata {
+	playlistMetadata.SpotifyPlaylistId = simplePlaylist.ID.String()
+	playlistMetadata.Name = simplePlaylist.Name
+	playlistMetadata.TrackCount = uint(simplePlaylist.Tracks.Total)
+	playlistMetadata.ImageThumbnailUrl = util.FindSmallestImage(simplePlaylist.Images).URL
+	playlistMetadata.OwnerName = simplePlaylist.Owner.DisplayName
 
 	return playlistMetadata
 }

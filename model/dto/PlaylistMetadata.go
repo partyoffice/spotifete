@@ -3,19 +3,19 @@ package dto
 import . "github.com/47-11/spotifete/model/database"
 
 type PlaylistMetadataDto struct {
-	SpotifyPLaylistId         string `json:"trackId"`
-	PlaylistName              string `json:"trackName"`
-	TrackCount                uint   `json:"trackCount"`
-	PlaylistImageThumbnailUrl string `json:"playlistImageThumbnailUrl"`
-	CreatedByName             string `json:"createdBy"`
+	SpotifyPLaylistId string `json:"spotifyPlaylistId"`
+	Name              string `json:"name"`
+	TrackCount        uint   `json:"trackCount"`
+	ImageThumbnailUrl string `json:"imageThumbnailUrl"`
+	OwnerName         string `json:"createdBy"`
 }
 
 func (playlistMetadataDto PlaylistMetadataDto) FromDatabaseModel(model PlaylistMetadata) PlaylistMetadataDto {
 	playlistMetadataDto.SpotifyPLaylistId = model.SpotifyPlaylistId
-	playlistMetadataDto.PlaylistName = model.PlaylistName
+	playlistMetadataDto.Name = model.Name
 	playlistMetadataDto.TrackCount = model.TrackCount
-	playlistMetadataDto.PlaylistImageThumbnailUrl = model.PlaylistImageThumbnailUrl
-	playlistMetadataDto.CreatedByName = model.CreatedByName
+	playlistMetadataDto.ImageThumbnailUrl = model.ImageThumbnailUrl
+	playlistMetadataDto.OwnerName = model.OwnerName
 
 	return playlistMetadataDto
 }

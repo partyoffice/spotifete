@@ -5,7 +5,6 @@ import (
 	"github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
-	"github.com/47-11/spotifete/util"
 	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
@@ -125,13 +124,7 @@ func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limi
 
 	var resultDtos []dto.PlaylistMetadataDto
 	for _, playlist := range result.Playlists.Playlists {
-		resultDtos = append(resultDtos, dto.PlaylistMetadataDto{
-			SpotifyPLaylistId:         playlist.ID.String(),
-			PlaylistName:              playlist.Name,
-			TrackCount:                playlist.Tracks.Total,
-			PlaylistImageThumbnailUrl: util.FindSmallestImage(playlist.Images).URL,
-			CreatedByName:             playlist.Owner.DisplayName,
-		})
+		resultDtos = append(resultDtos, dto.PlaylistMetadataDto{}.FromDatabaseModel(PlaylistMetadata{}.FromSimplePlaylist(playlist)))
 	}
 
 	return resultDtos, nil
