@@ -161,12 +161,12 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 
 	// Create database entry
 	listeningSession := ListeningSession{
-		Model:           gorm.Model{},
-		Active:          true,
-		OwnerId:         user.ID,
-		JoinId:          &joinId,
-		SpotifyPlaylist: playlist.ID.String(),
-		Title:           title,
+		Model:         gorm.Model{},
+		Active:        true,
+		OwnerId:       user.ID,
+		JoinId:        &joinId,
+		QueuePlaylist: playlist.ID.String(),
+		Title:         title,
 	}
 
 	database.GetConnection().Create(&listeningSession)
@@ -205,7 +205,7 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	database.GetConnection().Save(&session)
 
 	client := SpotifyService().GetClientForUser(user)
-	err := client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.SpotifyPlaylist))
+	err := client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.QueuePlaylist))
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 	owner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetClientForUser(*owner)
 
-	playlist, err := client.GetPlaylist(spotify.ID(session.SpotifyPlaylist))
+	playlist, err := client.GetPlaylist(spotify.ID(session.QueuePlaylist))
 	if err != nil {
 		return err
 	}
@@ -387,7 +387,7 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
-	playlistId := spotify.ID(session.SpotifyPlaylist)
+	playlistId := spotify.ID(session.QueuePlaylist)
 
 	// Always replace all tracks with only the current one playing first
 	err := client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.SpotifyTrackId))
@@ -436,7 +436,7 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 	if resolveAdditionalInformation {
 		owner := UserService().GetUserById(listeningSession.OwnerId)
 		result.Owner = UserService().CreateDto(*owner, false)
-		result.SpotifyPlaylistId = listeningSession.SpotifyPlaylist
+		result.QueuePlaylistId = listeningSession.QueuePlaylist
 
 		currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(listeningSession)
 		upNextRequest := s.GetUpNextRequest(listeningSession)

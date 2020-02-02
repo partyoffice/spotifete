@@ -13,5 +13,5 @@ type ListeningSessionDto struct {
 	UpNext              *TrackMetadataDto  `json:"upNext"`
 	Queue               []TrackMetadataDto `json:"queue"`
 	QueueLastUpdated    time.Time          `json:"queueLastUpdated"`
-	SpotifyPlaylistId   string             `json:"spotifyPlaylist"`
+	QueuePlaylistId     string             `json:"spotifyPlaylist"`
 }

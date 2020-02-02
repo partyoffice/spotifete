@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-const targetDatabaseVersion = 26
+const targetDatabaseVersion = 27
 
 var connectionUrl string
 var connection *gorm.DB
