@@ -79,6 +79,7 @@ func setupTemplateController(baseRouter *gin.Engine) {
 	baseRouter.POST("/session/new", templateController.NewListeningSessionSubmit)
 	baseRouter.GET("/session/view/:joinId", templateController.ViewSession)
 	baseRouter.POST("/session/view/:joinId/request", templateController.RequestTrack)
+	baseRouter.POST("/session/view/:joinId/fallback", templateController.ChangeFallbackPlaylist)
 	baseRouter.POST("/session/close", templateController.CloseListeningSession)
 	baseRouter.GET("/app", templateController.GetApp)
 	baseRouter.GET("/app/android", templateController.GetAppAndroid)

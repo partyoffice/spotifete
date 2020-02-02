@@ -12,8 +12,11 @@
     <script type="text/javascript" src="/static/typeahead/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/common.js"></script>
     <script type="text/javascript" src="/static/js/viewSession.js"></script>
+    {{ if .user }}{{ if eq .session.Owner.SpotifyId  .user.SpotifyId }}
+    <script type="text/javascript" src="/static/js/viewSession_owner.js"></script>
+    {{ end }}{{ end }}
 </head>
-<body class="bg-dark text-white text-center">
+<body class="bg-dark text-white">
     <input id="currentSessionJoinId" type="hidden" hidden="hidden" value="{{ .session.JoinId }}" />
     <input id="queueLastUpdated" type="hidden" hidden="hidden" value="{{ .queueLastUpdated }}"/>
 
@@ -72,11 +75,29 @@
         </div>
     </nav>
 
-    <h1 class="display-4">Spotifete</h1>
-    <div>
+    <div class="text-center">
+        <h1 class="display-4">Spotifete</h1>
         <h3>{{ .session.Title }}</h3>
         <span class="lead">You can join using the code {{ .session.JoinIdHumanReadable }}</span>
-        <button type="button" title="show qr code" class="btn btn-primary" onclick="$('#shareSessionModal').modal();"><span class="fas fa-share-square"></span></button>
+        <button type="button" title="show qr code" class="btn btn-primary" data-toggle="modal" data-target="#shareSessionModal">
+            <span class="fas fa-share-square"></span>
+        </button>
+        <div id="shareSessionModal" class="modal text-dark" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ .session.Title }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>You can join using the code <strong>{{ .session.JoinIdHumanReadable }}</strong> or by scanning the QR Code with the App:</p>
+                        <img id="qrCodeImage" src="/api/v1/sessions/{{ .session.JoinId }}/qrcode?size=512&disableBorder=true" alt="Scan this QR code with your phone to join this session." />
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <br/>
@@ -92,8 +113,8 @@
 
     <div class="jumbotron jumbotron-fluid bg-info text-center text-dark">
         <div class="container">
-        <h4>Add songs to the queue!</h4>
-        <input id="trackSearchInput" type="search" class="typeahead form-control form-control-lg" placeholder="Search tracks" autofocus="autofocus" autocomplete="off" spellcheck="false">
+            <h4>Add songs to the queue!</h4>
+            <input id="trackSearchInput" type="search" class="typeahead form-control form-control-lg" placeholder="Search tracks" autofocus="autofocus" autocomplete="off" spellcheck="false">
         </div>
     </div>
 
@@ -164,15 +185,17 @@
         </tbody>
     </table>
 
+    <form id="submitRequestForm" action="/session/view/{{ .session.JoinId }}/request" method="post">
+        <input id="requestTrackIdInput" name="trackId" type="hidden" hidden="hidden" />
+    </form>
+
     <!-- TODO: Find out if there is a way to do this check properly -->
     {{ if .user }}
         {{ if eq .session.Owner.SpotifyId  .user.SpotifyId }}
-        <br/>
-        <!-- Button trigger modal -->
+        <!-- Close session -->
         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#closeSessionModal">
             Close Session
         </button>
-        <!-- Modal -->
         <div class="modal fade text-dark" id="closeSessionModal" tabindex="-1" role="dialog" aria-labelledby="Close Session" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -193,28 +216,14 @@
             </div>
         </div>
 
+        <!-- Change fallback playlist -->
+        <div class="text-dark">
+            <input id="playlistSearchInput" type="search" class="typeahead form-control" placeholder="Search playlists" autocomplete="off" spellcheck="false">
+        </div>
+        <form id="changeFallbackPlaylistForm" action="/session/view/{{ .session.JoinId }}/fallback" method="post">
+            <input id="changeFallbackPlaylistIdInput" name="playlistId" type="hidden" hidden="hidden" />
+        </form>
         {{ end }}
     {{ end }}
-
-    <div id="shareSessionModal" class="modal text-dark" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ .session.Title }}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>You can join using the code <strong>{{ .session.JoinIdHumanReadable }}</strong> or by scanning the QR Code with the App:</p>
-                    <img id="qrCodeImage" src="/api/v1/sessions/{{ .session.JoinId }}/qrcode?size=512&disableBorder=true" alt="Scan this QR code with your phone to join this session." />
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <form id="submitRequestForm" action="/session/view/{{ .session.JoinId }}/request" method="post">
-        <input id="requestTrackIdInput" name="trackId" type="hidden" hidden="hidden" />
-    </form>
 </body>
 </html>

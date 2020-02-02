@@ -125,6 +125,31 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 	}
 }
 
+func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := service.ListeningSessionService().GetSessionByJoinId(joinId)
+	if session == nil {
+		c.String(http.StatusNotFound, "session not found")
+		return
+	}
+
+	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	if loginSession == nil || loginSession.UserId == nil {
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/spotify/login?redirectTo=/session/view/%s", joinId))
+		return
+	}
+
+	user := service.UserService().GetUserById(*loginSession.UserId)
+
+	playlistId := c.PostForm("playlistId")
+	err := service.ListeningSessionService().ChangeFallbackPlaylist(*session, *user, playlistId)
+	if err == nil {
+		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
+	} else {
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s/?displayError=%s", joinId, err.Error()))
+	}
+}
+
 func (TemplateController) CloseListeningSession(c *gin.Context) {
 	joinId := c.PostForm("joinId")
 	if len(joinId) == 0 {

@@ -1,10 +1,4 @@
-let currentSessionJoinId;
-let queueLastUpdated;
-
 $(document).ready(function () {
-    currentSessionJoinId = $('#currentSessionJoinId').val();
-    queueLastUpdated = $('#queueLastUpdated').val();
-
     pollQueueLastUpdated();
 
     // Constructing the suggestion engine
@@ -12,7 +6,7 @@ $(document).ready(function () {
         datumTokenizer: Bloodhound.tokenizers.whitespace,
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: `/api/v1/spotify/search/track?session=${currentSessionJoinId}&limit=50&query=%%query%%`,
+            url: `/api/v1/spotify/search/playlist?session=${$('#currentSessionJoinId').val()}&limit=50&query=%%query%%`,
             wildcard: '%%query%%',
             transform: function (response) {
                 return response.results;
@@ -20,9 +14,8 @@ $(document).ready(function () {
         }
     });
 
-    const trackSearchInput = $('#trackSearchInput');
     // Initializing the typeahead
-    trackSearchInput.typeahead({
+    $('#playlistSearchInput').typeahead({
             hint: false,
             highlight: true,
             minLength: 2,
@@ -43,12 +36,12 @@ $(document).ready(function () {
             },
             templates: {
                 suggestion: function (suggestionData) {
-                    return `<div class="clickable" onclick="requestTrack('${suggestionData.trackId}')">
+                    return `<div class="clickable" onclick="changeFallbackPlaylist('${suggestionData.spotifyPlaylistId}')">
                                 <div class="media">
-                                    <img src="${suggestionData.albumImageThumbnailUrl}" class="mr-3" alt="...">
+                                    <img src="${suggestionData.imageThumbnailUrl}" class="mr-3" alt="...">
                                     <div class="media-body">
-                                        <h5 class="mt-0">${suggestionData.trackName}</h5>
-                                        <p>${suggestionData.artistName} - ${suggestionData.albumName}</p>
+                                        <h5 class="mt-0">${suggestionData.name}</h5>
+                                        <p>${suggestionData.createdBy} - ${suggestionData.trackCount} tracks</p>
                                     </div>
                                 </div>
                             </div>`;
@@ -64,30 +57,9 @@ $(document).ready(function () {
                 }
             }
         });
-
-    // After initializing, focus the input again
-    trackSearchInput.focus();
 });
 
-function requestTrack(trackId) {
-    $('#requestTrackIdInput').val(trackId);
-    $('#submitRequestForm').submit();
-}
-
-function pollQueueLastUpdated() {
-    $.ajax({
-        url: `/api/v1/sessions/${currentSessionJoinId}/queuelastupdated`
-    }).done(function(data) {
-        if (Date.parse(data.queueLastUpdated) > Date.parse(queueLastUpdated)) {
-            location.reload();
-        } else {
-            setTimeout(function(){
-                pollQueueLastUpdated();
-            }, 2000);
-        }
-    }).fail(function () {
-        setTimeout(function(){
-            pollQueueLastUpdated();
-        }, 2000);
-    });
+function changeFallbackPlaylist(playlistId) {
+    $('#changeFallbackPlaylistIdInput').val(playlistId);
+    $('#changeFallbackPlaylistForm').submit();
 }

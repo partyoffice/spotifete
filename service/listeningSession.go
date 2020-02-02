@@ -509,3 +509,20 @@ func (listeningSessionService) GenerateQrCodeForSession(joinId string, disableBo
 	qrCode.DisableBorder = disableBorder
 	return qrCode, nil
 }
+
+func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession, user User, playlistId string) error {
+	if session.OwnerId != user.ID {
+		return errors.New("only the session owner can change the fallback playlist")
+	}
+
+	client := SpotifyService().GetClientForUser(user)
+	playlistMetadata, err := SpotifyService().AddOrUpdatePlaylistMetadata(*client, spotify.ID(playlistId))
+	if err != nil {
+		return err
+	}
+
+	session.FallbackPlaylist = &playlistMetadata.SpotifyPlaylistId
+	database.GetConnection().Save(session)
+
+	return nil
+}

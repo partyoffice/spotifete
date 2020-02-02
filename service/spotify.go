@@ -163,6 +163,28 @@ func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackM
 	}
 }
 
+func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (PlaylistMetadata, error) {
+	spotifyPlaylist, err := client.GetPlaylist(playlistId)
+	if err != nil {
+		return PlaylistMetadata{}, err
+	}
+
+	knownPlaylistMetadata := s.GetPlaylistMetadataBySpotifyPlaylistId(playlistId.String())
+	if knownPlaylistMetadata != nil {
+		updatedPlaylistMetadata := knownPlaylistMetadata.FromFullPlaylist(*spotifyPlaylist)
+
+		database.GetConnection().Save(&updatedPlaylistMetadata)
+
+		return updatedPlaylistMetadata, nil
+	} else {
+		newPlaylistMetadata := PlaylistMetadata{}.FromFullPlaylist(*spotifyPlaylist)
+
+		database.GetConnection().Create(&newPlaylistMetadata)
+
+		return newPlaylistMetadata, nil
+	}
+}
+
 func (s spotifyService) GetPlaylistMetadataBySpotifyPlaylistId(playlistId string) *PlaylistMetadata {
 	var foundPlaylists []PlaylistMetadata
 	database.GetConnection().Where(PlaylistMetadata{SpotifyPlaylistId: playlistId}).Find(&foundPlaylists)
