@@ -354,6 +354,7 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 		return "", err
 	}
 
+	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
 	for _, track := range playlistTracks.Tracks {
 		trackId := track.Track.ID.String()
 		var trackPlays int
