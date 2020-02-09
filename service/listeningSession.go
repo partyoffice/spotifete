@@ -311,9 +311,17 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 
 	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
 
-	if currentlyPlayingRequest == nil {
-		// No requests present
-		// TODO: A this point we could use a fallback playlist or replay previously played tracks from this session
+	if session.FallbackPlaylist != nil && upNextRequest == nil {
+		// No requests present and a fallback playlist is present
+		fallbackTrackId, err := s.findNextUnplayedFallbackPlaylistTrack(session, *client)
+		if err != nil {
+			return err
+		}
+
+		err = s.RequestSong(session, fallbackTrackId)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -334,6 +342,36 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	}
 
 	return s.UpdateSessionPlaylistIfNeccessary(session)
+}
+
+func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrack(session ListeningSession, client spotify.Client) (nextFallbackTrackId string, err error) {
+	return s.findNextUnplayedFallbackPlaylistTrackOpt(session, client, 0, 0)
+}
+
+func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(session ListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, err error) {
+	playlistTracks, err := client.GetPlaylistTracksOpt(spotify.ID(*session.FallbackPlaylist), &spotify.Options{Offset: &pageOffset}, "")
+	if err != nil {
+		return "", err
+	}
+
+	for _, track := range playlistTracks.Tracks {
+		trackId := track.Track.ID.String()
+		var trackPlays int
+		database.GetConnection().Model(SongRequest{}).Where(SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
+
+		if uint(trackPlays) <= maximumPlays {
+			return trackId, nil
+		}
+	}
+
+	// Nothing found :/
+	if len(playlistTracks.Tracks) < playlistTracks.Limit {
+		// Checked all playlist tracks -> increase maximum plays and start over
+		return s.findNextUnplayedFallbackPlaylistTrackOpt(session, client, maximumPlays+1, 0)
+	} else {
+		// There might still be tracks left that we did not check yet -> increase offset
+		return s.findNextUnplayedFallbackPlaylistTrackOpt(session, client, maximumPlays, playlistTracks.Offset+playlistTracks.Limit)
+	}
 }
 
 func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session ListeningSession) error {
