@@ -6,7 +6,7 @@ require (
 	github.com/getsentry/sentry-go v0.5.1
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-playground/universal-translator v0.17.0 // indirect
-	github.com/golang-migrate/migrate/v4 v4.8.0
+	github.com/golang-migrate/migrate/v4 v4.9.1
 	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/google/logger v1.0.1
 	github.com/jinzhu/gorm v1.9.12
