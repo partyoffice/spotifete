@@ -12,7 +12,7 @@ import (
 )
 
 func Initialize() {
-	if config.GetConfig().GetBool("spotifete.releaseMode") {
+	if config.Get().SpotifeteConfiguration.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)

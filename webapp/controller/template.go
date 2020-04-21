@@ -181,9 +181,19 @@ func (TemplateController) GetApp(c *gin.Context) {
 }
 
 func (TemplateController) GetAppAndroid(c *gin.Context) {
-	c.Redirect(http.StatusTemporaryRedirect, config.GetConfig().GetString("spotifete.app.androidUrl"))
+	androidUrl := config.Get().SpotifeteConfiguration.AppConfiguration.AndroidUrl
+	if androidUrl == nil {
+		c.String(http.StatusNotImplemented, "Sorry, the android app is not available!")
+	} else {
+		c.Redirect(http.StatusTemporaryRedirect, *androidUrl)
+	}
 }
 
 func (TemplateController) GetAppIOS(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "Sorry, the iOS app is not available yet!")
+	iosUrl := config.Get().SpotifeteConfiguration.AppConfiguration.IOsUrl
+	if iosUrl == nil {
+		c.String(http.StatusNotImplemented, "Sorry, the iOS app is not available!")
+	} else {
+		c.Redirect(http.StatusTemporaryRedirect, *iosUrl)
+	}
 }

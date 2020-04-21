@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"github.com/47-11/spotifete/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -35,15 +34,7 @@ func GetConnection() *gorm.DB {
 }
 
 func initialize() {
-	c := config.GetConfig()
-
-	disableSsl := ""
-	if c.GetBool("database.disableSsl") {
-		disableSsl = " sslmode=disable"
-	}
-	connectionUrl = fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s %s", c.GetString("database.host"), c.GetString("database.port"), c.GetString("database.name"), c.GetString("database.user"), c.GetString("database.password"), disableSsl)
-
-	db, err := gorm.Open("postgres", connectionUrl)
+	db, err := gorm.Open("postgres", config.Get().DatabaseConfiguration.GetConnectionUrl())
 	if err != nil {
 		logger.Fatalf("failed to connect to database: %s", err.Error())
 	}

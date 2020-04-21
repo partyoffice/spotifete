@@ -21,21 +21,21 @@ func main() {
 	defer logger.Init("spotifete", true, false, logFile).Close()
 	logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	releaseMode := config.GetConfig().GetBool("spotifete.releaseMode")
-	if releaseMode {
+	c := config.Get()
+	if c.SpotifeteConfiguration.ReleaseMode {
 		logger.Info("Starting SpotiFete in release mode...")
 	} else {
 		logger.Warning("Starting SpotiFete in debug mode! To enable release mode, set server.releaseMode to true in config file.")
 	}
 
 	// Initialize sentry
-	if releaseMode && config.GetConfig().IsSet("sentry.dsn") {
+	if c.SpotifeteConfiguration.ReleaseMode && c.SentryConfiguration.Dsn != nil {
 		logger.Info("Initializing sentry...")
 
 		err := sentry.Init(sentry.ClientOptions{
-			Dsn:              config.GetConfig().GetString("sentry.dsn"),
+			Dsn:              *c.SentryConfiguration.Dsn,
 			AttachStacktrace: true,
-			IgnoreErrors:     []string{".*Refresh token revoked.*"},
+			IgnoreErrors:     []string{".*Refresh token revoked.*"}, // TODO:
 		})
 
 		if err != nil {
