@@ -47,9 +47,8 @@ func main() {
 		logger.Warning("Skipping sentry initialization!")
 	}
 
-	// Initialize database connection
-	database.GetConnection()
-	defer database.Shutdown()
+	// Close database connection on shutdown
+	defer database.CloseConnection()
 
 	// Start polling sessions
 	go service.ListeningSessionService().PollSessions()

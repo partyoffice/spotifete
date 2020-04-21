@@ -14,27 +14,27 @@ import (
 
 const targetDatabaseVersion = 30
 
-var connectionUrl string
 var connection *gorm.DB
 var once sync.Once
 
-func Shutdown() {
+func GetConnection() *gorm.DB {
+	once.Do(func() {
+		connection = initialize()
+	})
+
+	return connection
+}
+
+func CloseConnection() {
+	logger.Info("Closing db connection")
 	if connection != nil {
 		err := connection.Close()
 		logger.Error(err)
 	}
 }
 
-func GetConnection() *gorm.DB {
-	once.Do(func() {
-		initialize()
-	})
-
-	return connection
-}
-
-func initialize() {
-	db, err := gorm.Open("postgres", config.Get().DatabaseConfiguration.GetConnectionUrl())
+func initialize() *gorm.DB {
+	db, err := gorm.Open("postgres", config.Get().DatabaseConfiguration.BuildConnectionUrl())
 	if err != nil {
 		logger.Fatalf("failed to connect to database: %s", err.Error())
 	}
@@ -50,7 +50,7 @@ func initialize() {
 		"file://resources/migrations/",
 		"postgres", driver)
 	if err != nil {
-		logger.Fatalf("could not prepare database migration: " + err.Error())
+		logger.Fatalf("could not prepare database migration: %s", err.Error())
 	}
 
 	version, _, _ := m.Version()
@@ -66,5 +66,5 @@ func initialize() {
 		logger.Infof("Database is up to date! (Version %d)", version)
 	}
 
-	connection = db
+	return db
 }
