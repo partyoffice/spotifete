@@ -67,7 +67,8 @@ func getRequiredString(viperConfiguration *viper.Viper, key string) string {
 	if viperConfiguration.IsSet(key) {
 		return viperConfiguration.GetString(key)
 	} else {
-		panic(fmt.Sprintf("Required string configuration parameter %s is not present.", key))
+		logger.Fatalf("Required string configuration parameter %s is not present.", key)
+		panic("Incomplete configuration")
 	}
 }
 
@@ -84,7 +85,8 @@ func getRequiredInt(viperConfiguration *viper.Viper, key string) int {
 	if viperConfiguration.IsSet(key) {
 		return viperConfiguration.GetInt(key)
 	} else {
-		panic(fmt.Sprintf("Required int configuration parameter %s is not present.", key))
+		logger.Fatalf("Required int configuration parameter %s is not present.", key)
+		panic("Incomplete configuration")
 	}
 }
 
@@ -141,7 +143,7 @@ func (c databaseConfiguration) read(viperConfiguration *viper.Viper) databaseCon
 	return c
 }
 
-func (c databaseConfiguration) GetConnectionUrl() string {
+func (c databaseConfiguration) BuildConnectionUrl() string {
 	connectionUrl := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s", c.Host, c.Port, c.Name, c.User, c.Password)
 	if c.DisableSsl {
 		connectionUrl += " sslmode=disable"
