@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/getsentry/sentry-go v0.6.0
+	github.com/getsentry/sentry-go v0.6.1
 	github.com/gin-gonic/gin v1.6.2
 	github.com/golang-migrate/migrate/v4 v4.10.0
 	github.com/golang/protobuf v1.4.0 // indirect
