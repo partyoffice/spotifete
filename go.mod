@@ -10,7 +10,7 @@ require (
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/google/logger v1.1.0
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
-	github.com/jinzhu/gorm v1.9.12
+	github.com/jinzhu/gorm v1.9.13
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
