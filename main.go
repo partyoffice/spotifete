@@ -62,7 +62,7 @@ func setupSentry() {
 	err := sentry.Init(configuration.SentryConfiguration.GetSentryClientOptions())
 
 	if err != nil {
-		logger.Fatalf("Sentry initialization failed: " + err.Error())
+		logger.Fatalf("Sentry initialization failed: %s" + err.Error())
 	}
 }
 
