@@ -63,51 +63,6 @@ func Get() Configuration {
 	return instance
 }
 
-func getRequiredString(viperConfiguration *viper.Viper, key string) string {
-	if viperConfiguration.IsSet(key) {
-		return viperConfiguration.GetString(key)
-	} else {
-		logger.Fatalf("Required string configuration parameter %s is not present.", key)
-		panic("Incomplete configuration")
-	}
-}
-
-func getOptionalString(viperConfiguration *viper.Viper, key string) *string {
-	if viperConfiguration.IsSet(key) {
-		value := viperConfiguration.GetString(key)
-		return &value
-	} else {
-		return nil
-	}
-}
-
-func getRequiredInt(viperConfiguration *viper.Viper, key string) int {
-	if viperConfiguration.IsSet(key) {
-		return viperConfiguration.GetInt(key)
-	} else {
-		logger.Fatalf("Required int configuration parameter %s is not present.", key)
-		panic("Incomplete configuration")
-	}
-}
-
-func getOptionalInt(viperConfiguration *viper.Viper, key string) *int {
-	if viperConfiguration.IsSet(key) {
-		value := viperConfiguration.GetInt(key)
-		return &value
-	} else {
-		return nil
-	}
-}
-
-func getBool(viperConfiguration *viper.Viper, key string) bool {
-	if viperConfiguration.IsSet(key) {
-		return viperConfiguration.GetBool(key)
-	} else {
-		logger.Warningf("Bool configuration parameter %s not present, falling back to default false. Explicitly set a value to disable this warning.", key)
-		return false
-	}
-}
-
 func (c Configuration) read(viperConfiguration *viper.Viper) Configuration {
 	c.SpotifeteConfiguration = spotifeteConfiguration{}.read(viperConfiguration)
 	c.DatabaseConfiguration = databaseConfiguration{}.read(viperConfiguration)
@@ -163,4 +118,50 @@ func (c sentryConfiguration) read(viperConfiguration *viper.Viper) sentryConfigu
 	c.Dsn = getOptionalString(viperConfiguration, "sentry.dsn")
 
 	return c
+}
+
+
+func getRequiredString(viperConfiguration *viper.Viper, key string) string {
+	if viperConfiguration.IsSet(key) {
+		return viperConfiguration.GetString(key)
+	} else {
+		logger.Fatalf("Required string configuration parameter %s is not present.", key)
+		panic("Incomplete configuration")
+	}
+}
+
+func getOptionalString(viperConfiguration *viper.Viper, key string) *string {
+	if viperConfiguration.IsSet(key) {
+		value := viperConfiguration.GetString(key)
+		return &value
+	} else {
+		return nil
+	}
+}
+
+func getRequiredInt(viperConfiguration *viper.Viper, key string) int {
+	if viperConfiguration.IsSet(key) {
+		return viperConfiguration.GetInt(key)
+	} else {
+		logger.Fatalf("Required int configuration parameter %s is not present.", key)
+		panic("Incomplete configuration")
+	}
+}
+
+func getOptionalInt(viperConfiguration *viper.Viper, key string) *int {
+	if viperConfiguration.IsSet(key) {
+		value := viperConfiguration.GetInt(key)
+		return &value
+	} else {
+		return nil
+	}
+}
+
+func getBool(viperConfiguration *viper.Viper, key string) bool {
+	if viperConfiguration.IsSet(key) {
+		return viperConfiguration.GetBool(key)
+	} else {
+		logger.Warningf("Bool configuration parameter %s not present, falling back to default false. Explicitly set a value to disable this warning.", key)
+		return false
+	}
 }
