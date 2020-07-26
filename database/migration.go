@@ -39,8 +39,10 @@ func getDatabaseDriver(db *gorm.DB) database.Driver {
 }
 
 func runMigrationIfNecessary(migration *migrate.Migrate) {
-	version, _, _ := migration.Version()
-	if version == targetDatabaseVersion {
+	version, dirty, _ := migration.Version()
+	if dirty {
+		logger.Fatal("Could not run migration. Current database is dirty.")
+	} else if version == targetDatabaseVersion {
 		logger.Infof("Database is up to date! (Version %d)", version)
 	} else {
 		logger.Infof("Database version is %d / target version is %d. Migrating!\n", version, targetDatabaseVersion)
