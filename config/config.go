@@ -48,19 +48,33 @@ var once sync.Once
 
 func Get() Configuration {
 	once.Do(func() {
-		viperConfig := viper.New()
-		viperConfig.SetConfigType("yaml")
-		viperConfig.SetConfigName("spotifete-config")
-		viperConfig.AddConfigPath("/etc/spotifete")
-		viperConfig.AddConfigPath(".")
-		err := viperConfig.ReadInConfig()
-		if err != nil {
-			logger.Fatal("Could not read config file.")
-		}
-
-		instance = Configuration{}.read(viperConfig)
+		instance = readConfiguration()
 	})
 	return instance
+}
+
+func readConfiguration() Configuration {
+	viperConfiguration := readViperConfiguration()
+	return Configuration{}.read(viperConfiguration)
+}
+
+func readViperConfiguration() *viper.Viper {
+	viperConfiguration := createViperConfiguration()
+	err := viperConfiguration.ReadInConfig()
+	if err != nil {
+		logger.Fatal("Could not read config file.")
+	}
+
+	return viperConfiguration
+}
+
+func createViperConfiguration() *viper.Viper {
+	viperConfiguration := viper.New()
+	viperConfiguration.SetConfigType("yaml")
+	viperConfiguration.SetConfigName("spotifete-config")
+	viperConfiguration.AddConfigPath("/etc/spotifete")
+	viperConfiguration.AddConfigPath(".")
+	return viperConfiguration;
 }
 
 func (c Configuration) read(viperConfiguration *viper.Viper) Configuration {
