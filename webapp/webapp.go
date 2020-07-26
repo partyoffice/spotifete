@@ -1,6 +1,7 @@
 package webapp
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/config"
 	. "github.com/47-11/spotifete/webapp/controller"
 	"github.com/getsentry/sentry-go"
@@ -12,9 +13,12 @@ import (
 )
 
 func Initialize() {
-	if config.Get().SpotifeteConfiguration.ReleaseMode {
+	c := config.Get()
+	if c.SpotifeteConfiguration.ReleaseMode {
+		logger.Infof("Running in release mode on port %d", c.SpotifeteConfiguration.Port)
 		gin.SetMode(gin.ReleaseMode)
 	} else {
+		logger.Infof("Running in debug mode on port %d", c.SpotifeteConfiguration.Port)
 		gin.SetMode(gin.DebugMode)
 	}
 
@@ -38,8 +42,7 @@ func Initialize() {
 	setupTemplateController(baseRouter)
 	setupSpotifyController(baseRouter)
 
-	// Run on port 8410
-	err = baseRouter.Run(":8410")
+	err = baseRouter.Run(fmt.Sprintf(":%d", c.SpotifeteConfiguration.Port))
 
 	if err != nil {
 		sentry.CaptureException(err)
