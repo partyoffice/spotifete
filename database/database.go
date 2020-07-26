@@ -10,8 +10,6 @@ import (
 	"sync"
 )
 
-const targetDatabaseVersion = 30
-
 var connection *gorm.DB
 var once sync.Once
 

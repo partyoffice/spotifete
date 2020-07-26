@@ -8,6 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+const targetDatabaseVersion = 30
+
 func migrateIfNecessary(db *gorm.DB) {
 	logger.Info("Connection aquired. Checking database version")
 	migration := prepareMigration(db)
