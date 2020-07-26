@@ -44,7 +44,7 @@ func createViperConfiguration() *viper.Viper {
 	viperConfiguration.SetConfigName("spotifete-config")
 	viperConfiguration.AddConfigPath("/etc/spotifete")
 	viperConfiguration.AddConfigPath(".")
-	return viperConfiguration;
+	return viperConfiguration
 }
 
 func (c Configuration) read(viperConfiguration *viper.Viper) Configuration {
