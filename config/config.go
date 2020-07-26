@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/google/logger"
 	"github.com/spf13/viper"
 	"sync"
@@ -12,35 +11,6 @@ type Configuration struct {
 	DatabaseConfiguration  databaseConfiguration
 	SpotifyConfiguration   spotifyConfiguration
 	SentryConfiguration    sentryConfiguration
-}
-
-type spotifeteConfiguration struct {
-	BaseUrl          string
-	ReleaseMode      bool
-	AppConfiguration appConfiguration
-}
-
-type appConfiguration struct {
-	AndroidUrl *string
-	IOsUrl     *string
-}
-
-type databaseConfiguration struct {
-	Host       string
-	Port       int
-	Name       string
-	User       string
-	Password   string
-	DisableSsl bool
-}
-
-type spotifyConfiguration struct {
-	Id     string
-	Secret string
-}
-
-type sentryConfiguration struct {
-	Dsn *string
 }
 
 var instance Configuration
@@ -85,55 +55,6 @@ func (c Configuration) read(viperConfiguration *viper.Viper) Configuration {
 
 	return c
 }
-
-func (c spotifeteConfiguration) read(viperConfiguration *viper.Viper) spotifeteConfiguration {
-	c.BaseUrl = getRequiredString(viperConfiguration, "spotifete.baseUrl")
-	c.ReleaseMode = getBool(viperConfiguration, "spotifete.releaseMode")
-	c.AppConfiguration = appConfiguration{}.read(viperConfiguration)
-
-	return c
-}
-
-func (c appConfiguration) read(viperConfiguration *viper.Viper) appConfiguration {
-	c.AndroidUrl = getOptionalString(viperConfiguration, "spotifete.app.androidUrl")
-	c.IOsUrl = getOptionalString(viperConfiguration, "spotifete.app.iosUrl")
-
-	return c
-}
-
-func (c databaseConfiguration) read(viperConfiguration *viper.Viper) databaseConfiguration {
-	c.Host = getRequiredString(viperConfiguration, "database.host")
-	c.Port = getRequiredInt(viperConfiguration, "database.port")
-	c.Name = getRequiredString(viperConfiguration, "database.name")
-	c.User = getRequiredString(viperConfiguration, "database.user")
-	c.Password = getRequiredString(viperConfiguration, "database.password")
-	c.DisableSsl = getBool(viperConfiguration, "database.disableSsl")
-
-	return c
-}
-
-func (c databaseConfiguration) BuildConnectionUrl() string {
-	connectionUrl := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s", c.Host, c.Port, c.Name, c.User, c.Password)
-	if c.DisableSsl {
-		connectionUrl += " sslmode=disable"
-	}
-
-	return connectionUrl
-}
-
-func (c spotifyConfiguration) read(viperConfiguration *viper.Viper) spotifyConfiguration {
-	c.Id = getRequiredString(viperConfiguration, "spotify.id")
-	c.Secret = getRequiredString(viperConfiguration, "spotify.secret")
-
-	return c
-}
-
-func (c sentryConfiguration) read(viperConfiguration *viper.Viper) sentryConfiguration {
-	c.Dsn = getOptionalString(viperConfiguration, "sentry.dsn")
-
-	return c
-}
-
 
 func getRequiredString(viperConfiguration *viper.Viper, key string) string {
 	if viperConfiguration.IsSet(key) {
