@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/service"
@@ -11,33 +12,34 @@ import (
 	"os"
 )
 
-func main() {
-	setupLogger()
-	setupConfiguration()
-	setupSentryIfNeccessary()
-	setupDatabase()
+var logFile *os.File
 
-	go service.ListeningSessionService().PollSessions()
-	webapp.Initialize()
+func main() {
+	defer shutdown()
+	setup()
+	run()
+}
+
+func setup() {
+	setupLogger()
+	config.Get()
+	setupSentryIfNeccessary()
+	database.GetConnection()
 }
 
 func setupLogger() {
-	logFile, err := os.OpenFile("spotifete.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
-	if err != nil {
-		logger.Fatalf("Failed to open log file: %v", err)
-	}
-	defer logFile.Close()
-	defer logger.Init("spotifete", true, false, logFile).Close()
+	logFile = openLogFile()
+	logger.Init("spotifete", true, false, logFile)
 	logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
-func setupConfiguration() {
-	c := config.Get()
-	if c.SpotifeteConfiguration.ReleaseMode {
-		logger.Info("Starting SpotiFete in release mode...")
-	} else {
-		logger.Warning("Starting SpotiFete in debug mode! To enable release mode, set server.releaseMode to true in config file.")
+func openLogFile() *os.File {
+	openFile, err := os.OpenFile("spotifete.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	if err != nil {
+		logger.Fatalf("Failed to open log file: %v", err)
 	}
+
+	return openFile
 }
 
 func setupSentryIfNeccessary() {
@@ -64,10 +66,19 @@ func setupSentry() {
 	}
 }
 
-func setupDatabase() {
-	// We want to run migrations etc. before starting the webapp
-	database.GetConnection()
+func run() {
+	go service.ListeningSessionService().PollSessions()
+	webapp.Initialize()
+}
 
-	// Close database connection on shutdown
-	defer database.CloseConnection()
+func shutdown() {
+	database.CloseConnection()
+	closeLogFile()
+}
+
+func closeLogFile() {
+	err := logFile.Close()
+	if err != nil {
+		panic(fmt.Sprintf("Could not close log file: ", err.Error()))
+	}
 }
