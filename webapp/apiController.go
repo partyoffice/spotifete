@@ -46,7 +46,7 @@ func (ApiController) GetSession(c *gin.Context) {
 	}
 }
 
-func (ApiController) GetUser(c *gin.Context) {
+func (controller ApiController) GetUser(c *gin.Context) {
 	userId := c.Param("userId")
 
 	if userId == "current" {
