@@ -13,6 +13,7 @@ import (
 )
 
 var logFile *os.File
+var spotifeteWebapp webapp.SpotifeteWebapp
 
 func main() {
 	defer shutdown()
@@ -25,6 +26,7 @@ func setup() {
 	config.Get()
 	setupSentryIfNeccessary()
 	database.GetConnection()
+	setupWebapp()
 }
 
 func setupLogger() {
@@ -66,14 +68,20 @@ func setupSentry() {
 	}
 }
 
+func setupWebapp() {
+	spotifeteWebapp = webapp.SpotifeteWebapp{}
+	spotifeteWebapp.Setup()
+}
+
 func run() {
 	go service.ListeningSessionService().PollSessions()
-	webapp.Initialize()
+	spotifeteWebapp.Run()
 }
 
 func shutdown() {
+	defer closeLogFile()
+	spotifeteWebapp.Shutdown()
 	database.CloseConnection()
-	closeLogFile()
 }
 
 func closeLogFile() {

@@ -1,4 +1,4 @@
-package controller
+package webapp
 
 import (
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
@@ -12,6 +12,24 @@ import (
 )
 
 type ApiController struct{}
+
+func (c ApiController) SetupRoutes(baseRouter *gin.Engine) {
+	router := baseRouter.Group("/api/v1")
+
+	router.GET("/", c.Index)
+	router.GET("/spotify/auth/new", c.GetAuthUrl)
+	router.GET("/spotify/auth/authenticated", c.DidAuthSucceed)
+	router.PATCH("/spotify/auth/invalidate", c.InvalidateSessionId)
+	router.GET("/spotify/search/track", c.SearchSpotifyTrack)
+	router.GET("/spotify/search/playlist", c.SearchSpotifyPlaylist)
+	router.GET("/sessions/:joinId", c.GetSession)
+	router.DELETE("sessions/:joinId", c.CloseListeningSession)
+	router.POST("/sessions/:joinId/request", c.RequestSong)
+	router.GET("/sessions/:joinId/queuelastupdated", c.QueueLastUpdated)
+	router.GET("/sessions/:joinId/qrcode", c.CreateQrCodeForListeningSession)
+	router.POST("/sessions", c.CreateListeningSession)
+	router.GET("/users/:userId", c.GetUser)
+}
 
 func (ApiController) Index(c *gin.Context) {
 	c.String(http.StatusOK, "SpotiFete API v1")
@@ -28,7 +46,7 @@ func (ApiController) GetSession(c *gin.Context) {
 	}
 }
 
-func (controller ApiController) GetUser(c *gin.Context) {
+func (ApiController) GetUser(c *gin.Context) {
 	userId := c.Param("userId")
 
 	if userId == "current" {
@@ -75,7 +93,7 @@ func (ApiController) GetAuthUrl(c *gin.Context) {
 	})
 }
 
-func (controller ApiController) DidAuthSucceed(c *gin.Context) {
+func (ApiController) DidAuthSucceed(c *gin.Context) {
 	sessionId := c.Query("sessionId")
 	if sessionId == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
@@ -95,7 +113,7 @@ func (controller ApiController) DidAuthSucceed(c *gin.Context) {
 	}
 }
 
-func (controller ApiController) InvalidateSessionId(c *gin.Context) {
+func (ApiController) InvalidateSessionId(c *gin.Context) {
 	var requestBody InvalidateSessionIdRequest
 
 	err := c.ShouldBindJSON(&requestBody)
@@ -113,7 +131,7 @@ func (controller ApiController) InvalidateSessionId(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
+func (ApiController) SearchSpotifyTrack(c *gin.Context) {
 	listeningSessionJoinId := c.Query("session")
 	if len(listeningSessionJoinId) == 0 {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
@@ -163,7 +181,7 @@ func (controller ApiController) SearchSpotifyTrack(c *gin.Context) {
 	})
 }
 
-func (controller ApiController) SearchSpotifyPlaylist(c *gin.Context) {
+func (ApiController) SearchSpotifyPlaylist(c *gin.Context) {
 	listeningSessionJoinId := c.Query("session")
 	if len(listeningSessionJoinId) == 0 {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
@@ -213,7 +231,7 @@ func (controller ApiController) SearchSpotifyPlaylist(c *gin.Context) {
 	})
 }
 
-func (controller ApiController) RequestSong(c *gin.Context) {
+func (ApiController) RequestSong(c *gin.Context) {
 	requestBody := RequestSongRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -248,7 +266,7 @@ func (controller ApiController) RequestSong(c *gin.Context) {
 	}
 }
 
-func (controller ApiController) QueueLastUpdated(c *gin.Context) {
+func (ApiController) QueueLastUpdated(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
 	if session == nil {
@@ -259,7 +277,7 @@ func (controller ApiController) QueueLastUpdated(c *gin.Context) {
 	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: service.ListeningSessionService().GetQueueLastUpdated(*session)})
 }
 
-func (controller ApiController) CreateListeningSession(c *gin.Context) {
+func (ApiController) CreateListeningSession(c *gin.Context) {
 	requestBody := CreateListeningSessionRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -313,7 +331,7 @@ func (ApiController) CloseListeningSession(c *gin.Context) {
 
 	loginSessionId := request.LoginSessionId
 	if loginSessionId == nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Login session id not given"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "SpotifyLogin session id not given"})
 		return
 	}
 

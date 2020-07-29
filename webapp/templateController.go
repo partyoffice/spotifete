@@ -1,4 +1,4 @@
-package controller
+package webapp
 
 import (
 	"fmt"
@@ -12,6 +12,22 @@ import (
 )
 
 type TemplateController struct{}
+
+func (c TemplateController) SetupRoutes(baseRouter *gin.Engine) {
+	baseRouter.LoadHTMLGlob("resources/templates/*.html")
+
+	baseRouter.GET("/", c.Index)
+	baseRouter.GET("/session/new", c.NewListeningSession)
+	baseRouter.POST("/session/new", c.NewListeningSessionSubmit)
+	baseRouter.GET("/session/view/:joinId", c.ViewSession)
+	baseRouter.POST("/session/view/:joinId/request", c.RequestTrack)
+	baseRouter.POST("/session/view/:joinId/fallback", c.ChangeFallbackPlaylist)
+	baseRouter.POST("/session/close", c.CloseListeningSession)
+	baseRouter.GET("/app", c.GetApp)
+	baseRouter.GET("/app/android", c.GetAppAndroid)
+	baseRouter.GET("/app/ios", c.GetAppIOS)
+	baseRouter.GET("/apicallback")
+}
 
 func (TemplateController) Index(c *gin.Context) {
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
