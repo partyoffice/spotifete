@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/service"
@@ -87,6 +86,6 @@ func shutdown() {
 func closeLogFile() {
 	err := logFile.Close()
 	if err != nil {
-		panic(fmt.Sprintf("Could not close log file: ", err.Error()))
+		panic("Could not close log file: " + err.Error())
 	}
 }
