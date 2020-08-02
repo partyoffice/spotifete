@@ -1,4 +1,4 @@
-package webapp
+package controller
 
 import (
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-type ApiController struct{}
+type ApiController struct{Controller}
 
-func (c ApiController) SetupRoutes(baseRouter *gin.Engine) {
+func (c ApiController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router := baseRouter.Group("/api/v1")
 
 	router.GET("/", c.Index)

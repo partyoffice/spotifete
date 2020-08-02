@@ -1,4 +1,4 @@
-package webapp
+package controller
 
 import (
 	"fmt"
@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-type TemplateController struct{}
+type TemplateController struct{Controller}
 
-func (c TemplateController) SetupRoutes(baseRouter *gin.Engine) {
+func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	baseRouter.LoadHTMLGlob("resources/templates/*.html")
 
 	baseRouter.GET("/", c.Index)

@@ -1,35 +1,42 @@
-package webapp
+package controller
 
 import (
-	"github.com/47-11/spotifete/service"
-	"github.com/getsentry/sentry-go"
-	"github.com/gin-gonic/gin"
-	"github.com/google/logger"
-	"net/http"
+"github.com/47-11/spotifete/service"
+"github.com/getsentry/sentry-go"
+"github.com/gin-gonic/gin"
+"github.com/google/logger"
+"net/http"
 )
 
-type AuthController struct{}
-
-func (c AuthController) SetupRoutes(baseRouter *gin.Engine) {
-	router := baseRouter.Group("/spotify")
-
-	router.GET("/login", c.SpotifyLogin)
-	router.GET("/logout", c.Logout)
-	router.GET("/callback", c.SpotifyCallback)
-	router.GET("/apicallback", c.SpotifyApiCallback)
+type AuthenticationController interface {
+	Controller
+	Login(*gin.Context)
+	Logout(*gin.Context)
 }
 
-func (AuthController) SpotifyLogin(c *gin.Context) {
-	redirectTo := c.Query("redirectTo")
-	if len(redirectTo) == 0 {
-		redirectTo = "/"
-	}
+type OAuth2AuthenticationController interface {
+	AuthenticationController
+	Callback(*gin.Context)
+}
+
+
+type SpotifyAuthenticationController struct{OAuth2AuthenticationController}
+
+func (c SpotifyAuthenticationController) SetupWithBaseRouter(baseRouter *gin.Engine) {
+	group := baseRouter.Group("/spotify")
+	group.GET("/login", c.Login)
+	group.GET("/logout", c.Logout)
+	group.GET("/callback", c.Callback)
+}
+
+func (SpotifyAuthenticationController) Login(c *gin.Context) {
+	redirectTo := c.DefaultQuery("redirectTo", "/")
 
 	authUrl, _ := service.SpotifyService().NewAuthUrl(redirectTo)
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
-func (AuthController) SpotifyCallback(c *gin.Context) {
+func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 	// Set user and token in session and redirect back to index
 	state := c.Request.FormValue("state")
 
@@ -84,12 +91,12 @@ func (AuthController) SpotifyCallback(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, redirectTo)
 }
 
-func (AuthController) SpotifyApiCallback(c *gin.Context) {
+func (SpotifyAuthenticationController) SpotifyApiCallback(c *gin.Context) {
 	// TODO: Do something nicer here
 	c.String(http.StatusOK, "Logged in successfully! You can close this window.")
 }
 
-func (AuthController) Logout(c *gin.Context) {
+func (SpotifyAuthenticationController) Logout(c *gin.Context) {
 	_ = service.LoginSessionService().InvalidateSession(c)
 
 	redirectTo := c.Query("redirectTo")
@@ -99,3 +106,4 @@ func (AuthController) Logout(c *gin.Context) {
 
 	c.Redirect(http.StatusTemporaryRedirect, redirectTo)
 }
+

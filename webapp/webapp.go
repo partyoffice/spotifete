@@ -3,6 +3,7 @@ package webapp
 import (
 	"fmt"
 	"github.com/47-11/spotifete/config"
+	"github.com/47-11/spotifete/webapp/controller"
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,7 @@ type SpotifeteWebapp struct {
 func (w SpotifeteWebapp) Setup() SpotifeteWebapp {
 	w = w.createAndConfigureRouter()
 	w = w.setupLogging()
-	w.setupRoutes()
+	w.setupControllers()
 
 	return w
 }
@@ -68,11 +69,11 @@ func (w SpotifeteWebapp) setupSentryLogging() {
 	}))
 }
 
-func (w SpotifeteWebapp) setupRoutes() {
-	AuthController{}.SetupRoutes(w.router)
-	StaticController{}.SetupRoutes(w.router)
-	TemplateController{}.SetupRoutes(w.router)
-	ApiController{}.SetupRoutes(w.router)
+func (w SpotifeteWebapp) setupControllers() {
+	controller.SpotifyAuthenticationController{}.SetupWithBaseRouter(w.router)
+	controller.StaticController{}.SetupWithBaseRouter(w.router)
+	controller.ApiController{}.SetupWithBaseRouter(w.router)
+	controller.ApiController{}.SetupWithBaseRouter(w.router)
 }
 
 func (w SpotifeteWebapp) Run() {
