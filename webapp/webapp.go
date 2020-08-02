@@ -11,16 +11,6 @@ import (
 	"os"
 )
 
-type Controller interface {
-	SetupRoutes(BaseRouter *gin.Engine)
-}
-
-type Webapp interface {
-	Setup()
-	Run()
-	Shutdown()
-}
-
 type SpotifeteWebapp struct {
 	router  *gin.Engine
 	logFile *os.File
