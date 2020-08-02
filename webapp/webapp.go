@@ -16,15 +16,19 @@ type SpotifeteWebapp struct {
 	logFile *os.File
 }
 
-func (w SpotifeteWebapp) Setup() {
-	w.createAndConfigureRouter()
-	w.setupLogging()
+func (w SpotifeteWebapp) Setup() SpotifeteWebapp {
+	w = w.createAndConfigureRouter()
+	w = w.setupLogging()
 	w.setupRoutes()
+
+	return w
 }
 
-func (w SpotifeteWebapp) createAndConfigureRouter() {
+func (w SpotifeteWebapp) createAndConfigureRouter() SpotifeteWebapp {
 	w.setGinModeDependingOnConfiguration()
 	w.router = gin.Default()
+
+	return w
 }
 
 func (SpotifeteWebapp) setGinModeDependingOnConfiguration() {
@@ -38,18 +42,24 @@ func (SpotifeteWebapp) setGinModeDependingOnConfiguration() {
 	}
 }
 
-func (w SpotifeteWebapp) setupLogging() {
-	w.setupGinLogging()
+func (w SpotifeteWebapp) setupLogging() SpotifeteWebapp {
+	w = w.setupGinLogging()
 	w.setupSentryLogging()
+
+	return w
 }
 
-func (w SpotifeteWebapp) setupGinLogging() {
+func (w SpotifeteWebapp) setupGinLogging() SpotifeteWebapp {
 	logFile, err := os.OpenFile("gin.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		logger.Fatalf("Failed to open gin log file: %v", err)
 	}
 
+	w.logFile = logFile
+
 	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
+
+	return w
 }
 
 func (w SpotifeteWebapp) setupSentryLogging() {

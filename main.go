@@ -68,8 +68,7 @@ func setupSentry() {
 }
 
 func setupWebapp() {
-	spotifeteWebapp = webapp.SpotifeteWebapp{}
-	spotifeteWebapp.Setup()
+	spotifeteWebapp = webapp.SpotifeteWebapp{}.Setup()
 }
 
 func run() {
