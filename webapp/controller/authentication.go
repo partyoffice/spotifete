@@ -38,7 +38,7 @@ func (SpotifyAuthenticationController) Login(c *gin.Context) {
 
 func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 	// Set user and token in session and redirect back to index
-	state := c.Request.FormValue("state")
+	state := c.Query("state")
 
 	// Check that this state exists and was not used in a callback before
 	session := service.LoginSessionService().GetSessionBySessionId(state, true)
