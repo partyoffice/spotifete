@@ -122,7 +122,7 @@ func (SpotifyAuthenticationController) SpotifyApiCallback(c *gin.Context) {
 }
 
 func (SpotifyAuthenticationController) Logout(c *gin.Context) {
-	_ = service.LoginSessionService().InvalidateSession(c)
+	service.LoginSessionService().InvalidateSession(c)
 
 	redirectTo := c.Query("redirectTo")
 	if len(redirectTo) == 0 || redirectTo[0:1] != "/" {

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	database "github.com/47-11/spotifete/database"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/gin-gonic/gin"
@@ -75,7 +74,7 @@ func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *LoginSession 
 		return session
 	} else {
 		// Session not found or not valid
-		_ = s.InvalidateSession(c)
+		s.InvalidateSession(c)
 		return nil
 	}
 }
@@ -102,23 +101,20 @@ func (loginSessionService) SetUserForSession(session LoginSession, user User) {
 	database.GetConnection().Save(session)
 }
 
-func (s loginSessionService) InvalidateSession(c *gin.Context) error {
-	sessionId, _ := c.Cookie("SESSIONID")
-	if sessionId == "" {
-		return nil
-	} else {
-		c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
-		return s.InvalidateSessionBySessionId(sessionId)
+func (s loginSessionService) InvalidateSession(c *gin.Context) {
+	for {
+		sessionId, _ := c.Cookie("SESSIONID")
+		if sessionId == "" {
+			return
+		} else {
+			c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
+			s.InvalidateSessionBySessionId(sessionId)
+		}
 	}
 }
 
-func (loginSessionService) InvalidateSessionBySessionId(sessionId string) error {
-	rowsAffected := database.GetConnection().Model(&LoginSession{}).Where(LoginSession{SessionId: sessionId}).Update("active", false).RowsAffected
-	if rowsAffected > 0 {
-		return nil
-	} else {
-		return errors.New("session not found")
-	}
+func (loginSessionService) InvalidateSessionBySessionId(sessionId string) {
+	database.GetConnection().Model(&LoginSession{}).Where(LoginSession{SessionId: sessionId}).Update("active", false)
 }
 
 func (loginSessionService) IsSessionValid(session LoginSession) bool {
