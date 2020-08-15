@@ -122,11 +122,7 @@ func (ApiController) InvalidateSessionId(c *gin.Context) {
 		return
 	}
 
-	err = service.LoginSessionService().InvalidateSessionBySessionId(requestBody.LoginSessionId)
-	if err != nil {
-		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
-		return
-	}
+	service.LoginSessionService().InvalidateSessionBySessionId(requestBody.LoginSessionId)
 
 	c.Status(http.StatusNoContent)
 }

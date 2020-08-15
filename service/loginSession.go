@@ -102,14 +102,12 @@ func (loginSessionService) SetUserForSession(session LoginSession, user User) {
 }
 
 func (s loginSessionService) InvalidateSession(c *gin.Context) {
-	for {
-		sessionId, _ := c.Cookie("SESSIONID")
-		if sessionId == "" {
-			return
-		} else {
-			c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
-			s.InvalidateSessionBySessionId(sessionId)
-		}
+	sessionId, _ := c.Cookie("SESSIONID")
+	if sessionId == "" {
+		return
+	} else {
+		c.SetCookie("SESSIONID", "", -1, "/", "", false, true)
+		s.InvalidateSessionBySessionId(sessionId)
 	}
 }
 
