@@ -105,7 +105,7 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 	}
 
 	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypeTrack, &spotify.Options{
-		Limit: &limit,
+		Limit:   &limit,
 		Country: &currentUser.Country,
 	})
 	if err != nil {

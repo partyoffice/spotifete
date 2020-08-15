@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type TemplateController struct{Controller}
+type TemplateController struct{ Controller }
 
 func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	baseRouter.LoadHTMLGlob("resources/templates/*.html")

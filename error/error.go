@@ -26,13 +26,13 @@ type BaseError struct {
 }
 
 func (e BaseError) Error() (errorString string) {
-	if e.shouldShowMessageToUser()  && e.Message != nil {
+	if e.shouldShowMessageToUser() && e.Message != nil {
 		errorString = *e.Message
 	} else {
 		errorString = e.getDefaultMessage()
 	}
 
-	if e.shouldShowCauseToUser() && e.Cause != nil{
+	if e.shouldShowCauseToUser() && e.Cause != nil {
 		errorString += "\n"
 		errorString += "caused by "
 		errorString += reflect.TypeOf(e.Cause).Name()

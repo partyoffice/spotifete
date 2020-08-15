@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type ApiController struct{Controller}
+type ApiController struct{ Controller }
 
 func (c ApiController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router := baseRouter.Group("/api/v1")

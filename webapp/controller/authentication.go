@@ -22,8 +22,7 @@ type OAuth2AuthenticationController interface {
 	Callback(*gin.Context)
 }
 
-
-type SpotifyAuthenticationController struct{OAuth2AuthenticationController}
+type SpotifyAuthenticationController struct{ OAuth2AuthenticationController }
 
 func (c SpotifyAuthenticationController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	group := baseRouter.Group("/spotify")
@@ -131,4 +130,3 @@ func (SpotifyAuthenticationController) Logout(c *gin.Context) {
 
 	c.Redirect(http.StatusTemporaryRedirect, redirectTo)
 }
-

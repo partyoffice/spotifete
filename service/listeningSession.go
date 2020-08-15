@@ -258,7 +258,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 		return errors.New("that song is already in the queue")
 	}
 
-	spotifyTrack, err := client.GetTrack(spotify.ID(trackId));
+	spotifyTrack, err := client.GetTrack(spotify.ID(trackId))
 	if err != nil {
 		return error2.BaseError{}.WithCause(err).WithMessage("Track not found by id.")
 	}
