@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
+	error2 "github.com/47-11/spotifete/error"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
 	"github.com/google/logger"
@@ -97,8 +98,15 @@ func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, 
 
 func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, error) {
 	cleanedQuery := strings.TrimSpace(query) + "*"
+
+	currentUser, err := client.CurrentUser()
+	if err != nil {
+		return nil, error2.BaseError{}.WithCause(err)
+	}
+
 	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypeTrack, &spotify.Options{
 		Limit: &limit,
+		Country: &currentUser.Country,
 	})
 	if err != nil {
 		return nil, err
@@ -130,21 +138,16 @@ func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limi
 	return resultDtos, nil
 }
 
-func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, trackId spotify.ID) (TrackMetadata, error) {
-	spotifyTrack, err := client.GetTrack(trackId)
-	if err != nil {
-		return TrackMetadata{}, err
-	}
-
-	track := s.GetTrackMetadataBySpotifyTrackId(trackId.String())
+func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyTrack spotify.FullTrack) (TrackMetadata, error) {
+	track := s.GetTrackMetadataBySpotifyTrackId(spotifyTrack.ID.String())
 	if track != nil {
-		updatedTrack := track.SetMetadata(*spotifyTrack)
+		updatedTrack := track.SetMetadata(spotifyTrack)
 
 		database.GetConnection().Save(&updatedTrack)
 
 		return updatedTrack, nil
 	} else {
-		newTrack := TrackMetadata{}.SetMetadata(*spotifyTrack)
+		newTrack := TrackMetadata{}.SetMetadata(spotifyTrack)
 
 		database.GetConnection().Create(&newTrack)
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/47-11/spotifete/database"
+	error2 "github.com/47-11/spotifete/error"
 	. "github.com/47-11/spotifete/model/database"
 	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/getsentry/sentry-go"
@@ -257,6 +258,25 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 		return errors.New("that song is already in the queue")
 	}
 
+	spotifyTrack, err := client.GetTrack(spotify.ID(trackId));
+	if err != nil {
+		return error2.BaseError{}.WithCause(err).WithMessage("Track not found by id.")
+	}
+
+	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(*client, *spotifyTrack)
+	if err != nil {
+		return err
+	}
+
+	currentUser, err := client.CurrentUser()
+	if err != nil {
+		return err
+	}
+
+	if !s.isTrackAvailableInUserMarket(*currentUser, *spotifyTrack) {
+		return error2.BaseError{}.WithMessage("This track is not available in your country.")
+	}
+
 	// Check if we have to add the request to the queue or play it immediately
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
@@ -271,11 +291,6 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 	} else {
 		// A song is currently playing and a follow up song is present. -> Just add this song to the normal queue
 		newRequestStatus = StatusInQueue
-	}
-
-	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(*client, spotify.ID(trackId))
-	if err != nil {
-		return err
 	}
 
 	newSongRequest := SongRequest{
@@ -349,7 +364,12 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrack(session L
 }
 
 func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(session ListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, err error) {
-	playlistTracks, err := client.GetPlaylistTracksOpt(spotify.ID(*session.FallbackPlaylist), &spotify.Options{Offset: &pageOffset}, "")
+	currentUser, err := client.CurrentUser()
+	if err != nil {
+		return "", error2.BaseError{}.WithCause(err)
+	}
+
+	playlistTracks, err := client.GetPlaylistTracksOpt(spotify.ID(*session.FallbackPlaylist), &spotify.Options{Offset: &pageOffset, Country: &currentUser.Country}, "")
 	if err != nil {
 		return "", err
 	}
@@ -564,4 +584,14 @@ func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession
 	database.GetConnection().Save(session)
 
 	return nil
+}
+
+func (s listeningSessionService) isTrackAvailableInUserMarket(user spotify.PrivateUser, track spotify.FullTrack) bool {
+	for _, availableMarket := range track.AvailableMarkets {
+		if availableMarket == user.Country {
+			return true
+		}
+	}
+
+	return false
 }
