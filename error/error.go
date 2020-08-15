@@ -21,23 +21,23 @@ type SpotifeteError interface {
 
 type BaseError struct {
 	SpotifeteError
-	Cause   error
-	Message string
+	Cause   *error
+	Message *string
 }
 
 func (e BaseError) Error() (errorString string) {
-	if e.shouldShowMessageToUser() {
-		errorString = e.Message
+	if e.shouldShowMessageToUser()  && e.Message != nil {
+		errorString = *e.Message
 	} else {
 		errorString = e.getDefaultMessage()
 	}
 
-	if e.shouldShowCauseToUser() {
+	if e.shouldShowCauseToUser() && e.Cause != nil{
 		errorString += "\n"
 		errorString += "caused by "
 		errorString += reflect.TypeOf(e.Cause).Name()
 		errorString += ": "
-		errorString += e.Cause.Error()
+		errorString += (*e.Cause).Error()
 	}
 
 	return errorString
@@ -51,13 +51,13 @@ func (e BaseError) JsonResponse(c *gin.Context) {
 	c.SecureJSON(e.getHttpStatus(), ErrorResponse{Message: e.Error()})
 }
 
-func (e BaseError) WithMessage(message string) BaseError {
-	e.Message = message
+func (e BaseError) WithMessage(message string) SpotifeteError {
+	e.Message = &message
 	return e
 }
 
-func (e BaseError) WithCause(cause error) BaseError {
-	e.Cause = cause
+func (e BaseError) WithCause(cause error) SpotifeteError {
+	e.Cause = &cause
 	return e
 }
 
