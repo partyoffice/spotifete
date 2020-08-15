@@ -1,11 +1,14 @@
 package controller
 
 import (
-"github.com/47-11/spotifete/service"
-"github.com/getsentry/sentry-go"
-"github.com/gin-gonic/gin"
-"github.com/google/logger"
-"net/http"
+	. "github.com/47-11/spotifete/error"
+	"github.com/47-11/spotifete/model/database"
+	"github.com/47-11/spotifete/service"
+	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
+	"github.com/google/logger"
+	"golang.org/x/oauth2"
+	"net/http"
 )
 
 type AuthenticationController interface {
@@ -37,58 +40,80 @@ func (SpotifyAuthenticationController) Login(c *gin.Context) {
 }
 
 func (SpotifyAuthenticationController) Callback(c *gin.Context) {
-	// Set user and token in session and redirect back to index
+	loginSession, err := getValidLoginSessionFromContext(c)
+	if err != nil {
+		err.StringResponse(c)
+		return
+	}
+
+	token, err := getTokenFromContext(c)
+	if err != nil {
+		err.StringResponse(c)
+		return
+	}
+
+	err = authenticateUser(token, loginSession)
+	if err != nil {
+		err.StringResponse(c)
+		return
+	}
+
+	// Set or update session cookie
+	service.LoginSessionService().SetSessionCookie(c, loginSession.SessionId)
+
+	redirectTo := loginSession.CallbackRedirect
+	if redirectTo[0:1] != "/" {
+		redirectTo = "/" + redirectTo
+	}
+
+	c.Redirect(http.StatusSeeOther, redirectTo)
+}
+
+func getValidLoginSessionFromContext(c *gin.Context) (database.LoginSession, SpotifeteError) {
 	state := c.Query("state")
 
-	// Check that this state exists and was not used in a callback before
 	session := service.LoginSessionService().GetSessionBySessionId(state, true)
 	if session == nil {
-		c.String(http.StatusUnauthorized, "invalid state.")
-		return
+		return database.LoginSession{}, AuthenticationError{}.WithMessage("Invalid state.")
 	}
 
 	if session.UserId != nil {
-		c.String(http.StatusUnauthorized, "State has already been used.")
-		return
+		return database.LoginSession{}, AuthenticationError{}.WithMessage("State has already been used.")
 	}
 
-	// Fetch the token
+	return *session, nil
+}
+
+func getTokenFromContext(c *gin.Context) (*oauth2.Token, SpotifeteError) {
+	state := c.Query("state")
+
 	token, err := service.SpotifyService().Authenticator.Token(state, c.Request)
 	if err != nil {
 		logger.Error(err)
 		sentry.CaptureException(err)
-		c.String(http.StatusInternalServerError, "Could not get token: "+err.Error())
-		return
+		return nil, InternalError{}.WithCause(err).WithMessage("Could not fetch token.")
 	}
 
-	// Get the spotify user for the token
+	return token, nil
+}
+
+func authenticateUser(token *oauth2.Token, session database.LoginSession) SpotifeteError {
 	client := service.SpotifyService().Authenticator.NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
 		logger.Error(err)
 		sentry.CaptureException(err)
-		c.String(http.StatusInternalServerError, "Could not get current spotify user: "+err.Error())
-		return
+		return InternalError{}.WithCause(err).WithMessage("Could not get current user from spotify client.")
 	}
 
-	// Cache the created client
 	service.SpotifyService().Clients[spotifyUser.ID] = &client
 
-	// Get or create the database entry for the current user
 	user := service.UserService().GetOrCreateUser(spotifyUser)
 	service.UserService().SetToken(user, *token)
 
-	// Associate user with current session
-	service.LoginSessionService().SetUserForSession(*session, user)
+	service.LoginSessionService().SetUserForSession(session, user)
 
-	// Set or update session cookie
-	service.LoginSessionService().SetSessionCookie(c, session.SessionId)
-
-	redirectTo := session.CallbackRedirect
-	if redirectTo[0:1] != "/" {
-		redirectTo = "/" + redirectTo
-	}
-	c.Redirect(http.StatusSeeOther, redirectTo)
+	return nil
 }
 
 func (SpotifyAuthenticationController) SpotifyApiCallback(c *gin.Context) {
