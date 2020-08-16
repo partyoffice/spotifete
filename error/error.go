@@ -74,5 +74,5 @@ func (e BaseError) shouldShowCauseToUser() bool {
 }
 
 func (e BaseError) getDefaultMessage() string {
-	return "An error occured."
+	return "An error occurred."
 }
