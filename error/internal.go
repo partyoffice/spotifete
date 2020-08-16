@@ -2,14 +2,19 @@ package error
 
 import "net/http"
 
-type InternalError struct {
-	BaseError
+type Internal struct {
+	baseErrorBuilder
 }
 
-func (e InternalError) getHttpStatus() int {
+func (e Internal) getHttpStatus() int {
 	return http.StatusInternalServerError
 }
 
-func (e InternalError) shouldShowMessageToUser() bool {
+func (e Internal) shouldShowMessageToUser() bool {
 	return false
 }
+
+func (e Internal) shouldShowCauseToUser() bool {
+	return false
+}
+
