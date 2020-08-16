@@ -219,25 +219,29 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 			return err
 		}
 
-		var page []spotify.ID
-		for _, track := range distinctRequestedTracks {
-			page = append(page, track)
+		go func() {
+			var page []spotify.ID
+			for _, track := range distinctRequestedTracks {
+				page = append(page, track)
 
-			if len(page) == 100 {
+				if len(page) == 100 {
+					_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+					if err != nil {
+						sentry.CaptureException(err)
+						logger.Error(err)
+					}
+					page = []spotify.ID{}
+				}
+			}
+
+			if len(page) > 0 {
 				_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
 				if err != nil {
-					return err
+					sentry.CaptureException(err)
+					logger.Error(err)
 				}
-				page = []spotify.ID{}
 			}
-		}
-
-		if len(page) > 0 {
-			_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
-			if err != nil {
-				return err
-			}
-		}
+		}()
 	}
 
 	return nil
