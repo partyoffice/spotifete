@@ -1,7 +1,7 @@
 package controller
 
 import (
-	. "github.com/47-11/spotifete/error"
+	spotifeteError "github.com/47-11/spotifete/error"
 	"github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/service"
 	"github.com/getsentry/sentry-go"
@@ -41,19 +41,19 @@ func (SpotifyAuthenticationController) Login(c *gin.Context) {
 func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 	loginSession, err := getValidLoginSessionFromContext(c)
 	if err != nil {
-		err.StringResponse(c)
+		spotifeteError.SetStringResponseForContext(err, c)
 		return
 	}
 
 	token, err := getTokenFromContext(c)
 	if err != nil {
-		err.StringResponse(c)
+		spotifeteError.SetStringResponseForContext(err, c)
 		return
 	}
 
 	err = authenticateUser(token, loginSession)
 	if err != nil {
-		err.StringResponse(c)
+		spotifeteError.SetStringResponseForContext(err, c)
 		return
 	}
 
@@ -68,41 +68,41 @@ func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, redirectTo)
 }
 
-func getValidLoginSessionFromContext(c *gin.Context) (database.LoginSession, SpotifeteError) {
+func getValidLoginSessionFromContext(c *gin.Context) (database.LoginSession, error) {
 	state := c.Query("state")
 
 	session := service.LoginSessionService().GetSessionBySessionId(state, true)
 	if session == nil {
-		return database.LoginSession{}, AuthenticationError{}.WithMessage("Invalid state.")
+		return database.LoginSession{}, spotifeteError.Authentication{}.WithMessage("Invalid state.").Build()
 	}
 
 	if session.UserId != nil {
-		return database.LoginSession{}, AuthenticationError{}.WithMessage("State has already been used.")
+		return database.LoginSession{}, spotifeteError.Authentication{}.WithMessage("State has already been used.").Build()
 	}
 
 	return *session, nil
 }
 
-func getTokenFromContext(c *gin.Context) (*oauth2.Token, SpotifeteError) {
+func getTokenFromContext(c *gin.Context) (*oauth2.Token, error) {
 	state := c.Query("state")
 
 	token, err := service.SpotifyService().Authenticator.Token(state, c.Request)
 	if err != nil {
 		logger.Error(err)
 		sentry.CaptureException(err)
-		return nil, InternalError{}.WithCause(err).WithMessage("Could not fetch token.")
+		return nil, spotifeteError.Authentication{}.WithCause(err).WithMessage("Could not fetch token.").Build()
 	}
 
 	return token, nil
 }
 
-func authenticateUser(token *oauth2.Token, session database.LoginSession) SpotifeteError {
+func authenticateUser(token *oauth2.Token, session database.LoginSession) error {
 	client := service.SpotifyService().Authenticator.NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
 		logger.Error(err)
 		sentry.CaptureException(err)
-		return InternalError{}.WithCause(err).WithMessage("Could not get current user from spotify client.")
+		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get information about current user from spotify client.").Build()
 	}
 
 	service.SpotifyService().Clients[spotifyUser.ID] = &client
