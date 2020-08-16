@@ -137,20 +137,20 @@ func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limi
 	return resultDtos, nil
 }
 
-func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyTrack spotify.FullTrack) (TrackMetadata, error) {
+func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyTrack spotify.FullTrack) TrackMetadata {
 	track := s.GetTrackMetadataBySpotifyTrackId(spotifyTrack.ID.String())
 	if track != nil {
 		updatedTrack := track.SetMetadata(spotifyTrack)
 
 		database.GetConnection().Save(&updatedTrack)
 
-		return updatedTrack, nil
+		return updatedTrack
 	} else {
 		newTrack := TrackMetadata{}.SetMetadata(spotifyTrack)
 
 		database.GetConnection().Create(&newTrack)
 
-		return newTrack, nil
+		return newTrack
 	}
 }
 

@@ -262,10 +262,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get track information from Spotify.").Build()
 	}
 
-	updatedTrackMetadata, err := SpotifyService().AddOrUpdateTrackMetadata(*client, *spotifyTrack)
-	if err != nil {
-		return err
-	}
+	updatedTrackMetadata := SpotifyService().AddOrUpdateTrackMetadata(*client, *spotifyTrack)
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
