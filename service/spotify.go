@@ -3,10 +3,9 @@ package service
 import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
-	error2 "github.com/47-11/spotifete/error"
+	spotifeteError "github.com/47-11/spotifete/error"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
-	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"strings"
@@ -73,7 +72,7 @@ func (s spotifyService) refreshAndSaveTokenForSpotifyUserIfNeccessary(client spo
 func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user User) {
 	newToken, err := client.Token() // This should refresh the token if neccessary: https://github.com/zmb3/spotify/issues/108#issuecomment-568899119
 	if err != nil {
-		logger.Warning(err)
+		spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not refresh token.")
 		return
 	}
 
@@ -101,7 +100,7 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
-		return nil, error2.BaseError{}.WithCause(err)
+		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get information on current user from Spotify.").Build()
 	}
 
 	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypeTrack, &spotify.Options{
@@ -109,7 +108,7 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 		Country: &currentUser.Country,
 	})
 	if err != nil {
-		return nil, err
+		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Track search failed.").Build()
 	}
 
 	var resultDtos []dto.TrackMetadataDto
@@ -127,7 +126,7 @@ func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limi
 		Limit: &limit,
 	})
 	if err != nil {
-		return nil, err
+		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Playlist search failed.").Build()
 	}
 
 	var resultDtos []dto.PlaylistMetadataDto
@@ -169,7 +168,7 @@ func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackM
 func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (PlaylistMetadata, error) {
 	spotifyPlaylist, err := client.GetPlaylist(playlistId)
 	if err != nil {
-		return PlaylistMetadata{}, err
+		return PlaylistMetadata{}, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get playlist information from Spotify.").Build()
 	}
 
 	knownPlaylistMetadata := s.GetPlaylistMetadataBySpotifyPlaylistId(playlistId.String())
