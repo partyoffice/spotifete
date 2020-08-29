@@ -17,4 +17,3 @@ func (e Internal) shouldShowMessageToUser() bool {
 func (e Internal) shouldShowCauseToUser() bool {
 	return false
 }
-

@@ -16,7 +16,7 @@ func SetJsonResponseForContext(err error, c *gin.Context) {
 	c.JSON(getHttpStatusForError(err), v1.ErrorResponse{Message: err.Error()})
 }
 
-func getHttpStatusForError (err error) int {
+func getHttpStatusForError(err error) int {
 	var spotifeteError spotifeteError
 
 	if err == nil {

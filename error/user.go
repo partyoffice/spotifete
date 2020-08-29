@@ -14,7 +14,6 @@ func (e userErrorBuilder) shouldShowCauseToUser() bool {
 	return true
 }
 
-
 type Authentication struct {
 	userErrorBuilder
 }
@@ -22,7 +21,6 @@ type Authentication struct {
 func (e Authentication) getHttpStatus() int {
 	return http.StatusUnauthorized
 }
-
 
 type IllegalArgument struct {
 	userErrorBuilder
@@ -39,7 +37,6 @@ func (e IllegalArgument) getDefaultMessage() string {
 func (e IllegalArgument) shouldLogError() bool {
 	return false
 }
-
 
 type IllegalState struct {
 	userErrorBuilder

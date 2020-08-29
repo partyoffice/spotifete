@@ -21,7 +21,7 @@ type baseErrorBuilder struct {
 	spotifeteErrorBuilder
 
 	message *string
-	cause error
+	cause   error
 }
 
 func (e baseErrorBuilder) WithMessage(message string) spotifeteErrorBuilder {
@@ -43,7 +43,6 @@ func (e baseErrorBuilder) Build() error {
 	}
 }
 
-
 func (e baseErrorBuilder) logErrorIfNeccessary() {
 	if e.shouldLogError() {
 		e.logError()
@@ -56,7 +55,7 @@ func (e baseErrorBuilder) logError() {
 		logger.ErrorDepth(999999, e.cause)
 	} else if e.message != nil {
 		sentry.CaptureMessage(*e.message)
-		logger.ErrorDepth(999999,e.message)
+		logger.ErrorDepth(999999, e.message)
 	}
 }
 

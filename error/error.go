@@ -3,8 +3,8 @@ package error
 type spotifeteError struct {
 	error
 
-	message string
-	cause error
+	message    string
+	cause      error
 	httpStatus int
 }
 
