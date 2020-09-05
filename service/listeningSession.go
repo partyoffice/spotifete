@@ -374,7 +374,7 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 		var trackPlays int
 		database.GetConnection().Model(SongRequest{}).Where(SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
-		if uint(trackPlays) <= maximumPlays {
+		if uint(trackPlays) <= maximumPlays && s.isTrackAvailableInUserMarket(*currentUser, track.Track) {
 			return trackId, nil
 		}
 	}
