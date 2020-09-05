@@ -52,10 +52,10 @@ func (e baseErrorBuilder) logErrorIfNeccessary() {
 func (e baseErrorBuilder) logError() {
 	if e.cause != nil {
 		sentry.CaptureException(e.cause)
-		logger.ErrorDepth(999999, e.cause)
+		logger.ErrorDepth(3, e.cause)
 	} else if e.message != nil {
 		sentry.CaptureMessage(*e.message)
-		logger.ErrorDepth(999999, e.message)
+		logger.ErrorDepth(3, e.message)
 	}
 }
 
