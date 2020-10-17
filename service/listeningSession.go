@@ -579,7 +579,15 @@ func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession
 }
 
 func (s listeningSessionService) isTrackAvailableInUserMarket(user spotify.PrivateUser, track spotify.FullTrack) bool {
-	for _, availableMarket := range track.AvailableMarkets {
+	availableMarkets := track.AvailableMarkets
+
+	// Spotify does not seem to supply the available markets for a track anymore.
+	// So we have to use the available markets of the album
+	if len(availableMarkets) == 0 {
+		availableMarkets = track.Album.AvailableMarkets
+	}
+
+	for _, availableMarket := range availableMarkets {
 		if availableMarket == user.Country {
 			return true
 		}
