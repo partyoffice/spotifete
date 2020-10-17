@@ -319,13 +319,6 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 		currentlyPlaying = nil
 	}
 
-	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
-		// Nothing is running -> still update the playlist if neccessary
-		return s.UpdateSessionPlaylistIfNecessary(session)
-	}
-
-	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
-
 	if session.FallbackPlaylist != nil && upNextRequest == nil {
 		// No requests present and a fallback playlist is present
 		fallbackTrackId, spotifeteError := s.findNextUnplayedFallbackPlaylistTrack(session, *client)
@@ -337,9 +330,14 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 		if spotifeteError != nil {
 			return spotifeteError
 		}
-
-		return nil
 	}
+
+	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
+		// Nothing is running -> still update the playlist if neccessary
+		return s.UpdateSessionPlaylistIfNecessary(session)
+	}
+
+	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
 
 	if upNextRequest != nil && upNextRequest.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
