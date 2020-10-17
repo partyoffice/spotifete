@@ -250,20 +250,20 @@ func (s listeningSessionService) IsTrackInQueue(session ListeningSession, trackI
 	return len(duplicateRequestsForTrack) > 0
 }
 
-func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) *SpotifeteError {
+func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) (SongRequest, *SpotifeteError) {
 	sessionOwner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetClientForUser(*sessionOwner)
 
 	// Prevent duplicates
 	if s.IsTrackInQueue(session, trackId) {
-		return NewUserError("This tack is already in the queue.")
+		return SongRequest{}, NewUserError("This tack is already in the queue.")
 	}
 
 	// When using GetTrack Spotify does not include the available markets
 	// TODO: Use GetTrack again when Spotify fixed their API
 	spotifyTracks, err := client.GetTracks(spotify.ID(trackId))
 	if err != nil || len(spotifyTracks) == 0 {
-		return NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
+		return SongRequest{}, NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
 	}
 	spotifyTrack := spotifyTracks[0]
 
@@ -271,11 +271,11 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
-		return NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
+		return SongRequest{}, NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	if !s.isTrackAvailableInUserMarket(*currentUser, *spotifyTrack) {
-		return NewUserError("Sorry, this track is not available :/")
+		return SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
 	// Check if we have to add the request to the queue or play it immediately
@@ -304,7 +304,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 
 	database.GetConnection().Create(&newSongRequest)
 
-	return s.UpdateSessionPlaylistIfNecessary(session)
+	return newSongRequest, s.UpdateSessionPlaylistIfNecessary(session)
 }
 
 func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSession) *SpotifeteError {
@@ -326,9 +326,18 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 			return spotifeteError
 		}
 
-		spotifeteError = s.RequestSong(session, fallbackTrackId)
+		newSongRequest, spotifeteError := s.RequestSong(session, fallbackTrackId)
 		if spotifeteError != nil {
 			return spotifeteError
+		}
+
+		switch newSongRequest.Status {
+		case StatusCurrentlyPlaying:
+			currentlyPlayingRequest = &newSongRequest
+			break
+		case StatusUpNext:
+			upNextRequest = &newSongRequest
+			break
 		}
 	}
 

@@ -129,7 +129,7 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 	trackId := c.PostForm("trackId")
 
-	spotifeteError := service.ListeningSessionService().RequestSong(*session, trackId)
+	_, spotifeteError := service.ListeningSessionService().RequestSong(*session, trackId)
 	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {

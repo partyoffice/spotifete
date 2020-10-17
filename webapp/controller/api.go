@@ -248,7 +248,7 @@ func (ApiController) RequestSong(c *gin.Context) {
 		return
 	}
 
-	spotifeteError := service.ListeningSessionService().RequestSong(*session, requestBody.TrackId)
+	_, spotifeteError := service.ListeningSessionService().RequestSong(*session, requestBody.TrackId)
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {
