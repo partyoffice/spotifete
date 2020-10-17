@@ -259,10 +259,13 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 		return NewUserError("This tack is already in the queue.")
 	}
 
-	spotifyTrack, err := client.GetTrack(spotify.ID(trackId))
-	if err != nil {
+	// When using GetTrack Spotify does not include the available markets
+	// TODO: Use GetTrack again when Spotify fixed their API
+	spotifyTracks, err := client.GetTracks(spotify.ID(trackId))
+	if err != nil || len(spotifyTracks) == 0 {
 		return NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
 	}
+	spotifyTrack := spotifyTracks[0]
 
 	updatedTrackMetadata := SpotifyService().AddOrUpdateTrackMetadata(*client, *spotifyTrack)
 
@@ -372,12 +375,20 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 	}
 
 	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
-	for _, track := range playlistTracks.Tracks {
-		trackId := track.Track.ID.String()
+	for _, playlistTrack := range playlistTracks.Tracks {
+		// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
+		// TODO: Remove this
+		refreshedTracks, err := client.GetTracks(playlistTrack.Track.ID)
+		if err != nil || len(refreshedTracks) == 0 {
+			NewError("Could not fetch track information from Spotify.", err, http.StatusInternalServerError)
+		}
+		track := refreshedTracks[0]
+		trackId := track.ID.String();
+
 		var trackPlays int
 		database.GetConnection().Model(SongRequest{}).Where(SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
-		if uint(trackPlays) <= maximumPlays && s.isTrackAvailableInUserMarket(*currentUser, track.Track) {
+		if uint(trackPlays) <= maximumPlays && s.isTrackAvailableInUserMarket(*currentUser, *track) {
 			return trackId, nil
 		}
 	}
@@ -579,15 +590,7 @@ func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession
 }
 
 func (s listeningSessionService) isTrackAvailableInUserMarket(user spotify.PrivateUser, track spotify.FullTrack) bool {
-	availableMarkets := track.AvailableMarkets
-
-	// Spotify does not seem to supply the available markets for a track anymore.
-	// So we have to use the available markets of the album
-	if len(availableMarkets) == 0 {
-		availableMarkets = track.Album.AvailableMarkets
-	}
-
-	for _, availableMarket := range availableMarkets {
+	for _, availableMarket := range track.AvailableMarkets {
 		if availableMarket == user.Country {
 			return true
 		}
