@@ -49,11 +49,11 @@ func NewInternalError(message string, cause error) *SpotifeteError {
 }
 
 func logErrorAsync(message string, cause error, logDepth int) {
-	logError(message, cause, logDepth + 1)
+	logError(message, cause, logDepth+1)
 }
 
 func logError(message string, cause error, logDepth int) {
-	logger.ErrorDepth(logDepth + 1, buildMessageWithCause(message, cause))
+	logger.ErrorDepth(logDepth+1, buildMessageWithCause(message, cause))
 	sentry.CaptureMessage(message)
 	sentry.CaptureException(cause)
 }

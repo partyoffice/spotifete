@@ -549,7 +549,7 @@ func (s listeningSessionService) GetDistinctRequestedTracks(session ListeningSes
 
 func (listeningSessionService) GenerateQrCodeForSession(joinId string, disableBorder bool) (*qrcode.QRCode, *SpotifeteError) {
 	baseUrl := config.Get().SpotifeteConfiguration.BaseUrl
-	qrCodeContent := fmt.Sprintf("%s/session/view/%s",baseUrl, joinId)
+	qrCodeContent := fmt.Sprintf("%s/session/view/%s", baseUrl, joinId)
 
 	// Generate QR code for this session
 	qrCode, err := qrcode.New(qrCodeContent, qrcode.Medium)
