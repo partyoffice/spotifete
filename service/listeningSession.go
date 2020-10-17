@@ -383,7 +383,7 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 			NewError("Could not fetch track information from Spotify.", err, http.StatusInternalServerError)
 		}
 		track := refreshedTracks[0]
-		trackId := track.ID.String();
+		trackId := track.ID.String()
 
 		var trackPlays int
 		database.GetConnection().Model(SongRequest{}).Where(SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
