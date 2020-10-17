@@ -163,11 +163,9 @@ func (ApiController) SearchSpotifyTrack(c *gin.Context) {
 	user := service.UserService().GetUserById(session.OwnerId)
 	client := service.SpotifyService().GetClientForUser(*user)
 
-	tracks, err := service.SpotifyService().SearchTrack(*client, query, limit)
-	if err != nil {
-		sentry.CaptureException(err)
-		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	tracks, spotifeteError := service.SpotifyService().SearchTrack(*client, query, limit)
+	if spotifeteError != nil {
+		spotifeteError.SetJsonResponse(c)
 		return
 	}
 
@@ -213,11 +211,9 @@ func (ApiController) SearchSpotifyPlaylist(c *gin.Context) {
 	user := service.UserService().GetUserById(session.OwnerId)
 	client := service.SpotifyService().GetClientForUser(*user)
 
-	playlists, err := service.SpotifyService().SearchPlaylist(*client, query, limit)
-	if err != nil {
-		sentry.CaptureException(err)
-		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	playlists, spotifeteError := service.SpotifyService().SearchPlaylist(*client, query, limit)
+	if spotifeteError != nil {
+		spotifeteError.SetJsonResponse(c)
 		return
 	}
 
@@ -252,13 +248,11 @@ func (ApiController) RequestSong(c *gin.Context) {
 		return
 	}
 
-	err = service.ListeningSessionService().RequestSong(*session, requestBody.TrackId)
-	if err == nil {
+	spotifeteError := service.ListeningSessionService().RequestSong(*session, requestBody.TrackId)
+	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {
-		sentry.CaptureException(err)
-		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		spotifeteError.SetJsonResponse(c)
 	}
 }
 
@@ -304,11 +298,9 @@ func (ApiController) CreateListeningSession(c *gin.Context) {
 	}
 
 	owner := service.UserService().GetUserById(*loginSession.UserId)
-	createdSession, err := service.ListeningSessionService().NewSession(*owner, *requestBody.ListeningSessionTitle)
-	if err != nil {
-		sentry.CaptureException(err)
-		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	createdSession, spotifeteError := service.ListeningSessionService().NewSession(*owner, *requestBody.ListeningSessionTitle)
+	if spotifeteError != nil {
+		spotifeteError.SetJsonResponse(c)
 		return
 	}
 
@@ -339,11 +331,11 @@ func (ApiController) CloseListeningSession(c *gin.Context) {
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 
-	err = service.ListeningSessionService().CloseSession(*user, sessionJoinId)
-	if err == nil {
+	spotifeteError := service.ListeningSessionService().CloseSession(*user, sessionJoinId)
+	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		spotifeteError.SetJsonResponse(c)
 	}
 }
 
@@ -363,11 +355,9 @@ func (ApiController) CreateQrCodeForListeningSession(c *gin.Context) {
 		size = parsed
 	}
 
-	qrCode, err := service.ListeningSessionService().GenerateQrCodeForSession(joinId, disableBorder)
-	if err != nil {
-		sentry.CaptureException(err)
-		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	qrCode, spotifeteError := service.ListeningSessionService().GenerateQrCodeForSession(joinId, disableBorder)
+	if spotifeteError != nil {
+		spotifeteError.SetJsonResponse(c)
 		return
 	}
 

@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/service"
-	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/google/logger"
 	"net/http"
 	"time"
 )
@@ -76,15 +74,13 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 
 	title := c.PostForm("title")
 	if len(title) == 0 {
-		c.String(http.StatusBadRequest, "title must not be empty")
+		c.String(http.StatusBadRequest, "Title must not be empty.")
 		return
 	}
 
-	session, err := service.ListeningSessionService().NewSession(*user, title)
-	if err != nil {
-		logger.Error(err)
-		sentry.CaptureException(err)
-		c.String(http.StatusInternalServerError, err.Error())
+	session, spotifeteError := service.ListeningSessionService().NewSession(*user, title)
+	if spotifeteError != nil {
+		spotifeteError.SetStringResponse(c)
 		return
 	}
 
@@ -95,7 +91,7 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	listeningSession := service.ListeningSessionService().GetSessionByJoinId(joinId)
 	if listeningSession == nil {
-		c.String(http.StatusNotFound, "session not found")
+		c.String(http.StatusNotFound, "Session not found.")
 		return
 	}
 
@@ -133,11 +129,11 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 	trackId := c.PostForm("trackId")
 
-	err := service.ListeningSessionService().RequestSong(*session, trackId)
-	if err == nil {
+	spotifeteError := service.ListeningSessionService().RequestSong(*session, trackId)
+	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {
-		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s/?displayError=%s", joinId, err.Error()))
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s/?displayError=%s", joinId, spotifeteError.MessageForUser))
 	}
 }
 
@@ -158,11 +154,11 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 	user := service.UserService().GetUserById(*loginSession.UserId)
 
 	playlistId := c.PostForm("playlistId")
-	err := service.ListeningSessionService().ChangeFallbackPlaylist(*session, *user, playlistId)
-	if err == nil {
+	spotifeteError := service.ListeningSessionService().ChangeFallbackPlaylist(*session, *user, playlistId)
+	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {
-		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s/?displayError=%s", joinId, err.Error()))
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s/?displayError=%s", joinId, spotifeteError.MessageForUser))
 	}
 }
 
@@ -181,11 +177,9 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	user := service.UserService().GetUserById(*loginSession.UserId)
 
-	err := service.ListeningSessionService().CloseSession(*user, joinId)
-	if err != nil {
-		logger.Error(err)
-		sentry.CaptureException(err)
-		c.String(http.StatusInternalServerError, err.Error())
+	spotifeteError := service.ListeningSessionService().CloseSession(*user, joinId)
+	if spotifeteError != nil {
+		spotifeteError.SetStringResponse(c)
 		return
 	}
 

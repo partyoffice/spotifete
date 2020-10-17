@@ -3,11 +3,12 @@ package service
 import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
-	spotifeteError "github.com/47-11/spotifete/error"
+	. "github.com/47-11/spotifete/error"
 	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
+	"net/http"
 	"strings"
 	"sync"
 )
@@ -69,11 +70,10 @@ func (s spotifyService) refreshAndSaveTokenForSpotifyUserIfNeccessary(client spo
 	s.refreshAndSaveTokenForUserIfNeccessary(client, *user)
 }
 
-func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user User) {
+func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user User) *SpotifeteError {
 	newToken, err := client.Token() // This should refresh the token if neccessary: https://github.com/zmb3/spotify/issues/108#issuecomment-568899119
 	if err != nil {
-		spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not refresh token.")
-		return
+		return NewError("Could not refresh Spotify access token. Please try to log out and log in again.", err, http.StatusUnauthorized)
 	}
 
 	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
@@ -81,6 +81,8 @@ func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Cl
 		// Do this in a goroutine so API calls don't have to wait for the database write to succeed
 		go UserService().SetToken(user, *newToken)
 	}
+
+	return nil
 }
 
 func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
@@ -95,12 +97,12 @@ func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, 
 	return s.Authenticator.AuthURL(sessionId), sessionId
 }
 
-func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, error) {
+func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, *SpotifeteError) {
 	cleanedQuery := strings.TrimSpace(query) + "*"
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
-		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get information on current user from Spotify.").Build()
+		return nil, NewError("Could not fetch information on session owner from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypeTrack, &spotify.Options{
@@ -108,7 +110,7 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 		Country: &currentUser.Country,
 	})
 	if err != nil {
-		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Track search failed.").Build()
+		return nil, NewError("Could not search for track on Spotify.", err, http.StatusInternalServerError)
 	}
 
 	var resultDtos []dto.TrackMetadataDto
@@ -120,13 +122,13 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 	return resultDtos, nil
 }
 
-func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limit int) ([]dto.PlaylistMetadataDto, error) {
+func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limit int) ([]dto.PlaylistMetadataDto, *SpotifeteError) {
 	cleanedQuery := strings.TrimSpace(query) + "*"
 	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypePlaylist, &spotify.Options{
 		Limit: &limit,
 	})
 	if err != nil {
-		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Playlist search failed.").Build()
+		return nil, NewError("Could not search for track on Spotify.", err, http.StatusInternalServerError)
 	}
 
 	var resultDtos []dto.PlaylistMetadataDto
@@ -165,10 +167,10 @@ func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackM
 	}
 }
 
-func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (PlaylistMetadata, error) {
+func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (PlaylistMetadata, *SpotifeteError) {
 	spotifyPlaylist, err := client.GetPlaylist(playlistId)
 	if err != nil {
-		return PlaylistMetadata{}, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get playlist information from Spotify.").Build()
+		return PlaylistMetadata{}, NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	knownPlaylistMetadata := s.GetPlaylistMetadataBySpotifyPlaylistId(playlistId.String())

@@ -3,16 +3,17 @@ package service
 import (
 	"bytes"
 	"fmt"
+	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
-	spotifeteError "github.com/47-11/spotifete/error"
+	. "github.com/47-11/spotifete/error"
 	. "github.com/47-11/spotifete/model/database"
 	dto "github.com/47-11/spotifete/model/dto"
-	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
 	"image/jpeg"
 	"math/rand"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -123,9 +124,9 @@ func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session Listen
 	return requests
 }
 
-func (s listeningSessionService) NewSession(user User, title string) (*ListeningSession, error) {
+func (s listeningSessionService) NewSession(user User, title string) (*ListeningSession, *SpotifeteError) {
 	if len(title) == 0 {
-		return nil, spotifeteError.IllegalArgument{}.WithMessage("Session title must not be empty.").Build()
+		return nil, NewUserError("Session title must not be empty.")
 	}
 
 	client := SpotifyService().GetClientForUser(user)
@@ -133,27 +134,27 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 	joinId := s.newJoinId()
 	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s-%s or by installing our app and scanning the QR code in the playlist image.", title, joinId[0:4], joinId[4:8]), false)
 	if err != nil {
-		return nil, spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not create playlist.").Build()
+		return nil, NewError("Could not create spotify playlist.", err, http.StatusInternalServerError)
 	}
 
 	// Generate QR code for this session
-	qrCode, err := s.GenerateQrCodeForSession(joinId, false)
-	if err != nil {
-		return nil, err
+	qrCode, spotifeteError := s.GenerateQrCodeForSession(joinId, false)
+	if spotifeteError != nil {
+		return nil, spotifeteError
 	}
 
 	// Encode QR code as jpeg
 	jpegBuffer := new(bytes.Buffer)
 	err = jpeg.Encode(jpegBuffer, qrCode.Image(512), nil)
 	if err != nil {
-		return nil, spotifeteError.Internal{}.WithCause(err).WithMessage("Could not encode QR code as jpeg.").Build()
+		return nil, NewError("Could not encode qr code as image.", err, http.StatusInternalServerError)
 	}
 
 	// Set QR code as playlist image in background
 	go func() {
 		err := client.SetPlaylistImage(playlist.ID, jpegBuffer)
 		if err != nil {
-			_ = spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not set QR code as playlist image.").Build()
+			NewInternalError("Could not set playlist image.", err)
 		}
 	}()
 
@@ -192,10 +193,10 @@ func (listeningSessionService) joinIdExists(joinId string) bool {
 	return count > 0
 }
 
-func (s listeningSessionService) CloseSession(user User, joinId string) error {
+func (s listeningSessionService) CloseSession(user User, joinId string) *SpotifeteError {
 	session := s.GetSessionByJoinId(joinId)
 	if user.ID != session.OwnerId {
-		return spotifeteError.Authentication{}.WithMessage("Only the owner can close a session.").Build()
+		return NewUserError("Only the session owner can close a session.")
 	}
 
 	session.Active = false
@@ -203,9 +204,10 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	database.GetConnection().Save(&session)
 
 	client := SpotifyService().GetClientForUser(user)
+	// TODO: Only try to unfollow playlist if owner is still following it.
 	err := client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.QueuePlaylist))
 	if err != nil {
-		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not unfollow playlist.").Build()
+		return NewError("Could not unfollow (delete) playlist.", err, http.StatusInternalServerError)
 	}
 
 	// Create rewind playlist if any tracks were requested
@@ -213,7 +215,7 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 	if len(distinctRequestedTracks) > 0 {
 		rewindPlaylist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s Rewind - SpotiFete", session.Title), fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title), false)
 		if err != nil {
-			return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not create rewind playlist.").Build()
+			return NewError("Could not create rewind playlist.", err, http.StatusInternalServerError)
 		}
 
 		go func() {
@@ -224,7 +226,7 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 				if len(page) == 100 {
 					_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
 					if err != nil {
-						_ = spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not add tracks to rewind playlist.").Build()
+						_ = NewInternalError(fmt.Sprintf("Could not add tracks to rewind playlist. Session: %d | Rewind playlist: %s | Tracks: %s", session.ID, rewindPlaylist.ID, page), err)
 					}
 					page = []spotify.ID{}
 				}
@@ -233,7 +235,7 @@ func (s listeningSessionService) CloseSession(user User, joinId string) error {
 			if len(page) > 0 {
 				_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
 				if err != nil {
-					_ = spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not add tracks to rewind playlist.").Build()
+					_ = NewInternalError(fmt.Sprintf("Could not add tracks to rewind playlist. Session: %d | Rewind playlist: %s | Tracks: %s", session.ID, rewindPlaylist.ID, page), err)
 				}
 			}
 		}()
@@ -248,29 +250,29 @@ func (s listeningSessionService) IsTrackInQueue(session ListeningSession, trackI
 	return len(duplicateRequestsForTrack) > 0
 }
 
-func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) error {
+func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) *SpotifeteError {
 	sessionOwner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetClientForUser(*sessionOwner)
 
 	// Prevent duplicates
 	if s.IsTrackInQueue(session, trackId) {
-		return spotifeteError.IllegalArgument{}.WithMessage("This track is already in the queue.").Build()
+		return NewUserError("This tack is already in the queue.")
 	}
 
 	spotifyTrack, err := client.GetTrack(spotify.ID(trackId))
 	if err != nil {
-		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get track information from Spotify.").Build()
+		return NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	updatedTrackMetadata := SpotifyService().AddOrUpdateTrackMetadata(*client, *spotifyTrack)
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
-		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get information on session owner from Spotify.").Build()
+		return NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	if !s.isTrackAvailableInUserMarket(*currentUser, *spotifyTrack) {
-		return spotifeteError.IllegalArgument{}.WithMessage("Sorry, this track is not available :/").Build()
+		return NewUserError("Sorry, this track is not available :/")
 	}
 
 	// Check if we have to add the request to the queue or play it immediately
@@ -299,10 +301,10 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 
 	database.GetConnection().Create(&newSongRequest)
 
-	return s.UpdateSessionPlaylistIfNeccessary(session)
+	return s.UpdateSessionPlaylistIfNecessary(session)
 }
 
-func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSession) error {
+func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
@@ -310,27 +312,28 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 	client := SpotifyService().GetClientForUser(*owner)
 	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
 	if err != nil {
-		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get currently playing track from Spotify.").Build()
+		return NewError("Could not get currently playing track from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
 		// Nothing is running -> still update the playlist if neccessary
-		return s.UpdateSessionPlaylistIfNeccessary(session)
+		return s.UpdateSessionPlaylistIfNecessary(session)
 	}
 
 	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
 
 	if session.FallbackPlaylist != nil && upNextRequest == nil {
 		// No requests present and a fallback playlist is present
-		fallbackTrackId, err := s.findNextUnplayedFallbackPlaylistTrack(session, *client)
-		if err != nil {
-			return err
+		fallbackTrackId, spotifeteError := s.findNextUnplayedFallbackPlaylistTrack(session, *client)
+		if spotifeteError != nil {
+			return spotifeteError
 		}
 
-		err = s.RequestSong(session, fallbackTrackId)
-		if err != nil {
-			return err
+		spotifeteError = s.RequestSong(session, fallbackTrackId)
+		if spotifeteError != nil {
+			return spotifeteError
 		}
+
 		return nil
 	}
 
@@ -350,22 +353,22 @@ func (s listeningSessionService) UpdateSessionIfNeccessary(session ListeningSess
 		}
 	}
 
-	return s.UpdateSessionPlaylistIfNeccessary(session)
+	return s.UpdateSessionPlaylistIfNecessary(session)
 }
 
-func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrack(session ListeningSession, client spotify.Client) (nextFallbackTrackId string, err error) {
+func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrack(session ListeningSession, client spotify.Client) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
 	return s.findNextUnplayedFallbackPlaylistTrackOpt(session, client, 0, 0)
 }
 
-func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(session ListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, err error) {
+func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(session ListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
 	currentUser, err := client.CurrentUser()
 	if err != nil {
-		return "", spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get information on session owner from Spotify.").Build()
+		return "", NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	playlistTracks, err := client.GetPlaylistTracksOpt(spotify.ID(*session.FallbackPlaylist), &spotify.Options{Offset: &pageOffset, Country: &currentUser.Country}, "")
 	if err != nil {
-		return "", spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get tracks from fallback playlist.").Build()
+		return "", NewError("Could not get tracks in fallback playlist from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
@@ -389,7 +392,7 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 	}
 }
 
-func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session ListeningSession) error {
+func (s listeningSessionService) UpdateSessionPlaylistIfNecessary(session ListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
@@ -402,7 +405,7 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 
 	playlist, err := client.GetPlaylist(spotify.ID(session.QueuePlaylist))
 	if err != nil {
-		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not get playlist information from Spotify.").Build()
+		return NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	playlistTracks := playlist.Tracks.Tracks
@@ -436,7 +439,7 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNeccessary(session Liste
 	return nil
 }
 
-func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session ListeningSession) error {
+func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session ListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
@@ -445,14 +448,14 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 	// Always replace all tracks with only the current one playing first
 	err := client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.SpotifyTrackId))
 	if err != nil {
-		return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could not update tracks in playlist.").Build()
+		return NewError("Could not update tracks in playlist.", err, http.StatusInternalServerError)
 	}
 
 	// After that, add the up next song as well if it is present
 	if upNextRequest != nil {
 		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequest.SpotifyTrackId))
 		if err != nil {
-			return spotifeteError.IllegalState{}.WithCause(err).WithMessage("Could add track to playlist.").Build()
+			return NewError("Could not add track to playlist.", err, http.StatusInternalServerError)
 		}
 	}
 
@@ -462,10 +465,7 @@ func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, se
 func (s listeningSessionService) PollSessions() {
 	for range time.Tick(5 * time.Second) {
 		for _, session := range s.GetActiveSessions() {
-			err := s.UpdateSessionIfNeccessary(session)
-			if err != nil {
-				logger.Errorf("error while polling session %s.", *session.JoinId)
-			}
+			s.UpdateSessionIfNecessary(session)
 		}
 	}
 }
@@ -547,20 +547,23 @@ func (s listeningSessionService) GetDistinctRequestedTracks(session ListeningSes
 	return
 }
 
-func (listeningSessionService) GenerateQrCodeForSession(joinId string, disableBorder bool) (*qrcode.QRCode, error) {
+func (listeningSessionService) GenerateQrCodeForSession(joinId string, disableBorder bool) (*qrcode.QRCode, *SpotifeteError) {
+	baseUrl := config.Get().SpotifeteConfiguration.BaseUrl
+	qrCodeContent := fmt.Sprintf("%s/session/view/%s",baseUrl, joinId)
+
 	// Generate QR code for this session
-	qrCode, err := qrcode.New(fmt.Sprintf("spotifete://session/%s", joinId), qrcode.Medium)
+	qrCode, err := qrcode.New(qrCodeContent, qrcode.Medium)
 	if err != nil {
-		return nil, spotifeteError.Internal{}.WithCause(err).WithMessage("Could not create QR code.").Build()
+		return nil, NewError("Could not create QR code.", err, http.StatusInternalServerError)
 	}
 
 	qrCode.DisableBorder = disableBorder
 	return qrCode, nil
 }
 
-func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession, user User, playlistId string) error {
+func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession, user User, playlistId string) *SpotifeteError {
 	if session.OwnerId != user.ID {
-		return spotifeteError.Authentication{}.WithMessage("Only the session owner can change the fallback playlist.").Build()
+		return NewUserError("Only the session owner can change the fallback playlist.")
 	}
 
 	client := SpotifyService().GetClientForUser(user)
