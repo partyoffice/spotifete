@@ -384,20 +384,23 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 
 	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
 	for _, playlistTrack := range playlistTracks.Tracks {
-		// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
-		// TODO: Remove this
-		refreshedTracks, err := client.GetTracks(playlistTrack.Track.ID)
-		if err != nil || len(refreshedTracks) == 0 {
-			NewError("Could not fetch track information from Spotify.", err, http.StatusInternalServerError)
-		}
-		track := refreshedTracks[0]
-		trackId := track.ID.String()
+		trackId := playlistTrack.Track.ID.String()
 
 		var trackPlays int
 		database.GetConnection().Model(SongRequest{}).Where(SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
-		if uint(trackPlays) <= maximumPlays && s.isTrackAvailableInUserMarket(*currentUser, *track) {
-			return trackId, nil
+		if uint(trackPlays) <= maximumPlays {
+			// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
+			// TODO: Remove this if Spotify fixes their API
+			refreshedTracks, err := client.GetTracks(playlistTrack.Track.ID)
+			if err != nil || len(refreshedTracks) == 0 {
+				NewError("Could not fetch track information from Spotify.", err, http.StatusInternalServerError)
+			}
+			refreshedTrack := refreshedTracks[0]
+
+			if s.isTrackAvailableInUserMarket(*currentUser, *refreshedTrack) {
+				return trackId, nil
+			}
 		}
 	}
 
