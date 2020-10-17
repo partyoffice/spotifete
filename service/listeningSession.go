@@ -315,7 +315,8 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 	client := SpotifyService().GetClientForUser(*owner)
 	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
 	if err != nil {
-		return NewError("Could not get currently playing track from Spotify.", err, http.StatusInternalServerError)
+		NewInternalError("Could not get currently playing track from Spotify.", err)
+		currentlyPlaying = nil
 	}
 
 	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
