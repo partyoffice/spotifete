@@ -72,7 +72,7 @@ func setupWebapp() {
 }
 
 func run() {
-	listeningSession.PollSessions()
+	go listeningSession.PollSessions()
 	spotifeteWebapp.Run()
 }
 
