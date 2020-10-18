@@ -15,8 +15,8 @@ func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	baseRouter.LoadHTMLGlob("resources/templates/*.html")
 
 	baseRouter.GET("/", c.Index)
-	baseRouter.GET("/login", c.Index)
-	baseRouter.GET("/logout", c.Index)
+	baseRouter.GET("/login", c.Login)
+	baseRouter.GET("/logout", c.Logout)
 	baseRouter.GET("/session/new", c.NewListeningSession)
 	baseRouter.POST("/session/new", c.NewListeningSessionSubmit)
 	baseRouter.GET("/session/view/:joinId", c.ViewSession)
@@ -51,14 +51,14 @@ func (TemplateController) Index(c *gin.Context) {
 	})
 }
 
-func (SpotifyAuthenticationController) Login(c *gin.Context) {
+func (TemplateController) Login(c *gin.Context) {
 	redirectTo := c.DefaultQuery("redirectTo", "/")
 
 	authUrl, _ := service.SpotifyService().NewAuthUrl(redirectTo)
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
-func (SpotifyAuthenticationController) Logout(c *gin.Context) {
+func (TemplateController) Logout(c *gin.Context) {
 	service.LoginSessionService().InvalidateSession(c)
 
 	redirectTo := c.DefaultQuery("redirectTo", "/")
