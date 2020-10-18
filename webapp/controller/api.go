@@ -13,22 +13,22 @@ import (
 
 type ApiController struct{ Controller }
 
-func (c ApiController) SetupWithBaseRouter(baseRouter *gin.Engine) {
+func (controller ApiController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router := baseRouter.Group("/api/v1")
 
-	router.GET("/", c.Index)
-	router.GET("/spotify/auth/new", c.GetAuthUrl)
-	router.GET("/spotify/auth/authenticated", c.DidAuthSucceed)
-	router.PATCH("/spotify/auth/invalidate", c.InvalidateSessionId)
-	router.GET("/spotify/search/track", c.SearchSpotifyTrack)
-	router.GET("/spotify/search/playlist", c.SearchSpotifyPlaylist)
-	router.GET("/sessions/:joinId", c.GetSession)
-	router.DELETE("sessions/:joinId", c.CloseListeningSession)
-	router.POST("/sessions/:joinId/request", c.RequestSong)
-	router.GET("/sessions/:joinId/queuelastupdated", c.QueueLastUpdated)
-	router.GET("/sessions/:joinId/qrcode", c.CreateQrCodeForListeningSession)
-	router.POST("/sessions", c.CreateListeningSession)
-	router.GET("/users/:userId", c.GetUser)
+	router.GET("/", controller.Index)
+	router.GET("/spotify/auth/new", controller.GetAuthUrl)
+	router.GET("/spotify/auth/authenticated", controller.DidAuthSucceed)
+	router.PATCH("/spotify/auth/invalidate", controller.InvalidateSessionId)
+	router.GET("/spotify/search/track", controller.SearchSpotifyTrack)
+	router.GET("/spotify/search/playlist", controller.SearchSpotifyPlaylist)
+	router.GET("/sessions/:joinId", controller.GetSession)
+	router.DELETE("sessions/:joinId", controller.CloseListeningSession)
+	router.POST("/sessions/:joinId/request", controller.RequestSong)
+	router.GET("/sessions/:joinId/queuelastupdated", controller.QueueLastUpdated)
+	router.GET("/sessions/:joinId/qrcode", controller.CreateQrCodeForListeningSession)
+	router.POST("/sessions", controller.CreateListeningSession)
+	router.GET("/users/:userId", controller.GetUser)
 }
 
 func (ApiController) Index(c *gin.Context) {
