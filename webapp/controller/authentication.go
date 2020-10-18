@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
 	"github.com/47-11/spotifete/service"
@@ -18,6 +19,7 @@ type SpotifyAuthenticationController struct{ OAuth2AuthenticationController }
 
 func (c SpotifyAuthenticationController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	group := baseRouter.Group("/auth")
+
 	group.GET("/callback", c.Callback)
 }
 
@@ -41,7 +43,7 @@ func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 	}
 
 	// Set or update session cookie
-	service.LoginSessionService().SetSessionCookie(c, loginSession.SessionId)
+	authentication.SetCookie(c, loginSession.SessionId)
 
 	redirectTo := loginSession.CallbackRedirect
 	if redirectTo[0:1] != "/" {
@@ -54,7 +56,7 @@ func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 func getValidLoginSessionFromContext(c *gin.Context) (model.LoginSession, *SpotifeteError) {
 	state := c.Query("state")
 
-	session := service.LoginSessionService().GetSessionBySessionId(state, true)
+	session := authentication.GetValidSession(state)
 	if session == nil {
 		return model.LoginSession{}, NewUserError("Unknown state.")
 	}
@@ -89,7 +91,7 @@ func authenticateUser(token *oauth2.Token, session model.LoginSession) *Spotifet
 	user := service.UserService().GetOrCreateUser(spotifyUser)
 	service.UserService().SetToken(user, *token)
 
-	service.LoginSessionService().SetUserForSession(session, user)
+	authentication.SetUserForSession(session, user)
 
 	return nil
 }

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/service"
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 }
 
 func (TemplateController) Index(c *gin.Context) {
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"time":               time.Now(),
@@ -54,12 +55,16 @@ func (TemplateController) Index(c *gin.Context) {
 func (TemplateController) Login(c *gin.Context) {
 	redirectTo := c.DefaultQuery("redirectTo", "/")
 
-	authUrl, _ := service.SpotifyService().NewAuthUrl(redirectTo)
+	_, authUrl := authentication.NewSession(redirectTo)
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
 func (TemplateController) Logout(c *gin.Context) {
-	service.LoginSessionService().InvalidateSession(c)
+	sessionId := authentication.GetSessionIdFromCookie(c)
+	if sessionId != nil {
+		authentication.InvalidateSession(*sessionId)
+		authentication.RemoveCookie(c)
+	}
 
 	redirectTo := c.DefaultQuery("redirectTo", "/")
 	if redirectTo[0:1] != "/" {
@@ -70,7 +75,7 @@ func (TemplateController) Logout(c *gin.Context) {
 }
 
 func (TemplateController) NewListeningSession(c *gin.Context) {
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.Redirect(http.StatusSeeOther, "/login?redirectTo=/session/new")
 		return
@@ -83,7 +88,7 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 }
 
 func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.Redirect(http.StatusSeeOther, "/login?redirectTo=/session/new")
 		return
@@ -119,7 +124,7 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	displayError := c.Query("displayError")
 
 	queueLastUpdated := service.ListeningSessionService().GetQueueLastUpdated(*listeningSession).UTC().Format(time.RFC3339Nano)
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
 			"queueLastUpdated": queueLastUpdated,
@@ -164,7 +169,7 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
 		return
@@ -188,7 +193,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
+	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
 		return

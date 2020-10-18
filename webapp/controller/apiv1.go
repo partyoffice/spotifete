@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/47-11/spotifete/authentication"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/service"
 	"github.com/getsentry/sentry-go"
@@ -71,7 +72,7 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionBySessionId(loginSessionId, true)
+	loginSession := authentication.GetValidSession(loginSessionId)
 	if loginSession == nil {
 		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "invalid login session"})
 		return
@@ -87,10 +88,10 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 }
 
 func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
-	url, sessionId := service.SpotifyService().NewAuthUrl("/spotify/api-callback")
+	newSession, authUrl := authentication.NewSession("/spotify/auth/success")
 	c.JSON(http.StatusOK, GetAuthUrlResponse{
-		Url:       url,
-		SessionId: sessionId,
+		Url:       authUrl,
+		SessionId: newSession.SessionId,
 	})
 }
 
@@ -101,13 +102,13 @@ func (ApiV1Controller) DidAuthSucceed(c *gin.Context) {
 		return
 	}
 
-	session := service.LoginSessionService().GetSessionBySessionId(sessionId, false)
+	session := authentication.GetSession(sessionId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	if service.LoginSessionService().IsSessionValid(*session) && session.UserId != nil {
+	if authentication.IsSessionValid(*session) && session.UserId != nil {
 		c.JSON(http.StatusOK, DidAuthSucceedResponse{Authenticated: true})
 	} else {
 		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
@@ -123,7 +124,7 @@ func (ApiV1Controller) InvalidateSessionId(c *gin.Context) {
 		return
 	}
 
-	service.LoginSessionService().InvalidateSessionBySessionId(requestBody.LoginSessionId)
+	authentication.InvalidateSession(requestBody.LoginSessionId)
 
 	c.Status(http.StatusNoContent)
 }
@@ -287,7 +288,7 @@ func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionBySessionId(*requestBody.LoginSessionId, true)
+	loginSession := authentication.GetValidSession(*requestBody.LoginSessionId)
 	if loginSession == nil {
 		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "invalid login session"})
 		return
@@ -324,7 +325,7 @@ func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	loginSession := service.LoginSessionService().GetSessionBySessionId(*loginSessionId, true)
+	loginSession := authentication.GetValidSession(*loginSessionId)
 	if loginSession == nil {
 		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "Invalid login session"})
 		return

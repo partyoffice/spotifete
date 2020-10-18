@@ -6,7 +6,6 @@ import (
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
 	"github.com/47-11/spotifete/model/dto"
-	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
 	"net/http"
 	"strings"
@@ -83,18 +82,6 @@ func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Cl
 	}
 
 	return nil
-}
-
-func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
-	sessionId = LoginSessionService().newSessionId()
-	database.GetConnection().Create(&model.LoginSession{
-		Model:            gorm.Model{},
-		SessionId:        sessionId,
-		UserId:           nil,
-		Active:           true,
-		CallbackRedirect: callbackRedirectUrl,
-	})
-	return s.Authenticator.AuthURL(sessionId), sessionId
 }
 
 func (s spotifyService) SearchTrack(client spotify.Client, query string, limit int) ([]dto.TrackMetadataDto, *SpotifeteError) {
