@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-type ApiController struct{ Controller }
+type ApiV1Controller struct{ Controller }
 
-func (controller ApiController) SetupWithBaseRouter(baseRouter *gin.Engine) {
+func (controller ApiV1Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router := baseRouter.Group("/api/v1")
 
 	router.GET("/", controller.Index)
@@ -31,11 +31,11 @@ func (controller ApiController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router.GET("/users/:userId", controller.GetUser)
 }
 
-func (ApiController) Index(c *gin.Context) {
+func (ApiV1Controller) Index(c *gin.Context) {
 	c.String(http.StatusOK, "SpotiFete API v1")
 }
 
-func (ApiController) GetSession(c *gin.Context) {
+func (ApiV1Controller) GetSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 
 	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
@@ -46,7 +46,7 @@ func (ApiController) GetSession(c *gin.Context) {
 	}
 }
 
-func (controller ApiController) GetUser(c *gin.Context) {
+func (controller ApiV1Controller) GetUser(c *gin.Context) {
 	userId := c.Param("userId")
 
 	if userId == "current" {
@@ -62,7 +62,7 @@ func (controller ApiController) GetUser(c *gin.Context) {
 	}
 }
 
-func (ApiController) GetCurrentUser(c *gin.Context) {
+func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 	loginSessionId := c.Query("sessionId")
 
 	if len(loginSessionId) == 0 {
@@ -85,7 +85,7 @@ func (ApiController) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, service.UserService().CreateDto(*user, true))
 }
 
-func (ApiController) GetAuthUrl(c *gin.Context) {
+func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
 	url, sessionId := service.SpotifyService().NewAuthUrl("/spotify/api-callback")
 	c.JSON(http.StatusOK, GetAuthUrlResponse{
 		Url:       url,
@@ -93,7 +93,7 @@ func (ApiController) GetAuthUrl(c *gin.Context) {
 	})
 }
 
-func (ApiController) DidAuthSucceed(c *gin.Context) {
+func (ApiV1Controller) DidAuthSucceed(c *gin.Context) {
 	sessionId := c.Query("sessionId")
 	if sessionId == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
@@ -113,7 +113,7 @@ func (ApiController) DidAuthSucceed(c *gin.Context) {
 	}
 }
 
-func (ApiController) InvalidateSessionId(c *gin.Context) {
+func (ApiV1Controller) InvalidateSessionId(c *gin.Context) {
 	var requestBody InvalidateSessionIdRequest
 
 	err := c.ShouldBindJSON(&requestBody)
@@ -127,7 +127,7 @@ func (ApiController) InvalidateSessionId(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (ApiController) SearchSpotifyTrack(c *gin.Context) {
+func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 	listeningSessionJoinId := c.Query("session")
 	if len(listeningSessionJoinId) == 0 {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
@@ -175,7 +175,7 @@ func (ApiController) SearchSpotifyTrack(c *gin.Context) {
 	})
 }
 
-func (ApiController) SearchSpotifyPlaylist(c *gin.Context) {
+func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 	listeningSessionJoinId := c.Query("session")
 	if len(listeningSessionJoinId) == 0 {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
@@ -223,7 +223,7 @@ func (ApiController) SearchSpotifyPlaylist(c *gin.Context) {
 	})
 }
 
-func (ApiController) RequestSong(c *gin.Context) {
+func (ApiV1Controller) RequestSong(c *gin.Context) {
 	requestBody := RequestSongRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -256,7 +256,7 @@ func (ApiController) RequestSong(c *gin.Context) {
 	}
 }
 
-func (ApiController) QueueLastUpdated(c *gin.Context) {
+func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
 	if session == nil {
@@ -267,7 +267,7 @@ func (ApiController) QueueLastUpdated(c *gin.Context) {
 	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: service.ListeningSessionService().GetQueueLastUpdated(*session)})
 }
 
-func (ApiController) CreateListeningSession(c *gin.Context) {
+func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
 	requestBody := CreateListeningSessionRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -307,7 +307,7 @@ func (ApiController) CreateListeningSession(c *gin.Context) {
 	c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*createdSession, true))
 }
 
-func (ApiController) CloseListeningSession(c *gin.Context) {
+func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 
 	var request = CloseListeningSessionRequest{}
@@ -339,7 +339,7 @@ func (ApiController) CloseListeningSession(c *gin.Context) {
 	}
 }
 
-func (ApiController) CreateQrCodeForListeningSession(c *gin.Context) {
+func (ApiV1Controller) CreateQrCodeForListeningSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	disableBorder := strings.EqualFold("true", c.Query("disableBorder"))
 	sizeOverride := c.Query("size")
