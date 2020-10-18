@@ -1,6 +1,8 @@
 package dto
 
-import . "github.com/47-11/spotifete/model/database"
+import (
+	"github.com/47-11/spotifete/database/model"
+)
 
 type PlaylistMetadataDto struct {
 	SpotifyPLaylistId string `json:"spotifyPlaylistId"`
@@ -10,7 +12,7 @@ type PlaylistMetadataDto struct {
 	OwnerName         string `json:"createdBy"`
 }
 
-func (playlistMetadataDto PlaylistMetadataDto) FromDatabaseModel(model PlaylistMetadata) PlaylistMetadataDto {
+func (playlistMetadataDto PlaylistMetadataDto) FromDatabaseModel(model model.PlaylistMetadata) PlaylistMetadataDto {
 	playlistMetadataDto.SpotifyPLaylistId = model.SpotifyPlaylistId
 	playlistMetadataDto.Name = model.Name
 	playlistMetadataDto.TrackCount = model.TrackCount

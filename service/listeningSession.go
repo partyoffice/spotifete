@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
+	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	. "github.com/47-11/spotifete/model/database"
 	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/jinzhu/gorm"
 	qrcode "github.com/skip2/go-qrcode"
@@ -36,25 +36,25 @@ func ListeningSessionService() *listeningSessionService {
 
 func (listeningSessionService) GetTotalSessionCount() int {
 	var count int
-	database.GetConnection().Model(&ListeningSession{}).Count(&count)
+	database.GetConnection().Model(&model.ListeningSession{}).Count(&count)
 	return count
 }
 
 func (listeningSessionService) GetActiveSessionCount() int {
 	var count int
-	database.GetConnection().Model(&ListeningSession{}).Where(ListeningSession{Active: true}).Count(&count)
+	database.GetConnection().Model(&model.ListeningSession{}).Where(model.ListeningSession{Active: true}).Count(&count)
 	return count
 }
 
-func (listeningSessionService) GetActiveSessions() []ListeningSession {
-	var sessions []ListeningSession
-	database.GetConnection().Where(ListeningSession{Active: true}).Find(&sessions)
+func (listeningSessionService) GetActiveSessions() []model.ListeningSession {
+	var sessions []model.ListeningSession
+	database.GetConnection().Where(model.ListeningSession{Active: true}).Find(&sessions)
 	return sessions
 }
 
-func (listeningSessionService) GetSessionById(id uint) *ListeningSession {
-	var sessions []ListeningSession
-	database.GetConnection().Where(ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
+func (listeningSessionService) GetSessionById(id uint) *model.ListeningSession {
+	var sessions []model.ListeningSession
+	database.GetConnection().Where(model.ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -63,13 +63,13 @@ func (listeningSessionService) GetSessionById(id uint) *ListeningSession {
 	}
 }
 
-func (listeningSessionService) GetSessionByJoinId(joinId string) *ListeningSession {
+func (listeningSessionService) GetSessionByJoinId(joinId string) *model.ListeningSession {
 	if len(joinId) == 0 {
 		return nil
 	}
 
-	var sessions []ListeningSession
-	database.GetConnection().Where(ListeningSession{JoinId: &joinId}).Find(&sessions)
+	var sessions []model.ListeningSession
+	database.GetConnection().Where(model.ListeningSession{JoinId: &joinId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		return &sessions[0]
@@ -78,17 +78,17 @@ func (listeningSessionService) GetSessionByJoinId(joinId string) *ListeningSessi
 	}
 }
 
-func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []ListeningSession {
-	var sessions []ListeningSession
-	database.GetConnection().Where(ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
+func (listeningSessionService) GetActiveSessionsByOwnerId(ownerId uint) []model.ListeningSession {
+	var sessions []model.ListeningSession
+	database.GetConnection().Where(model.ListeningSession{Active: true, OwnerId: ownerId}).Find(&sessions)
 	return sessions
 }
 
-func (s listeningSessionService) GetCurrentlyPlayingRequest(session ListeningSession) *SongRequest {
-	var requests []SongRequest
-	database.GetConnection().Where(SongRequest{
+func (s listeningSessionService) GetCurrentlyPlayingRequest(session model.ListeningSession) *model.SongRequest {
+	var requests []model.SongRequest
+	database.GetConnection().Where(model.SongRequest{
 		SessionId: session.ID,
-		Status:    StatusCurrentlyPlaying,
+		Status:    model.StatusCurrentlyPlaying,
 	}, session.ID).Find(&requests)
 
 	if len(requests) > 0 {
@@ -98,11 +98,11 @@ func (s listeningSessionService) GetCurrentlyPlayingRequest(session ListeningSes
 	}
 }
 
-func (s listeningSessionService) GetUpNextRequest(session ListeningSession) *SongRequest {
-	var requests []SongRequest
-	database.GetConnection().Where(SongRequest{
+func (s listeningSessionService) GetUpNextRequest(session model.ListeningSession) *model.SongRequest {
+	var requests []model.SongRequest
+	database.GetConnection().Where(model.SongRequest{
 		SessionId: session.ID,
-		Status:    StatusUpNext,
+		Status:    model.StatusUpNext,
 	}, session.ID).Find(&requests)
 
 	if len(requests) > 0 {
@@ -112,11 +112,11 @@ func (s listeningSessionService) GetUpNextRequest(session ListeningSession) *Son
 	}
 }
 
-func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session ListeningSession) []SongRequest {
-	var requests []SongRequest
-	database.GetConnection().Where(SongRequest{
+func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session model.ListeningSession) []model.SongRequest {
+	var requests []model.SongRequest
+	database.GetConnection().Where(model.SongRequest{
 		SessionId: session.ID,
-		Status:    StatusInQueue,
+		Status:    model.StatusInQueue,
 	}).Order("created_at asc").Find(&requests)
 
 	// TODO: Do something smarter than just using the request order here
@@ -124,7 +124,7 @@ func (s listeningSessionService) GetSessionQueueInDemocraticOrder(session Listen
 	return requests
 }
 
-func (s listeningSessionService) NewSession(user User, title string) (*ListeningSession, *SpotifeteError) {
+func (s listeningSessionService) NewSession(user model.User, title string) (*model.ListeningSession, *SpotifeteError) {
 	if len(title) == 0 {
 		return nil, NewUserError("Session title must not be empty.")
 	}
@@ -159,7 +159,7 @@ func (s listeningSessionService) NewSession(user User, title string) (*Listening
 	}()
 
 	// Create database entry
-	listeningSession := ListeningSession{
+	listeningSession := model.ListeningSession{
 		Model:         gorm.Model{},
 		Active:        true,
 		OwnerId:       user.ID,
@@ -189,11 +189,11 @@ func (s listeningSessionService) newJoinId() string {
 
 func (listeningSessionService) joinIdExists(joinId string) bool {
 	var count uint
-	database.GetConnection().Model(&ListeningSession{}).Where(ListeningSession{JoinId: &joinId}).Count(&count)
+	database.GetConnection().Model(&model.ListeningSession{}).Where(model.ListeningSession{JoinId: &joinId}).Count(&count)
 	return count > 0
 }
 
-func (s listeningSessionService) CloseSession(user User, joinId string) *SpotifeteError {
+func (s listeningSessionService) CloseSession(user model.User, joinId string) *SpotifeteError {
 	session := s.GetSessionByJoinId(joinId)
 	if user.ID != session.OwnerId {
 		return NewUserError("Only the session owner can close a session.")
@@ -244,26 +244,26 @@ func (s listeningSessionService) CloseSession(user User, joinId string) *Spotife
 	return nil
 }
 
-func (s listeningSessionService) IsTrackInQueue(session ListeningSession, trackId string) bool {
-	var duplicateRequestsForTrack []SongRequest
+func (s listeningSessionService) IsTrackInQueue(session model.ListeningSession, trackId string) bool {
+	var duplicateRequestsForTrack []model.SongRequest
 	database.GetConnection().Where("status != 'PLAYED' AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
 	return len(duplicateRequestsForTrack) > 0
 }
 
-func (s listeningSessionService) RequestSong(session ListeningSession, trackId string) (SongRequest, *SpotifeteError) {
+func (s listeningSessionService) RequestSong(session model.ListeningSession, trackId string) (model.SongRequest, *SpotifeteError) {
 	sessionOwner := UserService().GetUserById(session.OwnerId)
 	client := SpotifyService().GetClientForUser(*sessionOwner)
 
 	// Prevent duplicates
 	if s.IsTrackInQueue(session, trackId) {
-		return SongRequest{}, NewUserError("This tack is already in the queue.")
+		return model.SongRequest{}, NewUserError("This tack is already in the queue.")
 	}
 
 	// When using GetTrack Spotify does not include the available markets
 	// TODO: Use GetTrack again when Spotify fixed their API
 	spotifyTracks, err := client.GetTracks(spotify.ID(trackId))
 	if err != nil || len(spotifyTracks) == 0 {
-		return SongRequest{}, NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
+		return model.SongRequest{}, NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
 	}
 	spotifyTrack := spotifyTracks[0]
 
@@ -271,30 +271,30 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
-		return SongRequest{}, NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
+		return model.SongRequest{}, NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	if !s.isTrackAvailableInUserMarket(*currentUser, *spotifyTrack) {
-		return SongRequest{}, NewUserError("Sorry, this track is not available :/")
+		return model.SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
 	// Check if we have to add the request to the queue or play it immediately
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
-	var newRequestStatus SongRequestStatus
+	var newRequestStatus model.SongRequestStatus
 	if currentlyPlayingRequest == nil {
 		// No song is playing, that means the queue is empty -> Set this to play immediately
-		newRequestStatus = StatusCurrentlyPlaying
+		newRequestStatus = model.StatusCurrentlyPlaying
 	} else if upNextRequest == nil {
 		// A song is currently playing, but no follow up song is present -> Set this as the next song
-		newRequestStatus = StatusUpNext
+		newRequestStatus = model.StatusUpNext
 	} else {
 		// A song is currently playing and a follow up song is present. -> Just add this song to the normal queue
-		newRequestStatus = StatusInQueue
+		newRequestStatus = model.StatusInQueue
 	}
 
-	newSongRequest := SongRequest{
+	newSongRequest := model.SongRequest{
 		Model:          gorm.Model{},
 		SessionId:      session.ID,
 		UserId:         nil,
@@ -307,7 +307,7 @@ func (s listeningSessionService) RequestSong(session ListeningSession, trackId s
 	return newSongRequest, s.UpdateSessionPlaylistIfNecessary(session)
 }
 
-func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSession) *SpotifeteError {
+func (s listeningSessionService) UpdateSessionIfNecessary(session model.ListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
@@ -332,10 +332,10 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 		}
 
 		switch newSongRequest.Status {
-		case StatusCurrentlyPlaying:
+		case model.StatusCurrentlyPlaying:
 			currentlyPlayingRequest = &newSongRequest
 			break
-		case StatusUpNext:
+		case model.StatusUpNext:
 			upNextRequest = &newSongRequest
 			break
 		}
@@ -350,16 +350,16 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 
 	if upNextRequest != nil && upNextRequest.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
 		// The previous track finished and the playlist moved on the the next track. Time to update!
-		currentlyPlayingRequest.Status = StatusPlayed
+		currentlyPlayingRequest.Status = model.StatusPlayed
 		database.GetConnection().Save(currentlyPlayingRequest)
 
-		upNextRequest.Status = StatusCurrentlyPlaying
+		upNextRequest.Status = model.StatusCurrentlyPlaying
 		database.GetConnection().Save(upNextRequest)
 
 		queue := s.GetSessionQueueInDemocraticOrder(session)
 		if len(queue) > 0 {
 			newUpNext := queue[0]
-			newUpNext.Status = StatusUpNext
+			newUpNext.Status = model.StatusUpNext
 			database.GetConnection().Save(&newUpNext)
 		}
 	}
@@ -367,11 +367,11 @@ func (s listeningSessionService) UpdateSessionIfNecessary(session ListeningSessi
 	return s.UpdateSessionPlaylistIfNecessary(session)
 }
 
-func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrack(session ListeningSession, client spotify.Client) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrack(session model.ListeningSession, client spotify.Client) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
 	return s.findNextUnplayedFallbackPlaylistTrackOpt(session, client, 0, 0)
 }
 
-func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(session ListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(session model.ListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
 	currentUser, err := client.CurrentUser()
 	if err != nil {
 		return "", NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
@@ -387,7 +387,7 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 		trackId := playlistTrack.Track.ID.String()
 
 		var trackPlays int
-		database.GetConnection().Model(SongRequest{}).Where(SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
+		database.GetConnection().Model(model.SongRequest{}).Where(model.SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
 		if uint(trackPlays) <= maximumPlays {
 			// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
@@ -414,7 +414,7 @@ func (s listeningSessionService) findNextUnplayedFallbackPlaylistTrackOpt(sessio
 	}
 }
 
-func (s listeningSessionService) UpdateSessionPlaylistIfNecessary(session ListeningSession) *SpotifeteError {
+func (s listeningSessionService) UpdateSessionPlaylistIfNecessary(session model.ListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
@@ -461,7 +461,7 @@ func (s listeningSessionService) UpdateSessionPlaylistIfNecessary(session Listen
 	return nil
 }
 
-func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session ListeningSession) *SpotifeteError {
+func (s listeningSessionService) updateSessionPlaylist(client spotify.Client, session model.ListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := s.GetCurrentlyPlayingRequest(session)
 	upNextRequest := s.GetUpNextRequest(session)
 
@@ -490,13 +490,13 @@ func (s listeningSessionService) PollSessions() {
 	}
 }
 
-func (s listeningSessionService) pollSession(session ListeningSession) {
+func (s listeningSessionService) pollSession(session model.ListeningSession) {
 	for range time.Tick(5 * time.Second) {
 		s.UpdateSessionIfNecessary(session)
 	}
 }
 
-func (s listeningSessionService) CreateDto(listeningSession ListeningSession, resolveAdditionalInformation bool) dto.ListeningSessionDto {
+func (s listeningSessionService) CreateDto(listeningSession model.ListeningSession, resolveAdditionalInformation bool) dto.ListeningSessionDto {
 	result := dto.ListeningSessionDto{}
 	if listeningSession.JoinId == nil {
 		result.JoinId = ""
@@ -542,9 +542,9 @@ func (s listeningSessionService) CreateDto(listeningSession ListeningSession, re
 	return result
 }
 
-func (s listeningSessionService) GetQueueLastUpdated(session ListeningSession) time.Time {
-	lastUpdatedSongRequest := SongRequest{}
-	database.GetConnection().Where(SongRequest{
+func (s listeningSessionService) GetQueueLastUpdated(session model.ListeningSession) time.Time {
+	lastUpdatedSongRequest := model.SongRequest{}
+	database.GetConnection().Where(model.SongRequest{
 		SessionId: session.ID,
 	}).Order("updated_at desc").First(&lastUpdatedSongRequest)
 
@@ -556,13 +556,13 @@ func (s listeningSessionService) GetQueueLastUpdated(session ListeningSession) t
 	}
 }
 
-func (s listeningSessionService) GetDistinctRequestedTracks(session ListeningSession) (trackIds []spotify.ID) {
+func (s listeningSessionService) GetDistinctRequestedTracks(session model.ListeningSession) (trackIds []spotify.ID) {
 	type Result struct {
 		SpotifyTrackId string
 	}
 
 	var results []Result
-	database.GetConnection().Table("song_requests").Select("distinct spotify_track_id").Where(SongRequest{
+	database.GetConnection().Table("song_requests").Select("distinct spotify_track_id").Where(model.SongRequest{
 		SessionId: session.ID,
 	}).Scan(&results)
 
@@ -587,7 +587,7 @@ func (listeningSessionService) GenerateQrCodeForSession(joinId string, disableBo
 	return qrCode, nil
 }
 
-func (s listeningSessionService) ChangeFallbackPlaylist(session ListeningSession, user User, playlistId string) *SpotifeteError {
+func (s listeningSessionService) ChangeFallbackPlaylist(session model.ListeningSession, user model.User, playlistId string) *SpotifeteError {
 	if session.OwnerId != user.ID {
 		return NewUserError("Only the session owner can change the fallback playlist.")
 	}

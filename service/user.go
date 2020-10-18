@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/47-11/spotifete/database"
-	. "github.com/47-11/spotifete/model/database"
+	"github.com/47-11/spotifete/database/model"
 	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
@@ -24,13 +24,13 @@ func UserService() *userService {
 
 func (userService) GetTotalUserCount() int {
 	var count int
-	database.GetConnection().Model(&User{}).Count(&count)
+	database.GetConnection().Model(&model.User{}).Count(&count)
 	return count
 }
 
-func (userService) GetUserById(id uint) *User {
-	var users []User
-	database.GetConnection().Where(User{
+func (userService) GetUserById(id uint) *model.User {
+	var users []model.User
+	database.GetConnection().Where(model.User{
 		Model: gorm.Model{ID: id},
 	}).Find(&users)
 
@@ -41,9 +41,9 @@ func (userService) GetUserById(id uint) *User {
 	}
 }
 
-func (userService) GetUserBySpotifyId(spotifyId string) *User {
-	var users []User
-	database.GetConnection().Where(User{SpotifyId: spotifyId}).Find(&users)
+func (userService) GetUserBySpotifyId(spotifyId string) *model.User {
+	var users []model.User
+	database.GetConnection().Where(model.User{SpotifyId: spotifyId}).Find(&users)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -52,15 +52,15 @@ func (userService) GetUserBySpotifyId(spotifyId string) *User {
 	}
 }
 
-func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) User {
-	var users []User
-	database.GetConnection().Where(User{SpotifyId: spotifyUser.ID}).Find(&users)
+func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) model.User {
+	var users []model.User
+	database.GetConnection().Where(model.User{SpotifyId: spotifyUser.ID}).Find(&users)
 
 	if len(users) == 1 {
 		return users[0]
 	} else {
 		// No user found -> Create new
-		newUser := User{
+		newUser := model.User{
 			Model:              gorm.Model{},
 			SpotifyId:          spotifyUser.ID,
 			SpotifyDisplayName: spotifyUser.DisplayName,
@@ -73,8 +73,8 @@ func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) User {
 	}
 }
 
-func (userService) SetToken(user User, token oauth2.Token) {
-	database.GetConnection().Model(&user).Updates(User{
+func (userService) SetToken(user model.User, token oauth2.Token) {
+	database.GetConnection().Model(&user).Updates(model.User{
 		SpotifyAccessToken:  token.AccessToken,
 		SpotifyRefreshToken: token.RefreshToken,
 		SpotifyTokenType:    token.TokenType,
@@ -82,7 +82,7 @@ func (userService) SetToken(user User, token oauth2.Token) {
 	})
 }
 
-func (s userService) CreateDto(user User, resolveAdditionalInformation bool) dto.UserDto {
+func (s userService) CreateDto(user model.User, resolveAdditionalInformation bool) dto.UserDto {
 	result := dto.UserDto{}
 
 	result.SpotifyId = user.SpotifyId

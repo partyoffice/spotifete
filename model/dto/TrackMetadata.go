@@ -1,6 +1,8 @@
 package dto
 
-import . "github.com/47-11/spotifete/model/database"
+import (
+	"github.com/47-11/spotifete/database/model"
+)
 
 type TrackMetadataDto struct {
 	SpotifyTrackId         string `json:"trackId"`
@@ -10,7 +12,7 @@ type TrackMetadataDto struct {
 	AlbumImageThumbnailUrl string `json:"albumImageThumbnailUrl"`
 }
 
-func (trackMetadataDto TrackMetadataDto) FromDatabaseModel(model TrackMetadata) TrackMetadataDto {
+func (trackMetadataDto TrackMetadataDto) FromDatabaseModel(model model.TrackMetadata) TrackMetadataDto {
 	trackMetadataDto.SpotifyTrackId = model.SpotifyTrackId
 	trackMetadataDto.TrackName = model.TrackName
 	trackMetadataDto.ArtistName = model.ArtistName

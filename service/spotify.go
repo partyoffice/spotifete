@@ -3,8 +3,8 @@ package service
 import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
+	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	. "github.com/47-11/spotifete/model/database"
 	"github.com/47-11/spotifete/model/dto"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
@@ -47,7 +47,7 @@ func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.C
 	return s.GetClientForUser(*user)
 }
 
-func (s spotifyService) GetClientForUser(user User) *spotify.Client {
+func (s spotifyService) GetClientForUser(user model.User) *spotify.Client {
 	if client, ok := s.Clients[user.SpotifyId]; ok {
 		s.refreshAndSaveTokenForUserIfNeccessary(*client, user)
 		return client
@@ -70,7 +70,7 @@ func (s spotifyService) refreshAndSaveTokenForSpotifyUserIfNeccessary(client spo
 	s.refreshAndSaveTokenForUserIfNeccessary(client, *user)
 }
 
-func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user User) *SpotifeteError {
+func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user model.User) *SpotifeteError {
 	newToken, err := client.Token() // This should refresh the token if neccessary: https://github.com/zmb3/spotify/issues/108#issuecomment-568899119
 	if err != nil {
 		return NewError("Could not refresh Spotify access token. Please try to log out and log in again.", err, http.StatusUnauthorized)
@@ -87,7 +87,7 @@ func (s spotifyService) refreshAndSaveTokenForUserIfNeccessary(client spotify.Cl
 
 func (s spotifyService) NewAuthUrl(callbackRedirectUrl string) (authUrl string, sessionId string) {
 	sessionId = LoginSessionService().newSessionId()
-	database.GetConnection().Create(&LoginSession{
+	database.GetConnection().Create(&model.LoginSession{
 		Model:            gorm.Model{},
 		SessionId:        sessionId,
 		UserId:           nil,
@@ -115,7 +115,7 @@ func (s spotifyService) SearchTrack(client spotify.Client, query string, limit i
 
 	var resultDtos []dto.TrackMetadataDto
 	for _, track := range result.Tracks.Tracks {
-		metadata := TrackMetadata{}.SetMetadata(track)
+		metadata := model.TrackMetadata{}.SetMetadata(track)
 		resultDtos = append(resultDtos, dto.TrackMetadataDto{}.FromDatabaseModel(metadata))
 	}
 
@@ -133,13 +133,13 @@ func (s spotifyService) SearchPlaylist(client spotify.Client, query string, limi
 
 	var resultDtos []dto.PlaylistMetadataDto
 	for _, playlist := range result.Playlists.Playlists {
-		resultDtos = append(resultDtos, dto.PlaylistMetadataDto{}.FromDatabaseModel(PlaylistMetadata{}.FromSimplePlaylist(playlist)))
+		resultDtos = append(resultDtos, dto.PlaylistMetadataDto{}.FromDatabaseModel(model.PlaylistMetadata{}.FromSimplePlaylist(playlist)))
 	}
 
 	return resultDtos, nil
 }
 
-func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyTrack spotify.FullTrack) TrackMetadata {
+func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyTrack spotify.FullTrack) model.TrackMetadata {
 	track := s.GetTrackMetadataBySpotifyTrackId(spotifyTrack.ID.String())
 	if track != nil {
 		updatedTrack := track.SetMetadata(spotifyTrack)
@@ -148,7 +148,7 @@ func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyT
 
 		return updatedTrack
 	} else {
-		newTrack := TrackMetadata{}.SetMetadata(spotifyTrack)
+		newTrack := model.TrackMetadata{}.SetMetadata(spotifyTrack)
 
 		database.GetConnection().Create(&newTrack)
 
@@ -156,9 +156,9 @@ func (s spotifyService) AddOrUpdateTrackMetadata(client spotify.Client, spotifyT
 	}
 }
 
-func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackMetadata {
-	var foundTracks []TrackMetadata
-	database.GetConnection().Where(TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
+func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *model.TrackMetadata {
+	var foundTracks []model.TrackMetadata
+	database.GetConnection().Where(model.TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
 
 	if len(foundTracks) > 0 {
 		return &foundTracks[0]
@@ -167,10 +167,10 @@ func (s spotifyService) GetTrackMetadataBySpotifyTrackId(trackId string) *TrackM
 	}
 }
 
-func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (PlaylistMetadata, *SpotifeteError) {
+func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (model.PlaylistMetadata, *SpotifeteError) {
 	spotifyPlaylist, err := client.GetPlaylist(playlistId)
 	if err != nil {
-		return PlaylistMetadata{}, NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
+		return model.PlaylistMetadata{}, NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
 	}
 
 	knownPlaylistMetadata := s.GetPlaylistMetadataBySpotifyPlaylistId(playlistId.String())
@@ -181,7 +181,7 @@ func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playl
 
 		return updatedPlaylistMetadata, nil
 	} else {
-		newPlaylistMetadata := PlaylistMetadata{}.FromFullPlaylist(*spotifyPlaylist)
+		newPlaylistMetadata := model.PlaylistMetadata{}.FromFullPlaylist(*spotifyPlaylist)
 
 		database.GetConnection().Create(&newPlaylistMetadata)
 
@@ -189,9 +189,9 @@ func (s spotifyService) AddOrUpdatePlaylistMetadata(client spotify.Client, playl
 	}
 }
 
-func (s spotifyService) GetPlaylistMetadataBySpotifyPlaylistId(playlistId string) *PlaylistMetadata {
-	var foundPlaylists []PlaylistMetadata
-	database.GetConnection().Where(PlaylistMetadata{SpotifyPlaylistId: playlistId}).Find(&foundPlaylists)
+func (s spotifyService) GetPlaylistMetadataBySpotifyPlaylistId(playlistId string) *model.PlaylistMetadata {
+	var foundPlaylists []model.PlaylistMetadata
+	database.GetConnection().Where(model.PlaylistMetadata{SpotifyPlaylistId: playlistId}).Find(&foundPlaylists)
 
 	if len(foundPlaylists) > 0 {
 		return &foundPlaylists[0]

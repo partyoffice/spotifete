@@ -1,4 +1,4 @@
-package database
+package model
 
 import (
 	"github.com/47-11/spotifete/util"

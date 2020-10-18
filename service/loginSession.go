@@ -1,8 +1,8 @@
 package service
 
 import (
-	database "github.com/47-11/spotifete/database"
-	. "github.com/47-11/spotifete/model/database"
+	"github.com/47-11/spotifete/database"
+	"github.com/47-11/spotifete/database/model"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"math/rand"
@@ -27,7 +27,7 @@ var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 func (loginSessionService) sessionIdExists(sessionId string) bool {
 	var count uint
 
-	database.GetConnection().Model(&LoginSession{}).Where(LoginSession{SessionId: sessionId}).Count(&count)
+	database.GetConnection().Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Count(&count)
 	return count > 0
 }
 
@@ -45,9 +45,9 @@ func (s loginSessionService) newSessionId() string {
 	}
 }
 
-func (s loginSessionService) GetSessionBySessionId(sessionId string, requireValid bool) *LoginSession {
-	var sessions []LoginSession
-	database.GetConnection().Where(LoginSession{SessionId: sessionId}).Find(&sessions)
+func (s loginSessionService) GetSessionBySessionId(sessionId string, requireValid bool) *model.LoginSession {
+	var sessions []model.LoginSession
+	database.GetConnection().Where(model.LoginSession{SessionId: sessionId}).Find(&sessions)
 
 	if len(sessions) == 1 {
 		session := sessions[0]
@@ -60,7 +60,7 @@ func (s loginSessionService) GetSessionBySessionId(sessionId string, requireVali
 	return nil
 }
 
-func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *LoginSession {
+func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *model.LoginSession {
 	sessionId, err := c.Cookie("SESSIONID")
 	if err != nil || sessionId == "" {
 		// No cookie found -> Create new session id and save a new sentry with that id to the database
@@ -79,13 +79,13 @@ func (s loginSessionService) GetSessionFromCookie(c *gin.Context) *LoginSession 
 	}
 }
 
-func (s loginSessionService) createAndSetNewSession(c *gin.Context) LoginSession {
+func (s loginSessionService) createAndSetNewSession(c *gin.Context) model.LoginSession {
 	return s.createAndSetSession(c, s.newSessionId())
 }
 
-func (s loginSessionService) createAndSetSession(c *gin.Context, sessionId string) LoginSession {
+func (s loginSessionService) createAndSetSession(c *gin.Context, sessionId string) model.LoginSession {
 	s.SetSessionCookie(c, sessionId)
-	newLoginSession := LoginSession{
+	newLoginSession := model.LoginSession{
 		Model:     gorm.Model{},
 		SessionId: sessionId,
 		UserId:    nil,
@@ -96,7 +96,7 @@ func (s loginSessionService) createAndSetSession(c *gin.Context, sessionId strin
 	return newLoginSession
 }
 
-func (loginSessionService) SetUserForSession(session LoginSession, user User) {
+func (loginSessionService) SetUserForSession(session model.LoginSession, user model.User) {
 	session.UserId = &user.ID
 	database.GetConnection().Save(session)
 }
@@ -112,10 +112,10 @@ func (s loginSessionService) InvalidateSession(c *gin.Context) {
 }
 
 func (loginSessionService) InvalidateSessionBySessionId(sessionId string) {
-	database.GetConnection().Model(&LoginSession{}).Where(LoginSession{SessionId: sessionId}).Update("active", false)
+	database.GetConnection().Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Update("active", false)
 }
 
-func (loginSessionService) IsSessionValid(session LoginSession) bool {
+func (loginSessionService) IsSessionValid(session model.LoginSession) bool {
 	return session.Active && session.CreatedAt.AddDate(0, 0, 7).After(time.Now())
 }
 
