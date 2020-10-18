@@ -28,16 +28,6 @@ func SpotifyService() *spotifyService {
 	return spotifyServiceInstance
 }
 
-func (s spotifyService) GetClientForSpotifyUser(spotifyUserId string) *spotify.Client {
-	if client, ok := s.Clients[spotifyUserId]; ok {
-		s.refreshAndSaveTokenForSpotifyUserIfNeccessary(*client, spotifyUserId)
-		return client
-	}
-
-	user := UserService().GetUserBySpotifyId(spotifyUserId)
-	return s.GetClientForUser(*user)
-}
-
 func (s spotifyService) GetClientForUser(user model.User) *spotify.Client {
 	if client, ok := s.Clients[user.SpotifyId]; ok {
 		s.refreshAndSaveTokenForUserIfNeccessary(*client, user)
