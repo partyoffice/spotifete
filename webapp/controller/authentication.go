@@ -71,7 +71,7 @@ func getValidLoginSessionFromContext(c *gin.Context) (model.LoginSession, *Spoti
 func getTokenFromContext(c *gin.Context) (*oauth2.Token, *SpotifeteError) {
 	state := c.Query("state")
 
-	token, err := service.SpotifyService().Authenticator.Token(state, c.Request)
+	token, err := authentication.GetSpotifyAuthenticator().Token(state, c.Request)
 	if err != nil {
 		return nil, NewError("Could not fetch access token from Spotify.", err, http.StatusUnauthorized)
 	}
@@ -80,7 +80,7 @@ func getTokenFromContext(c *gin.Context) (*oauth2.Token, *SpotifeteError) {
 }
 
 func authenticateUser(token *oauth2.Token, session model.LoginSession) *SpotifeteError {
-	client := service.SpotifyService().Authenticator.NewClient(token)
+	client := authentication.GetSpotifyAuthenticator().NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
 		return NewError("Could not get user information from Spotify.", err, http.StatusInternalServerError)

@@ -8,10 +8,10 @@ import (
 )
 
 func authUrlForSession(session model.LoginSession) string {
-	return getAuthenticator().AuthURL(session.SessionId)
+	return GetSpotifyAuthenticator().AuthURL(session.SessionId)
 }
 
-func getAuthenticator() spotify.Authenticator {
+func GetSpotifyAuthenticator() spotify.Authenticator {
 	createAuthenticatorOne.Do(createAuthenticator)
 	return authenticator
 }

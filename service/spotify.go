@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/47-11/spotifete/config"
+	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
@@ -13,8 +13,7 @@ import (
 )
 
 type spotifyService struct {
-	Authenticator spotify.Authenticator
-	Clients       map[string]*spotify.Client
+	Clients map[string]*spotify.Client
 }
 
 var spotifyServiceInstance *spotifyService
@@ -22,15 +21,8 @@ var spotifyServiceOnce sync.Once
 
 func SpotifyService() *spotifyService {
 	spotifyServiceOnce.Do(func() {
-		c := config.Get()
-		callbackUrl := c.SpotifeteConfiguration.BaseUrl + "/spotify/callback"
-
-		newAuth := spotify.NewAuthenticator(callbackUrl, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPrivate, spotify.ScopeImageUpload, spotify.ScopeUserLibraryRead, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadPrivate)
-		newAuth.SetAuthInfo(c.SpotifyConfiguration.Id, c.SpotifyConfiguration.Secret)
-
 		spotifyServiceInstance = &spotifyService{
-			Authenticator: newAuth,
-			Clients:       map[string]*spotify.Client{},
+			Clients: map[string]*spotify.Client{},
 		}
 	})
 	return spotifyServiceInstance
@@ -57,7 +49,7 @@ func (s spotifyService) GetClientForUser(user model.User) *spotify.Client {
 		return nil
 	}
 
-	client := s.Authenticator.NewClient(token)
+	client := authentication.GetSpotifyAuthenticator().NewClient(token)
 	s.refreshAndSaveTokenForUserIfNeccessary(client, user)
 	s.Clients[user.SpotifyId] = &client
 
