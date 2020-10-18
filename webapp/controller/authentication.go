@@ -9,14 +9,8 @@ import (
 	"net/http"
 )
 
-type AuthenticationController interface {
-	Controller
-	Login(*gin.Context)
-	Logout(*gin.Context)
-}
-
 type OAuth2AuthenticationController interface {
-	AuthenticationController
+	Controller
 	Callback(*gin.Context)
 }
 
@@ -24,16 +18,7 @@ type SpotifyAuthenticationController struct{ OAuth2AuthenticationController }
 
 func (c SpotifyAuthenticationController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	group := baseRouter.Group("/auth")
-	group.GET("/login", c.Login)
-	group.GET("/logout", c.Logout)
 	group.GET("/callback", c.Callback)
-}
-
-func (SpotifyAuthenticationController) Login(c *gin.Context) {
-	redirectTo := c.DefaultQuery("redirectTo", "/")
-
-	authUrl, _ := service.SpotifyService().NewAuthUrl(redirectTo)
-	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
 func (SpotifyAuthenticationController) Callback(c *gin.Context) {
@@ -107,20 +92,4 @@ func authenticateUser(token *oauth2.Token, session database.LoginSession) *Spoti
 	service.LoginSessionService().SetUserForSession(session, user)
 
 	return nil
-}
-
-func (SpotifyAuthenticationController) SpotifyApiCallback(c *gin.Context) {
-	// TODO: Do something nicer here
-	c.String(http.StatusOK, "Logged in successfully! You can close this window now :)")
-}
-
-func (SpotifyAuthenticationController) Logout(c *gin.Context) {
-	service.LoginSessionService().InvalidateSession(c)
-
-	redirectTo := c.Query("redirectTo")
-	if len(redirectTo) == 0 || redirectTo[0:1] != "/" {
-		redirectTo = "/" + redirectTo
-	}
-
-	c.Redirect(http.StatusTemporaryRedirect, redirectTo)
 }
