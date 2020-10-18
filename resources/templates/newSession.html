@@ -48,7 +48,7 @@
                             Logged in as spotify user {{ .user.SpotifyDisplayName }}
                         </p>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="/spotify/logout">
+                        <a class="dropdown-item" href="/auth/logout">
                             <span class="fas fa-sign-out-alt"></span>
                             Logout
                         </a>
@@ -56,7 +56,7 @@
                 </li>
             {{ else }}
                 <li class="nav-item active">
-                    <a class="nav-link" href="/spotify/login">
+                    <a class="nav-link" href="/auth/login">
                         Login
                         <span class="fab fa-spotify"></span>
                     </a>

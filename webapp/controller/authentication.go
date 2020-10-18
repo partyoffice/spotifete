@@ -23,7 +23,7 @@ type OAuth2AuthenticationController interface {
 type SpotifyAuthenticationController struct{ OAuth2AuthenticationController }
 
 func (c SpotifyAuthenticationController) SetupWithBaseRouter(baseRouter *gin.Engine) {
-	group := baseRouter.Group("/spotify")
+	group := baseRouter.Group("/auth")
 	group.GET("/login", c.Login)
 	group.GET("/logout", c.Logout)
 	group.GET("/callback", c.Callback)

@@ -50,7 +50,7 @@
                                 Logged in as spotify user {{ .user.SpotifyDisplayName }}
                             </p>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="/spotify/logout">
+                            <a class="dropdown-item" href="/auth/logout">
                                 <span class="fas fa-sign-out-alt"></span>
                                 Logout
                             </a>
@@ -58,7 +58,7 @@
                     </li>
                 {{ else }}
                     <li class="nav-item active">
-                        <a class="nav-link" href="/spotify/login">
+                        <a class="nav-link" href="/auth/login">
                             Login
                             <span class="fab fa-spotify"></span>
                         </a>
@@ -117,7 +117,7 @@
                         <br/>
                     {{ else }}
                         <h3>Your Sessions</h3>
-                        <a href="/spotify/login" class="btn btn-primary btn-lg">
+                        <a href="/auth/login" class="btn btn-primary btn-lg">
                             <span class="fab fa-spotify"></span>
                             Log in via Spotify to create a new session or view your existing ones
                         </a>

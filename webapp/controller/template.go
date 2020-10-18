@@ -53,7 +53,7 @@ func (TemplateController) Index(c *gin.Context) {
 func (TemplateController) NewListeningSession(c *gin.Context) {
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.Redirect(http.StatusSeeOther, "/spotify/login?redirectTo=/session/new")
+		c.Redirect(http.StatusSeeOther, "/auth/login?redirectTo=/session/new")
 		return
 	}
 
@@ -66,7 +66,7 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.Redirect(http.StatusSeeOther, "/spotify/login?redirectTo=/session/new")
+		c.Redirect(http.StatusSeeOther, "/auth/login?redirectTo=/session/new")
 		return
 	}
 
@@ -147,7 +147,7 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/spotify/login?redirectTo=/session/view/%s", joinId))
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/auth/login?redirectTo=/session/view/%s", joinId))
 		return
 	}
 
@@ -171,7 +171,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	loginSession := service.LoginSessionService().GetSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
-		c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/spotify/login?redirectTo=/session/view/%s", joinId))
+		c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/auth/login?redirectTo=/session/view/%s", joinId))
 		return
 	}
 
