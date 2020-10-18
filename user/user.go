@@ -1,4 +1,4 @@
-package service
+package user
 
 import (
 	"github.com/47-11/spotifete/database"
@@ -6,29 +6,15 @@ import (
 	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
-	"sync"
 )
 
-type userService struct{}
-
-var userServiceInstance *userService
-var userServiceOnce sync.Once
-
-func UserService() *userService {
-	userServiceOnce.Do(func() {
-		userServiceInstance = &userService{}
-	})
-	return userServiceInstance
-}
-
-func (userService) GetTotalUserCount() int {
+func GetTotalUserCount() int {
 	var count int
 	database.GetConnection().Model(&model.User{}).Count(&count)
 	return count
 }
 
-func (userService) GetUserById(id uint) *model.User {
+func GetUserById(id uint) *model.User {
 	var users []model.User
 	database.GetConnection().Where(model.User{
 		Model: gorm.Model{ID: id},
@@ -41,7 +27,7 @@ func (userService) GetUserById(id uint) *model.User {
 	}
 }
 
-func (userService) GetUserBySpotifyId(spotifyId string) *model.User {
+func GetUserBySpotifyId(spotifyId string) *model.User {
 	var users []model.User
 	database.GetConnection().Where(model.User{SpotifyId: spotifyId}).Find(&users)
 
@@ -52,7 +38,7 @@ func (userService) GetUserBySpotifyId(spotifyId string) *model.User {
 	}
 }
 
-func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) model.User {
+func GetOrCreateUser(spotifyUser *spotify.PrivateUser) model.User {
 	var users []model.User
 	database.GetConnection().Where(model.User{SpotifyId: spotifyUser.ID}).Find(&users)
 
@@ -73,27 +59,11 @@ func (userService) GetOrCreateUser(spotifyUser *spotify.PrivateUser) model.User 
 	}
 }
 
-func (userService) SetToken(user model.User, token oauth2.Token) {
-	database.GetConnection().Model(&user).Updates(model.User{
-		SpotifyAccessToken:  token.AccessToken,
-		SpotifyRefreshToken: token.RefreshToken,
-		SpotifyTokenType:    token.TokenType,
-		SpotifyTokenExpiry:  token.Expiry,
-	})
-}
-
-func (s userService) CreateDto(user model.User, resolveAdditionalInformation bool) dto.UserDto {
+func CreateDto(user model.User) dto.UserDto {
 	result := dto.UserDto{}
 
 	result.SpotifyId = user.SpotifyId
 	result.SpotifyDisplayName = user.SpotifyDisplayName
-
-	if resolveAdditionalInformation {
-		result.ListeningSessions = []dto.ListeningSessionDto{}
-		for _, session := range ListeningSessionService().GetActiveSessionsByOwnerId(user.ID) {
-			result.ListeningSessions = append(result.ListeningSessions, ListeningSessionService().CreateDto(session, false))
-		}
-	}
 
 	return result
 }

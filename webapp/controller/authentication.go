@@ -4,7 +4,7 @@ import (
 	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	"github.com/47-11/spotifete/service"
+	"github.com/47-11/spotifete/user"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 	"net/http"
@@ -30,7 +30,7 @@ func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 		return
 	}
 
-	token, spotifeteError := getTokenFromContext(c)
+	token, spotifeteError := authentication.GetTokenFromCallback(c)
 	if spotifeteError != nil {
 		spotifeteError.SetStringResponse(c)
 		return
@@ -68,30 +68,19 @@ func getValidLoginSessionFromContext(c *gin.Context) (model.LoginSession, *Spoti
 	return *session, nil
 }
 
-func getTokenFromContext(c *gin.Context) (*oauth2.Token, *SpotifeteError) {
-	state := c.Query("state")
-
-	token, err := authentication.GetSpotifyAuthenticator().Token(state, c.Request)
-	if err != nil {
-		return nil, NewError("Could not fetch access token from Spotify.", err, http.StatusUnauthorized)
-	}
-
-	return token, nil
-}
-
 func authenticateUser(token *oauth2.Token, session model.LoginSession) *SpotifeteError {
-	client := authentication.GetSpotifyAuthenticator().NewClient(token)
+	client := authentication.NewClientForToken(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
 		return NewError("Could not get user information from Spotify.", err, http.StatusInternalServerError)
 	}
 
-	service.SpotifyService().Clients[spotifyUser.ID] = &client
+	authentication.AddClientToCache(*spotifyUser, client)
 
-	user := service.UserService().GetOrCreateUser(spotifyUser)
-	service.UserService().SetToken(user, *token)
+	persistedUser := user.GetOrCreateUser(spotifyUser)
+	authentication.UpdateUserToken(persistedUser, *token)
 
-	authentication.SetUserForSession(session, user)
+	authentication.SetUserForSession(session, persistedUser)
 
 	return nil
 }

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/config"
-	"github.com/47-11/spotifete/service"
+	"github.com/47-11/spotifete/listeningSession"
+	"github.com/47-11/spotifete/user"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -34,21 +35,21 @@ func (TemplateController) Index(c *gin.Context) {
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"time":               time.Now(),
-			"activeSessionCount": service.ListeningSessionService().GetActiveSessionCount(),
-			"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
+			"activeSessionCount": listeningSession.GetActiveSessionCount(),
+			"totalSessionCount":  listeningSession.GetTotalSessionCount(),
 			"user":               nil,
 			"userSessions":       nil,
 		})
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	loggedInUser := user.GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
-		"activeSessionCount": service.ListeningSessionService().GetActiveSessionCount(),
-		"totalSessionCount":  service.ListeningSessionService().GetTotalSessionCount(),
-		"user":               user,
-		"userSessions":       service.ListeningSessionService().GetActiveSessionsByOwnerId(*loginSession.UserId),
+		"activeSessionCount": listeningSession.GetActiveSessionCount(),
+		"totalSessionCount":  listeningSession.GetTotalSessionCount(),
+		"user":               loggedInUser,
+		"userSessions":       listeningSession.GetActiveSessionsByOwnerId(*loginSession.UserId),
 	})
 }
 
@@ -81,9 +82,9 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	loggedInUser := user.GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
-		"user": user,
+		"user": loggedInUser,
 	})
 }
 
@@ -94,7 +95,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	loggedInUser := user.GetUserById(*loginSession.UserId)
 
 	title := c.PostForm("title")
 	if len(title) == 0 {
@@ -102,7 +103,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	session, spotifeteError := service.ListeningSessionService().NewSession(*user, title)
+	session, spotifeteError := listeningSession.NewSession(*loggedInUser, title)
 	if spotifeteError != nil {
 		spotifeteError.SetStringResponse(c)
 		return
@@ -113,17 +114,17 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 
 func (TemplateController) ViewSession(c *gin.Context) {
 	joinId := c.Param("joinId")
-	listeningSession := service.ListeningSessionService().GetSessionByJoinId(joinId)
-	if listeningSession == nil {
+	session := listeningSession.GetSessionByJoinId(joinId)
+	if session == nil {
 		c.String(http.StatusNotFound, "Session not found.")
 		return
 	}
 
-	ListeningSessionDto := service.ListeningSessionService().CreateDto(*listeningSession, true)
+	ListeningSessionDto := listeningSession.CreateDto(*session, true)
 
 	displayError := c.Query("displayError")
 
-	queueLastUpdated := service.ListeningSessionService().GetQueueLastUpdated(*listeningSession).UTC().Format(time.RFC3339Nano)
+	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session).UTC().Format(time.RFC3339Nano)
 	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
@@ -134,18 +135,18 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	loggedInUser := user.GetUserById(*loginSession.UserId)
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"queueLastUpdated": queueLastUpdated,
 		"session":          ListeningSessionDto,
-		"user":             user,
+		"user":             loggedInUser,
 		"displayError":     displayError,
 	})
 }
 
 func (TemplateController) RequestTrack(c *gin.Context) {
 	joinId := c.Param("joinId")
-	session := service.ListeningSessionService().GetSessionByJoinId(joinId)
+	session := listeningSession.GetSessionByJoinId(joinId)
 	if session == nil {
 		c.String(http.StatusNotFound, "session not found")
 		return
@@ -153,7 +154,7 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 	trackId := c.PostForm("trackId")
 
-	_, spotifeteError := service.ListeningSessionService().RequestSong(*session, trackId)
+	_, spotifeteError := listeningSession.RequestSong(*session, trackId)
 	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {
@@ -163,7 +164,7 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 	joinId := c.Param("joinId")
-	session := service.ListeningSessionService().GetSessionByJoinId(joinId)
+	session := listeningSession.GetSessionByJoinId(joinId)
 	if session == nil {
 		c.String(http.StatusNotFound, "session not found")
 		return
@@ -175,10 +176,10 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	loggedInUser := user.GetUserById(*loginSession.UserId)
 
 	playlistId := c.PostForm("playlistId")
-	spotifeteError := service.ListeningSessionService().ChangeFallbackPlaylist(*session, *user, playlistId)
+	spotifeteError := listeningSession.ChangeFallbackPlaylist(*session, *loggedInUser, playlistId)
 	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {
@@ -199,9 +200,9 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	loggedInUser := user.GetUserById(*loginSession.UserId)
 
-	spotifeteError := service.ListeningSessionService().CloseSession(*user, joinId)
+	spotifeteError := listeningSession.CloseSession(*loggedInUser, joinId)
 	if spotifeteError != nil {
 		spotifeteError.SetStringResponse(c)
 		return

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/service"
+	"github.com/47-11/spotifete/listeningSession"
 	"github.com/47-11/spotifete/webapp"
 	"github.com/getsentry/sentry-go"
 	"github.com/google/logger"
@@ -72,7 +72,7 @@ func setupWebapp() {
 }
 
 func run() {
-	go service.ListeningSessionService().PollSessions()
+	listeningSession.PollSessions()
 	spotifeteWebapp.Run()
 }
 

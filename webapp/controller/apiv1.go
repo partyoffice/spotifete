@@ -2,8 +2,9 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/authentication"
+	"github.com/47-11/spotifete/listeningSession"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
-	"github.com/47-11/spotifete/service"
+	"github.com/47-11/spotifete/user"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
@@ -40,11 +41,11 @@ func (ApiV1Controller) Index(c *gin.Context) {
 func (ApiV1Controller) GetSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 
-	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
+	session := listeningSession.GetSessionByJoinId(sessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 	} else {
-		c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*session, true))
+		c.JSON(http.StatusOK, listeningSession.CreateDto(*session, true))
 	}
 }
 
@@ -56,11 +57,11 @@ func (controller ApiV1Controller) GetUser(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserBySpotifyId(userId)
-	if user == nil {
+	spotifeteUser := user.GetUserBySpotifyId(userId)
+	if spotifeteUser == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "user not found"})
 	} else {
-		c.JSON(http.StatusOK, service.UserService().CreateDto(*user, true))
+		c.JSON(http.StatusOK, user.CreateDto(*spotifeteUser))
 	}
 }
 
@@ -83,8 +84,8 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
-	c.JSON(http.StatusOK, service.UserService().CreateDto(*user, true))
+	spotifeteUser := user.GetUserById(*loginSession.UserId)
+	c.JSON(http.StatusOK, user.CreateDto(*spotifeteUser))
 }
 
 func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
@@ -156,16 +157,16 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 		limit = 10
 	}
 
-	session := service.ListeningSessionService().GetSessionByJoinId(listeningSessionJoinId)
+	session := listeningSession.GetSessionByJoinId(listeningSessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	user := service.UserService().GetUserById(session.OwnerId)
-	client := service.SpotifyService().GetClientForUser(*user)
+	spotifeteUser := user.GetUserById(session.OwnerId)
+	client := authentication.GetClientForUser(*spotifeteUser)
 
-	tracks, spotifeteError := service.SpotifyService().SearchTrack(*client, query, limit)
+	tracks, spotifeteError := listeningSession.SearchTrack(*client, query, limit)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
@@ -204,16 +205,16 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 		limit = 10
 	}
 
-	session := service.ListeningSessionService().GetSessionByJoinId(listeningSessionJoinId)
+	session := listeningSession.GetSessionByJoinId(listeningSessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	user := service.UserService().GetUserById(session.OwnerId)
-	client := service.SpotifyService().GetClientForUser(*user)
+	spotifeteUser := user.GetUserById(session.OwnerId)
+	client := authentication.GetClientForUser(*spotifeteUser)
 
-	playlists, spotifeteError := service.SpotifyService().SearchPlaylist(*client, query, limit)
+	playlists, spotifeteError := listeningSession.SearchPlaylist(*client, query, limit)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
@@ -235,7 +236,7 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 	}
 
 	sessionJoinId := c.Param("joinId")
-	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
+	session := listeningSession.GetSessionByJoinId(sessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
@@ -245,12 +246,12 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 		return
 	}
 
-	if service.ListeningSessionService().IsTrackInQueue(*session, requestBody.TrackId) {
+	if listeningSession.IsTrackInQueue(*session, requestBody.TrackId) {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "that song is already in the queue"})
 		return
 	}
 
-	_, spotifeteError := service.ListeningSessionService().RequestSong(*session, requestBody.TrackId)
+	_, spotifeteError := listeningSession.RequestSong(*session, requestBody.TrackId)
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {
@@ -260,13 +261,13 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 
 func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
-	session := service.ListeningSessionService().GetSessionByJoinId(sessionJoinId)
+	session := listeningSession.GetSessionByJoinId(sessionJoinId)
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: service.ListeningSessionService().GetQueueLastUpdated(*session)})
+	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: listeningSession.GetQueueLastUpdated(*session)})
 }
 
 func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
@@ -299,14 +300,14 @@ func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
 		return
 	}
 
-	owner := service.UserService().GetUserById(*loginSession.UserId)
-	createdSession, spotifeteError := service.ListeningSessionService().NewSession(*owner, *requestBody.ListeningSessionTitle)
+	owner := user.GetUserById(*loginSession.UserId)
+	createdSession, spotifeteError := listeningSession.NewSession(*owner, *requestBody.ListeningSessionTitle)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
 	}
 
-	c.JSON(http.StatusOK, service.ListeningSessionService().CreateDto(*createdSession, true))
+	c.JSON(http.StatusOK, listeningSession.CreateDto(*createdSession, true))
 }
 
 func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
@@ -331,9 +332,9 @@ func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	user := service.UserService().GetUserById(*loginSession.UserId)
+	spotifeteUser := user.GetUserById(*loginSession.UserId)
 
-	spotifeteError := service.ListeningSessionService().CloseSession(*user, sessionJoinId)
+	spotifeteError := listeningSession.CloseSession(*spotifeteUser, sessionJoinId)
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {
@@ -357,7 +358,7 @@ func (ApiV1Controller) CreateQrCodeForListeningSession(c *gin.Context) {
 		size = parsed
 	}
 
-	qrCode, spotifeteError := service.ListeningSessionService().GenerateQrCodeForSession(joinId, disableBorder)
+	qrCode, spotifeteError := listeningSession.GenerateQrCodeForSession(joinId, disableBorder)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
