@@ -73,6 +73,7 @@ func (w SpotifeteWebapp) setupControllers() {
 	controller.SpotifyAuthenticationController{}.SetupWithBaseRouter(w.router)
 	controller.StaticController{}.SetupWithBaseRouter(w.router)
 	controller.ApiV1Controller{}.SetupWithBaseRouter(w.router)
+	controller.ApiV2Controller{}.SetupWithBaseRouter(w.router)
 	controller.TemplateController{}.SetupWithBaseRouter(w.router)
 }
 
