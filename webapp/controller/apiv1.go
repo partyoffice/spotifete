@@ -20,6 +20,7 @@ func (controller ApiV1Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router.GET("/spotify/auth/new", controller.GetAuthUrl)
 	router.GET("/spotify/auth/authenticated", controller.DidAuthSucceed)
 	router.PATCH("/spotify/auth/invalidate", controller.InvalidateSessionId)
+	router.GET("/spotify/auth/success", controller.CallbackSuccess)
 	router.GET("/spotify/search/track", controller.SearchSpotifyTrack)
 	router.GET("/spotify/search/playlist", controller.SearchSpotifyPlaylist)
 	router.GET("/sessions/:joinId", controller.GetSession)
@@ -370,4 +371,8 @@ func (ApiV1Controller) CreateQrCodeForListeningSession(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "image/png", qrCodeImageBytes)
+}
+
+func (ApiV1Controller) CallbackSuccess(c *gin.Context) {
+	c.String(http.StatusOK, "Authentication successful. You can close this window now.")
 }

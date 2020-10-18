@@ -26,7 +26,6 @@ func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	baseRouter.GET("/app", c.GetApp)
 	baseRouter.GET("/app/android", c.GetAppAndroid)
 	baseRouter.GET("/app/ios", c.GetAppIOS)
-	baseRouter.GET("/api-callback")
 }
 
 func (TemplateController) Index(c *gin.Context) {
