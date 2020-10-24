@@ -14,6 +14,8 @@ type User struct {
 	SpotifyRefreshToken string
 	SpotifyTokenType    string
 	SpotifyTokenExpiry  time.Time
+
+	ListeningSessions *[]ListeningSession `gorm:"foreignKey:owner_id"`
 }
 
 func (u User) GetToken() *oauth2.Token {
