@@ -8,12 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetTotalUserCount() int {
-	var count int64
-	database.GetConnection().Model(&model.User{}).Count(&count)
-	return int(count)
-}
-
 func GetUserById(id uint) *model.User {
 	var users []model.User
 	database.GetConnection().Where(model.User{
