@@ -2,13 +2,24 @@ package util
 
 import "github.com/zmb3/spotify"
 
-func FindSmallestImage(images []spotify.Image) (smallestImage spotify.Image) {
-	// TODO: If no images are present, this does not work. Supply some fallback image in that case
+func FindSmallestImageUrlOrEmpty(images []spotify.Image) (smallestImageUrl string) {
+	smallestImage := findSmallestImage(images)
+	if smallestImage == nil {
+		return ""
+	} else {
+		return smallestImage.URL
+	}
+}
 
-	smallestImage = images[0]
+func findSmallestImage(images []spotify.Image) (smallestImage *spotify.Image) {
+	if len(images) == 0 {
+		return nil
+	}
+
+	smallestImage = &images[0]
 	for _, currentImage := range images {
 		if currentImage.Width*currentImage.Height < smallestImage.Width*smallestImage.Height {
-			smallestImage = currentImage
+			smallestImage = &currentImage
 		}
 	}
 

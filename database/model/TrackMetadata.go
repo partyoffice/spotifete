@@ -27,7 +27,7 @@ func (trackMetadata TrackMetadata) SetMetadata(spotifyTrack spotify.FullTrack) T
 	}
 
 	trackMetadata.ArtistName = strings.Join(artistNames, ", ")
-	trackMetadata.AlbumImageThumbnailUrl = util.FindSmallestImage(spotifyTrack.Album.Images).URL
+	trackMetadata.AlbumImageThumbnailUrl = util.FindSmallestImageUrlOrEmpty(spotifyTrack.Album.Images)
 
 	return trackMetadata
 }

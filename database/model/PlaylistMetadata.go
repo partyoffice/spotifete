@@ -19,7 +19,7 @@ func (playlistMetadata PlaylistMetadata) FromFullPlaylist(fullPlaylist spotify.F
 	playlistMetadata.SpotifyPlaylistId = fullPlaylist.ID.String()
 	playlistMetadata.Name = fullPlaylist.Name
 	playlistMetadata.TrackCount = uint(fullPlaylist.Tracks.Total)
-	playlistMetadata.ImageThumbnailUrl = util.FindSmallestImage(fullPlaylist.Images).URL
+	playlistMetadata.ImageThumbnailUrl = util.FindSmallestImageUrlOrEmpty(fullPlaylist.Images)
 	playlistMetadata.OwnerName = fullPlaylist.Owner.DisplayName
 
 	return playlistMetadata
@@ -29,7 +29,7 @@ func (playlistMetadata PlaylistMetadata) FromSimplePlaylist(simplePlaylist spoti
 	playlistMetadata.SpotifyPlaylistId = simplePlaylist.ID.String()
 	playlistMetadata.Name = simplePlaylist.Name
 	playlistMetadata.TrackCount = uint(simplePlaylist.Tracks.Total)
-	playlistMetadata.ImageThumbnailUrl = util.FindSmallestImage(simplePlaylist.Images).URL
+	playlistMetadata.ImageThumbnailUrl = util.FindSmallestImageUrlOrEmpty(simplePlaylist.Images)
 	playlistMetadata.OwnerName = simplePlaylist.Owner.DisplayName
 
 	return playlistMetadata
