@@ -2,8 +2,8 @@ package model
 
 import (
 	"github.com/47-11/spotifete/util"
-	"gorm.io/gorm"
 	"github.com/zmb3/spotify"
+	"gorm.io/gorm"
 )
 
 type PlaylistMetadata struct {
