@@ -5,8 +5,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/logger"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"sync"
 )
 
@@ -21,14 +21,6 @@ func GetConnection() *gorm.DB {
 	return connection
 }
 
-func CloseConnection() {
-	logger.Info("Closing db connection")
-	if connection != nil {
-		err := connection.Close()
-		logger.Error(err)
-	}
-}
-
 func initialize() *gorm.DB {
 	db := openConnection()
 	migrateIfNecessary(db)
@@ -36,7 +28,10 @@ func initialize() *gorm.DB {
 }
 
 func openConnection() *gorm.DB {
-	db, err := gorm.Open("postgres", config.Get().DatabaseConfiguration.BuildConnectionUrl())
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: config.Get().DatabaseConfiguration.BuildConnectionUrl(),
+	}), &gorm.Config{})
+
 	if err != nil {
 		logger.Fatalf("failed to connect to database: %s", err.Error())
 	}

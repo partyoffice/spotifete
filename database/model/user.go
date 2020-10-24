@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 	"time"
 )
 

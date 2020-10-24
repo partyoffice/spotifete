@@ -10,9 +10,9 @@ import (
 	. "github.com/47-11/spotifete/error"
 	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/47-11/spotifete/user"
-	"github.com/jinzhu/gorm"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
+	"gorm.io/gorm"
 	"image/jpeg"
 	"math/rand"
 	"net/http"
@@ -21,16 +21,16 @@ import (
 
 var numberRunes = []rune("0123456789")
 
-func GetTotalSessionCount() int {
-	var count int
+func GetTotalSessionCount() uint {
+	var count int64
 	database.GetConnection().Model(&model.ListeningSession{}).Count(&count)
-	return count
+	return uint(count)
 }
 
-func GetActiveSessionCount() int {
-	var count int
+func GetActiveSessionCount() uint {
+	var count int64
 	database.GetConnection().Model(&model.ListeningSession{}).Where(model.ListeningSession{Active: true}).Count(&count)
-	return count
+	return uint(count)
 }
 
 func GetActiveSessions() []model.ListeningSession {
@@ -175,7 +175,7 @@ func newJoinId() string {
 }
 
 func joinIdExists(joinId string) bool {
-	var count uint
+	var count int64
 	database.GetConnection().Model(&model.ListeningSession{}).Where(model.ListeningSession{JoinId: &joinId}).Count(&count)
 	return count > 0
 }
@@ -373,10 +373,10 @@ func findNextUnplayedFallbackPlaylistTrackOpt(session model.ListeningSession, cl
 	for _, playlistTrack := range playlistTracks.Tracks {
 		trackId := playlistTrack.Track.ID.String()
 
-		var trackPlays int
+		var trackPlays int64
 		database.GetConnection().Model(model.SongRequest{}).Where(model.SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
-		if uint(trackPlays) <= maximumPlays {
+		if trackPlays <= int64(maximumPlays) {
 			// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
 			// TODO: Remove this if Spotify fixes their API
 			refreshedTracks, err := client.GetTracks(playlistTrack.Track.ID)

@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/47-11/spotifete/util"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"github.com/zmb3/spotify"
 )
 

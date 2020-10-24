@@ -5,7 +5,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/google/logger"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 const targetDatabaseVersion = 31
@@ -29,10 +29,15 @@ func prepareMigration(db *gorm.DB) *migrate.Migrate {
 	return migration
 }
 
-func getDatabaseDriver(db *gorm.DB) database.Driver {
-	driver, err := postgres.WithInstance(db.DB(), &postgres.Config{})
+func getDatabaseDriver(gormDb *gorm.DB) database.Driver {
+	db, err := gormDb.DB()
 	if err != nil {
-		logger.Fatalf("could not get driver for migration from db instance: %s", err.Error())
+		logger.Fatal("could not get native driver from gorm driver", err)
+	}
+
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		logger.Fatal("could not get driver for migration from db instance", err.Error())
 	}
 
 	return driver

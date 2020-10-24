@@ -4,14 +4,14 @@ import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	dto "github.com/47-11/spotifete/model/dto"
-	"github.com/jinzhu/gorm"
 	"github.com/zmb3/spotify"
+	"gorm.io/gorm"
 )
 
 func GetTotalUserCount() int {
-	var count int
+	var count int64
 	database.GetConnection().Model(&model.User{}).Count(&count)
-	return count
+	return int(count)
 }
 
 func GetUserById(id uint) *model.User {
@@ -52,7 +52,6 @@ func GetOrCreateUser(spotifyUser *spotify.PrivateUser) model.User {
 			SpotifyDisplayName: spotifyUser.DisplayName,
 		}
 
-		database.GetConnection().NewRecord(newUser)
 		database.GetConnection().Create(&newUser)
 
 		return newUser

@@ -79,7 +79,6 @@ func run() {
 func shutdown() {
 	defer closeLogFile()
 	spotifeteWebapp.Shutdown()
-	database.CloseConnection()
 }
 
 func closeLogFile() {

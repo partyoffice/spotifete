@@ -4,7 +4,7 @@ import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"math/rand"
 	"time"
 )
@@ -60,7 +60,7 @@ func newSessionId() string {
 }
 
 func sessionIdExists(sessionId string) bool {
-	var count uint
+	var count int64
 
 	database.GetConnection().Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Count(&count)
 	return count > 0
