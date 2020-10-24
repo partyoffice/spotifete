@@ -7,7 +7,11 @@ import (
 	"github.com/google/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
+	"log"
+	"os"
 	"sync"
+	"time"
 )
 
 var connection *gorm.DB
@@ -28,13 +32,41 @@ func initialize() *gorm.DB {
 }
 
 func openConnection() *gorm.DB {
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: config.Get().DatabaseConfiguration.BuildConnectionUrl(),
-	}), &gorm.Config{})
+	db, err := gorm.Open(buildDialector(), buildConfig())
 
 	if err != nil {
 		logger.Fatalf("failed to connect to database: %s", err.Error())
 	}
 
 	return db
+}
+
+func buildDialector() gorm.Dialector {
+	return postgres.New(postgres.Config{
+		DSN: config.Get().DatabaseConfiguration.BuildConnectionUrl(),
+	})
+}
+
+func buildConfig() *gorm.Config {
+	return &gorm.Config{
+		Logger: buildLogger(),
+	}
+}
+
+func buildLogger() gormLogger.Interface {
+	var logLevel gormLogger.LogLevel
+	if config.Get().SpotifeteConfiguration.ReleaseMode {
+		logLevel = gormLogger.Warn
+	} else {
+		logLevel = gormLogger.Info
+	}
+
+	return gormLogger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		gormLogger.Config{
+			SlowThreshold: time.Second,
+			LogLevel:      logLevel,
+			Colorful:      false,
+		},
+	)
 }
