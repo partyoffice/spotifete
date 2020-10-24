@@ -12,8 +12,8 @@ type TrackMetadata struct {
 	ID                     uint
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
-	DeletedAt              gorm.DeletedAt `gorm:"index"`
-	SpotifyTrackId         string         `gorm:"primaryKey"`
+	DeletedAt              gorm.DeletedAt
+	SpotifyTrackId         string `gorm:"primaryKey"`
 	TrackName              string
 	ArtistName             string
 	AlbumName              string
