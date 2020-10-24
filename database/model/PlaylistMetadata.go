@@ -4,11 +4,15 @@ import (
 	"github.com/47-11/spotifete/util"
 	"github.com/zmb3/spotify"
 	"gorm.io/gorm"
+	"time"
 )
 
 type PlaylistMetadata struct {
-	gorm.Model
-	SpotifyPlaylistId string
+	ID                uint
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         gorm.DeletedAt `gorm:"index"`
+	SpotifyPlaylistId string         `gorm:"primaryKey"`
 	Name              string
 	TrackCount        uint
 	ImageThumbnailUrl string
