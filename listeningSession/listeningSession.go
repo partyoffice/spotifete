@@ -39,17 +39,6 @@ func GetActiveSessions() []model.ListeningSession {
 	return sessions
 }
 
-func GetSessionById(id uint) *model.ListeningSession {
-	var sessions []model.ListeningSession
-	database.GetConnection().Where(model.ListeningSession{Model: gorm.Model{ID: id}}).Find(&sessions)
-
-	if len(sessions) == 1 {
-		return &sessions[0]
-	} else {
-		return nil
-	}
-}
-
 func GetSessionByJoinId(joinId string) *model.ListeningSession {
 	if len(joinId) == 0 {
 		return nil

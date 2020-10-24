@@ -49,7 +49,7 @@ func (TemplateController) Index(c *gin.Context) {
 		"activeSessionCount": listeningSession.GetActiveSessionCount(),
 		"totalSessionCount":  listeningSession.GetTotalSessionCount(),
 		"user":               loggedInUser,
-		"userSessions":       listeningSession.GetActiveSessionsByOwnerId(*loginSession.UserId),
+		"userSessions":       loggedInUser.ListeningSessions,
 	})
 }
 

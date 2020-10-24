@@ -18,7 +18,7 @@ func GetUserById(id uint) *model.User {
 	var users []model.User
 	database.GetConnection().Where(model.User{
 		Model: gorm.Model{ID: id},
-	}).Find(&users)
+	}).Preload("ListeningSessions").Find(&users)
 
 	if len(users) == 1 {
 		return &users[0]
