@@ -11,8 +11,8 @@ type PlaylistMetadata struct {
 	ID                uint
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
-	DeletedAt         gorm.DeletedAt `gorm:"index"`
-	SpotifyPlaylistId string         `gorm:"primaryKey"`
+	DeletedAt         gorm.DeletedAt
+	SpotifyPlaylistId string `gorm:"primaryKey"`
 	Name              string
 	TrackCount        uint
 	ImageThumbnailUrl string
