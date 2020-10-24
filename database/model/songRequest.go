@@ -7,6 +7,7 @@ type SongRequest struct {
 	SessionId      uint
 	UserId         *uint
 	SpotifyTrackId string
+	TrackMetadata  TrackMetadata `gorm:"foreignKey:spotify_track_id"`
 	Status         SongRequestStatus
 }
 

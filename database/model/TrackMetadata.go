@@ -5,11 +5,15 @@ import (
 	"github.com/zmb3/spotify"
 	"gorm.io/gorm"
 	"strings"
+	"time"
 )
 
 type TrackMetadata struct {
-	gorm.Model
-	SpotifyTrackId         string
+	ID                     uint
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+	DeletedAt              gorm.DeletedAt `gorm:"index"`
+	SpotifyTrackId         string         `gorm:"primaryKey"`
 	TrackName              string
 	ArtistName             string
 	AlbumName              string
