@@ -1,10 +1,24 @@
 package api
 
+import (
+	. "github.com/47-11/spotifete/error"
+	"github.com/47-11/spotifete/shared"
+)
+
 type NewSessionRequest struct {
-	LoginSessionId        *string `json:"loginSessionId"`
-	ListeningSessionTitle *string `json:"listeningSessionTitle"`
+	shared.AuthenticatedRequest
+	ListeningSessionTitle string `json:"listening_session_title"`
 }
 
-type CloseSessionRequest struct {
-	LoginSessionId *string `json:"loginSessionId"`
+func (r NewSessionRequest) Validate() *SpotifeteError {
+	err := r.AuthenticatedRequest.Validate()
+	if err != nil {
+		return err
+	}
+
+	if r.ListeningSessionTitle == "" {
+		return NewUserError("listening_session_title must not be empty")
+	}
+
+	return nil
 }

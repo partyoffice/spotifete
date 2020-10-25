@@ -10,24 +10,20 @@ import (
 )
 
 func ApiNewSession(c *gin.Context) {
-	requestBody := api.NewSessionRequest{}
-	err := c.ShouldBindJSON(&requestBody)
+	request := api.NewSessionRequest{}
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
 		return
 	}
 
-	if requestBody.LoginSessionId == nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "required parameter loginSessionId not present"})
+	spotifeteError := request.Validate()
+	if spotifeteError != nil {
+		spotifeteError.SetJsonResponse(c)
 		return
 	}
 
-	if requestBody.ListeningSessionTitle == nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "required parameter listeningSessionTitle not present"})
-		return
-	}
-
-	loginSession := authentication.GetValidSession(*requestBody.LoginSessionId)
+	loginSession := authentication.GetValidSession(request.LoginSessionId)
 	if loginSession == nil {
 		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "invalid login session"})
 		return
@@ -38,7 +34,7 @@ func ApiNewSession(c *gin.Context) {
 		return
 	}
 
-	createdSession, spotifeteError := NewSession(*loginSession.User, *requestBody.ListeningSessionTitle)
+	createdSession, spotifeteError := NewSession(*loginSession.User, request.ListeningSessionTitle)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
@@ -61,19 +57,20 @@ func ApiGetSession(c *gin.Context) {
 }
 
 func ApiCloseSession(c *gin.Context) {
-	requestBody := api.CloseSessionRequest{}
-	err := c.ShouldBindJSON(&requestBody)
+	request := shared.AuthenticatedRequest{}
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
 		return
 	}
 
-	if requestBody.LoginSessionId == nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "required parameter loginSessionId not present"})
+	spotifeteError := request.Validate()
+	if spotifeteError != nil {
+		spotifeteError.SetJsonResponse(c)
 		return
 	}
 
-	loginSession := authentication.GetValidSession(*requestBody.LoginSessionId)
+	loginSession := authentication.GetValidSession(request.LoginSessionId)
 	if loginSession == nil {
 		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "invalid login session"})
 		return
@@ -84,5 +81,5 @@ func ApiCloseSession(c *gin.Context) {
 		return
 	}
 
-	CloseSession(*loginSession.User, *requestBody.LoginSessionId)
+	CloseSession(*loginSession.User, request.LoginSessionId)
 }
