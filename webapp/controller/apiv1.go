@@ -87,11 +87,7 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// TODO: Use eager loading for login session
-	user := users.FindFullUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, loginSession.User)
 }
 
 func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
@@ -307,16 +303,12 @@ func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
 		return
 	}
 
-	if loginSession.UserId == nil {
+	if loginSession.User == nil {
 		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "not authenticated to spotify yet"})
 		return
 	}
 
-	// TODO: Use eager loading
-	owner := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
-	createdSession, spotifeteError := listeningSession.NewSession(*owner, *requestBody.ListeningSessionTitle)
+	createdSession, spotifeteError := listeningSession.NewSession(*loginSession.User, *requestBody.ListeningSessionTitle)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
@@ -347,12 +339,12 @@ func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	// TODO: Use eager loading
-	user := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
+	if loginSession.User == nil {
+		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "Login session not authorized"})
+		return
+	}
 
-	spotifeteError := listeningSession.CloseSession(*user, sessionJoinId)
+	spotifeteError := listeningSession.CloseSession(*loginSession.User, sessionJoinId)
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {

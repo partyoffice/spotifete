@@ -33,27 +33,19 @@ func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 
 func (TemplateController) Index(c *gin.Context) {
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"time":               time.Now(),
-			"activeSessionCount": listeningSession.GetActiveSessionCount(),
-			"totalSessionCount":  listeningSession.GetTotalSessionCount(),
-			"user":               nil,
-			"userSessions":       nil,
+
+	var loggedInUser *model.FullUser
+	if loginSession != nil && loginSession.User != nil {
+		loggedInUser = users.FindFullUser(model.SimpleUser{
+			BaseModel: model.BaseModel{ID: loginSession.User.ID},
 		})
-		return
 	}
 
-	// TODO: Use eager loading
-	loggedInUser := users.FindFullUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
 		"activeSessionCount": listeningSession.GetActiveSessionCount(),
 		"totalSessionCount":  listeningSession.GetTotalSessionCount(),
 		"user":               loggedInUser,
-		"userSessions":       loggedInUser.ListeningSessions,
 	})
 }
 
@@ -81,31 +73,22 @@ func (TemplateController) Logout(c *gin.Context) {
 
 func (TemplateController) NewListeningSession(c *gin.Context) {
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
+	if loginSession == nil || loginSession.User == nil {
 		c.Redirect(http.StatusSeeOther, "/login?redirectTo=/session/new")
 		return
 	}
 
-	// TODO: Use eager loading
-	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
-		"user": loggedInUser,
+		"user": loginSession.User,
 	})
 }
 
 func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
+	if loginSession == nil || loginSession.User == nil {
 		c.Redirect(http.StatusSeeOther, "/login?redirectTo=/session/new")
 		return
 	}
-
-	// TODO: Use eager loading
-	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
 
 	title := c.PostForm("title")
 	if len(title) == 0 {
@@ -113,7 +96,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	session, spotifeteError := listeningSession.NewSession(*loggedInUser, title)
+	session, spotifeteError := listeningSession.NewSession(*loginSession.User, title)
 	if spotifeteError != nil {
 		spotifeteError.SetStringResponse(c)
 		return
@@ -142,11 +125,8 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	loginSession := authentication.GetValidSessionFromCookie(c)
 
 	var user *model.SimpleUser
-	if loginSession != nil && loginSession.UserId != nil {
-		// TODO: Use eager loading
-		user = users.FindSimpleUser(model.SimpleUser{
-			BaseModel: model.BaseModel{ID: *loginSession.UserId},
-		})
+	if loginSession != nil {
+		user = loginSession.User
 	}
 
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
@@ -191,18 +171,13 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 	}
 
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
+	if loginSession == nil || loginSession.User == nil {
 		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
 		return
 	}
 
-	// TODO: Use eager loading
-	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
-
 	playlistId := c.PostForm("playlistId")
-	spotifeteError := listeningSession.ChangeFallbackPlaylist(*session, *loggedInUser, playlistId)
+	spotifeteError := listeningSession.ChangeFallbackPlaylist(*session, *loginSession.User, playlistId)
 	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {
@@ -218,17 +193,12 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 	}
 
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
+	if loginSession == nil || loginSession.User == nil {
 		c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
 		return
 	}
 
-	// TODO: Use eager loading
-	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
-
-	spotifeteError := listeningSession.CloseSession(*loggedInUser, joinId)
+	spotifeteError := listeningSession.CloseSession(*loginSession.User, joinId)
 	if spotifeteError != nil {
 		spotifeteError.SetStringResponse(c)
 		return

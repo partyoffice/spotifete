@@ -22,7 +22,7 @@ func GetValidSession(sessionId string) *model.LoginSession {
 
 func GetSession(sessionId string) *model.LoginSession {
 	var sessions []model.LoginSession
-	database.GetConnection().Where(model.LoginSession{SessionId: sessionId}).Find(&sessions)
+	database.GetConnection().Where(model.LoginSession{SessionId: sessionId}).Joins("User").Find(&sessions)
 
 	if len(sessions) == 0 {
 		return nil

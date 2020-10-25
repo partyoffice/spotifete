@@ -99,13 +99,11 @@
                     {{ if .user }}
                         <div class="session_links">
                         <ul class="session_list mx-auto">
-                            {{ with .userSessions }}
-                                {{ range . }}
-                                    <li class="align-items-lg-baseline">
-                                        <a href="/session/view/{{ .JoinId }}" class="btn btn-info" role="button">{{ .Title }}</a>
-                                        <br/>
-                                    </li>
-                                {{ end }}
+                            {{ range .user.ListeningSessions }}
+                                <li class="align-items-lg-baseline">
+                                    <a href="/session/view/{{ .JoinId }}" class="btn btn-info" role="button">{{ .Title }}</a>
+                                    <br/>
+                                </li>
                             {{ end }}
                         </ul>
                         </div>
