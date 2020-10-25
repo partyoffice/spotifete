@@ -17,7 +17,7 @@ func (controller ApiV2Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router.GET("/auth/session/id/:sessionId/is-authenticated", authentication.ApiIsSessionAuthenticated)
 	router.PATCH("/auth/session/id/:sessionId/invalidate", authentication.ApiInvalidateSession)
 	router.Any("/auth/success", authentication.ApiCallbackSuccess)
-	router.POST("/session/new")
+	router.POST("/session/new", listeningSession.ApiNewSession)
 	router.GET("/session/id/:joinId", listeningSession.ApiGetSession)
 	router.DELETE("/session/id/:joinId")
 	router.GET("/session/id/:joinId/search/track")
