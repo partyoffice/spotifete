@@ -14,7 +14,7 @@ var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 func GetValidSession(sessionId string) *model.LoginSession {
 	session := GetSession(sessionId)
 
-	if IsSessionValid(*session) {
+	if session != nil && IsSessionValid(*session) {
 		return session
 	} else {
 		return nil
