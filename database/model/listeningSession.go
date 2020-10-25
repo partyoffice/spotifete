@@ -16,9 +16,7 @@ func (SimpleListeningSession) TableName() string {
 
 type FullListeningSession struct {
 	SimpleListeningSession
-	Owner                    SimpleUser        `gorm:"foreignKey:owner_id"`
-	QueuePlaylistMetadata    PlaylistMetadata  `gorm:"foreignKey:queue_playlist"`
-	FallbackPlaylistMetadata *PlaylistMetadata `gorm:"foreignKey:fallback_playlist"`
+	Owner SimpleUser `gorm:"foreignKey:owner_id"`
 }
 
 func (FullListeningSession) TableName() string {

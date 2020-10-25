@@ -59,7 +59,7 @@ func FindFullListeningSession(filter model.SimpleListeningSession) *model.FullLi
 
 func FindFullListeningSessions(filter model.SimpleListeningSession) []model.FullListeningSession {
 	var listeningSessions []model.FullListeningSession
-	database.GetConnection().Where(filter).Joins("Owner").Joins("QueuePlaylistMetadata").Joins("FallbackPlaylistMetadata").Find(&listeningSessions)
+	database.GetConnection().Where(filter).Joins("Owner").Find(&listeningSessions)
 	return listeningSessions
 }
 
