@@ -21,34 +21,23 @@ func (controller ApiV1Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router := baseRouter.Group("/api/v1")
 
 	router.GET("/", controller.Index)
-	router.GET("/spotify/auth/new", controller.GetAuthUrl)
-	router.GET("/spotify/auth/authenticated", controller.DidAuthSucceed)
-	router.PATCH("/spotify/auth/invalidate", controller.InvalidateSessionId)
-	router.GET("/spotify/auth/success", controller.CallbackSuccess)
+	router.GET("/spotify/auth/new", authentication.ApiNewSession)
+	router.GET("/spotify/auth/authenticated", authentication.ApiIsSessionAuthenticated)
+	router.PATCH("/spotify/auth/invalidate", authentication.ApiInvalidateSession)
+	router.GET("/spotify/auth/success", authentication.ApiCallbackSuccess)
 	router.GET("/spotify/search/track", controller.SearchSpotifyTrack)
 	router.GET("/spotify/search/playlist", controller.SearchSpotifyPlaylist)
-	router.GET("/sessions/:joinId", controller.GetSession)
+	router.GET("/sessions/:joinId", listeningSession.ApiGetSession)
 	router.DELETE("sessions/:joinId", controller.CloseListeningSession)
 	router.POST("/sessions/:joinId/request", controller.RequestSong)
 	router.GET("/sessions/:joinId/queuelastupdated", controller.QueueLastUpdated)
 	router.GET("/sessions/:joinId/qrcode", controller.CreateQrCodeForListeningSession)
-	router.POST("/sessions", controller.CreateListeningSession)
+	router.POST("/sessions", listeningSession.ApiNewSession)
 	router.GET("/users/:userId", controller.GetUser)
 }
 
 func (ApiV1Controller) Index(c *gin.Context) {
 	c.String(http.StatusOK, "SpotiFete API v1")
-}
-
-func (ApiV1Controller) GetSession(c *gin.Context) {
-	sessionJoinId := c.Param("joinId")
-
-	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{JoinId: &sessionJoinId})
-	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
-	} else {
-		c.JSON(http.StatusOK, session)
-	}
 }
 
 func (controller ApiV1Controller) GetUser(c *gin.Context) {
@@ -88,48 +77,6 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, loginSession.User)
-}
-
-func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
-	newSession, authUrl := authentication.NewSession("/spotify/auth/success")
-	c.JSON(http.StatusOK, GetAuthUrlResponse{
-		Url:       authUrl,
-		SessionId: newSession.SessionId,
-	})
-}
-
-func (ApiV1Controller) DidAuthSucceed(c *gin.Context) {
-	sessionId := c.Query("sessionId")
-	if sessionId == "" {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session id not given"})
-		return
-	}
-
-	session := authentication.GetSession(sessionId)
-	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
-		return
-	}
-
-	if authentication.IsSessionValid(*session) && session.UserId != nil {
-		c.JSON(http.StatusOK, DidAuthSucceedResponse{Authenticated: true})
-	} else {
-		c.JSON(http.StatusUnauthorized, DidAuthSucceedResponse{Authenticated: false})
-	}
-}
-
-func (ApiV1Controller) InvalidateSessionId(c *gin.Context) {
-	var requestBody InvalidateSessionIdRequest
-
-	err := c.ShouldBindJSON(&requestBody)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session id not given"})
-		return
-	}
-
-	authentication.InvalidateSession(requestBody.LoginSessionId)
-
-	c.Status(http.StatusNoContent)
 }
 
 func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
@@ -276,45 +223,6 @@ func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: listeningSession.GetQueueLastUpdated(*session)})
-}
-
-func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
-	requestBody := CreateListeningSessionRequest{}
-	err := c.ShouldBindJSON(&requestBody)
-	if err != nil {
-		logger.Info("Invalid request body: " + err.Error())
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
-		return
-	}
-
-	if requestBody.LoginSessionId == nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "required parameter loginSessionId not present"})
-		return
-	}
-
-	if requestBody.ListeningSessionTitle == nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "required parameter listeningSessionTitle not present"})
-		return
-	}
-
-	loginSession := authentication.GetValidSession(*requestBody.LoginSessionId)
-	if loginSession == nil {
-		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "invalid login session"})
-		return
-	}
-
-	if loginSession.User == nil {
-		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "not authenticated to spotify yet"})
-		return
-	}
-
-	createdSession, spotifeteError := listeningSession.NewSession(*loginSession.User, *requestBody.ListeningSessionTitle)
-	if spotifeteError != nil {
-		spotifeteError.SetJsonResponse(c)
-		return
-	}
-
-	c.JSON(http.StatusOK, createdSession)
 }
 
 func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
