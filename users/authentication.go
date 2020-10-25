@@ -38,7 +38,7 @@ func refreshAndSaveTokenForUserIfNeccessary(client spotify.Client, user model.Si
 
 	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
 		// Token was updated, persist to database
-		user.SetToken(newToken)
+		user = user.SetToken(newToken)
 
 		// Do this in a goroutine so API calls don't have to wait for the database write to succeed
 		go database.GetConnection().Save(&user)
@@ -55,7 +55,7 @@ func CreateAuthenticatedUser(token *oauth2.Token, loginSession model.LoginSessio
 	}
 
 	persistedUser := getOrCreateFromSpotifyUser(spotifyUser)
-	persistedUser.SetToken(token)
+	persistedUser = persistedUser.SetToken(token)
 	database.GetConnection().Save(persistedUser)
 
 	loginSession.UserId = &persistedUser.ID
