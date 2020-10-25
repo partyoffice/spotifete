@@ -33,6 +33,6 @@ func FindFullUser(filter model.SimpleUser) *model.FullUser {
 
 func FindFullUsers(filter model.SimpleUser) []model.FullUser {
 	var users []model.FullUser
-	database.GetConnection().Where(filter).Preload("ListeningSessions").Find(&users)
+	database.GetConnection().Where(filter).Preload("ListeningSessions", "active = true").Find(&users)
 	return users
 }
