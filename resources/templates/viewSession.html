@@ -11,7 +11,7 @@
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/static/typeahead/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/viewSession.js"></script>
-    {{ if .user }}{{ if eq .session.OwnerId  .user.Model.ID }}
+    {{ if .user }}{{ if eq .session.OwnerId  .user.ID }}
         <script type="text/javascript" src="/static/js/viewSession_owner.js"></script>
     {{ end }}{{ end }}
 </head>
