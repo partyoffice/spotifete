@@ -19,7 +19,7 @@ func (controller ApiV2Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router.Any("/auth/success", authentication.ApiCallbackSuccess)
 	router.POST("/session/new", listeningSession.ApiNewSession)
 	router.GET("/session/id/:joinId", listeningSession.ApiGetSession)
-	router.DELETE("/session/id/:joinId")
+	router.DELETE("/session/id/:joinId", listeningSession.ApiCloseSession)
 	router.GET("/session/id/:joinId/search/track")
 	router.GET("/session/id/:joinId/search/playlist")
 	router.POST("/session/id/:joinId/request-track")

@@ -28,7 +28,7 @@ func (controller ApiV1Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router.GET("/spotify/search/track", controller.SearchSpotifyTrack)
 	router.GET("/spotify/search/playlist", controller.SearchSpotifyPlaylist)
 	router.GET("/sessions/:joinId", listeningSession.ApiGetSession)
-	router.DELETE("sessions/:joinId", controller.CloseListeningSession)
+	router.DELETE("sessions/:joinId", listeningSession.ApiCloseSession)
 	router.POST("/sessions/:joinId/request", controller.RequestSong)
 	router.GET("/sessions/:joinId/queuelastupdated", controller.QueueLastUpdated)
 	router.GET("/sessions/:joinId/qrcode", controller.CreateQrCodeForListeningSession)
@@ -223,41 +223,6 @@ func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: listeningSession.GetQueueLastUpdated(*session)})
-}
-
-func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
-	sessionJoinId := c.Param("joinId")
-
-	var request = CloseListeningSessionRequest{}
-	err := c.BindJSON(&request)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Invalid request body"})
-		return
-	}
-
-	loginSessionId := request.LoginSessionId
-	if loginSessionId == nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "SpotifyLogin session id not given"})
-		return
-	}
-
-	loginSession := authentication.GetValidSession(*loginSessionId)
-	if loginSession == nil {
-		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "Invalid login session"})
-		return
-	}
-
-	if loginSession.User == nil {
-		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "Login session not authorized"})
-		return
-	}
-
-	spotifeteError := listeningSession.CloseSession(*loginSession.User, sessionJoinId)
-	if spotifeteError == nil {
-		c.Status(http.StatusNoContent)
-	} else {
-		spotifeteError.SetJsonResponse(c)
-	}
 }
 
 func (ApiV1Controller) CreateQrCodeForListeningSession(c *gin.Context) {

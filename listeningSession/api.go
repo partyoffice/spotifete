@@ -59,3 +59,30 @@ func ApiGetSession(c *gin.Context) {
 		c.JSON(http.StatusOK, session)
 	}
 }
+
+func ApiCloseSession(c *gin.Context) {
+	requestBody := api.CloseSessionRequest{}
+	err := c.ShouldBindJSON(&requestBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	if requestBody.LoginSessionId == nil {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "required parameter loginSessionId not present"})
+		return
+	}
+
+	loginSession := authentication.GetValidSession(*requestBody.LoginSessionId)
+	if loginSession == nil {
+		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "invalid login session"})
+		return
+	}
+
+	if loginSession.User == nil {
+		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "login session without user"})
+		return
+	}
+
+	CloseSession(*loginSession.User, *requestBody.LoginSessionId)
+}
