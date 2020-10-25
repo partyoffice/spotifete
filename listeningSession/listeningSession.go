@@ -456,7 +456,7 @@ func updateSessionPlaylist(client spotify.Client, session model.SimpleListeningS
 func PollSessions() {
 	for range time.Tick(5 * time.Second) {
 		activeSessions := FindFullListeningSessions(model.SimpleListeningSession{
-			Active: false,
+			Active: true,
 		})
 
 		for _, session := range activeSessions {
