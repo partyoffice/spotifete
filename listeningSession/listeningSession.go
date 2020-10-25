@@ -84,7 +84,7 @@ func GetSessionQueueInDemocraticOrder(session model.SimpleListeningSession) []mo
 	})
 
 	sort.SliceStable(queue, func(i, j int) bool {
-		return queue[i].ID > queue[j].ID
+		return queue[i].ID < queue[j].ID
 	})
 
 	return queue
