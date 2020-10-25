@@ -10,7 +10,7 @@ import (
 )
 
 func ApiNewSession(c *gin.Context) {
-	requestBody := api.NewListeningSessionRequest{}
+	requestBody := api.NewSessionRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
