@@ -36,12 +36,12 @@ $(document).ready(function () {
             },
             templates: {
                 suggestion: function (suggestionData) {
-                    return `<div class="clickable" onclick="changeFallbackPlaylist('${suggestionData.spotifyPlaylistId}')">
+                    return `<div class="clickable" onclick="changeFallbackPlaylist('${suggestionData.SpotifyPlaylistId}')">
                                 <div class="media">
-                                    <img src="${suggestionData.imageThumbnailUrl}" class="mr-3" alt="...">
+                                    <img src="${suggestionData.ImageThumbnailUrl}" class="mr-3" alt="...">
                                     <div class="media-body">
-                                        <h5 class="mt-0">${suggestionData.name}</h5>
-                                        <p>${suggestionData.createdBy} - ${suggestionData.trackCount} tracks</p>
+                                        <h5 class="mt-0">${suggestionData.Name}</h5>
+                                        <p>${suggestionData.CreatedBy} - ${suggestionData.TrackCount} tracks</p>
                                     </div>
                                 </div>
                             </div>`;
