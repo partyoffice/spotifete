@@ -4,7 +4,6 @@ import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	"gorm.io/gorm"
 	"math/rand"
 	"time"
 )
@@ -34,7 +33,7 @@ func GetSession(sessionId string) *model.LoginSession {
 
 func NewSession(callbackRedirectUrl string) (newSession model.LoginSession, spotifyAuthUrl string) {
 	newSession = model.LoginSession{
-		Model:            gorm.Model{},
+		BaseModel:        model.BaseModel{},
 		SessionId:        newSessionId(),
 		UserId:           nil,
 		Active:           true,

@@ -1,9 +1,7 @@
 package model
 
-import "gorm.io/gorm"
-
 type LoginSession struct {
-	gorm.Model
+	BaseModel
 	SessionId        string
 	UserId           *uint
 	User             *SimpleUser `gorm:"foreignKey:user_id"`

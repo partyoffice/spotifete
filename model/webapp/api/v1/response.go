@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/47-11/spotifete/model/dto"
+	"github.com/47-11/spotifete/database/model"
 	"time"
 )
 
@@ -19,13 +19,13 @@ type DidAuthSucceedResponse struct {
 }
 
 type SearchTracksResponse struct {
-	Query   string                 `json:"query"`
-	Results []dto.TrackMetadataDto `json:"results"`
+	Query   string                `json:"query"`
+	Results []model.TrackMetadata `json:"results"`
 }
 
 type SearchPlaylistResponse struct {
-	Query   string                    `json:"query"`
-	Results []dto.PlaylistMetadataDto `json:"results"`
+	Query   string                   `json:"query"`
+	Results []model.PlaylistMetadata `json:"results"`
 }
 
 type QueueLastUpdatedResponse struct {

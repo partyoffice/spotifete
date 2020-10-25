@@ -1,9 +1,7 @@
 package model
 
-import "gorm.io/gorm"
-
 type SongRequest struct {
-	gorm.Model
+	BaseModel
 	SessionId      uint
 	UserId         *uint
 	SpotifyTrackId string

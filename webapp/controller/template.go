@@ -8,7 +8,6 @@ import (
 	"github.com/47-11/spotifete/listeningSession"
 	"github.com/47-11/spotifete/users"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
@@ -47,7 +46,7 @@ func (TemplateController) Index(c *gin.Context) {
 
 	// TODO: Use eager loading
 	loggedInUser := users.FindFullUser(model.SimpleUser{
-		Model: gorm.Model{ID: *loginSession.UserId},
+		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
@@ -89,7 +88,7 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 
 	// TODO: Use eager loading
 	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: *loginSession.UserId},
+		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
 		"user": loggedInUser,
@@ -105,7 +104,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 
 	// TODO: Use eager loading
 	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: *loginSession.UserId},
+		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 
 	title := c.PostForm("title")
@@ -133,8 +132,6 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
-	ListeningSessionDto := listeningSession.CreateDto(*session, true)
-
 	displayError := c.Query("displayError")
 
 	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session).UTC().Format(time.RFC3339Nano)
@@ -142,7 +139,7 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	if loginSession == nil || loginSession.UserId == nil {
 		c.HTML(http.StatusOK, "viewSession.html", gin.H{
 			"queueLastUpdated": queueLastUpdated,
-			"session":          ListeningSessionDto,
+			"session":          session,
 			"displayError":     displayError,
 		})
 		return
@@ -150,11 +147,11 @@ func (TemplateController) ViewSession(c *gin.Context) {
 
 	// TODO: Use eager loading
 	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: *loginSession.UserId},
+		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"queueLastUpdated": queueLastUpdated,
-		"session":          ListeningSessionDto,
+		"session":          session,
 		"user":             loggedInUser,
 		"displayError":     displayError,
 	})
@@ -198,7 +195,7 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 
 	// TODO: Use eager loading
 	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: *loginSession.UserId},
+		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 
 	playlistId := c.PostForm("playlistId")
@@ -225,7 +222,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	// TODO: Use eager loading
 	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: *loginSession.UserId},
+		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 
 	spotifeteError := listeningSession.CloseSession(*loggedInUser, joinId)

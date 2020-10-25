@@ -2,7 +2,6 @@ package authentication
 
 import (
 	"github.com/47-11/spotifete/authentication/model/api"
-	v1 "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -24,7 +23,7 @@ func ApiIsSessionAuthenticated(c *gin.Context) {
 		return
 	}
 
-	response := v1.DidAuthSucceedResponse{Authenticated: sessionAuthenticated}
+	response := api.IsSessionAuthenticatedResponse{Authenticated: sessionAuthenticated}
 	if sessionAuthenticated {
 		c.JSON(http.StatusOK, response)
 	} else {

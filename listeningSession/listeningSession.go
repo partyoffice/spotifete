@@ -7,11 +7,9 @@ import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	dto "github.com/47-11/spotifete/model/dto"
 	"github.com/47-11/spotifete/users"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
-	"gorm.io/gorm"
 	"image/jpeg"
 	"math/rand"
 	"net/http"
@@ -128,7 +126,7 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 
 	// Create database entry
 	listeningSession := model.SimpleListeningSession{
-		Model:           gorm.Model{},
+		BaseModel:       model.BaseModel{},
 		Active:          true,
 		OwnerId:         user.ID,
 		JoinId:          &joinId,
@@ -267,7 +265,7 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 	}
 
 	newSongRequest := model.SongRequest{
-		Model:          gorm.Model{},
+		BaseModel:      model.BaseModel{},
 		SessionId:      session.ID,
 		UserId:         nil,
 		SpotifyTrackId: updatedTrackMetadata.SpotifyTrackId,
@@ -465,51 +463,6 @@ func PollSessions() {
 			UpdateSessionIfNecessary(session)
 		}
 	}
-}
-
-func CreateDto(listeningSession model.SimpleListeningSession, resolveAdditionalInformation bool) dto.ListeningSessionDto {
-	result := dto.ListeningSessionDto{}
-	if listeningSession.JoinId == nil {
-		result.JoinId = ""
-	} else {
-		result.JoinId = *listeningSession.JoinId
-
-	}
-	result.JoinIdHumanReadable = fmt.Sprintf("%s %s", result.JoinId[0:4], result.JoinId[4:8])
-	result.Title = listeningSession.Title
-
-	if resolveAdditionalInformation {
-		result.OwnerId = listeningSession.OwnerId
-		result.QueuePlaylistId = listeningSession.QueuePlaylistId
-
-		if listeningSession.FallbackPlaylistId != nil {
-			fallbackPlaylist := GetPlaylistMetadataBySpotifyPlaylistId(*listeningSession.FallbackPlaylistId)
-			fallbackPlaylistDto := dto.PlaylistMetadataDto{}.FromDatabaseModel(*fallbackPlaylist)
-			result.FallbackPlaylist = &fallbackPlaylistDto
-		}
-
-		currentlyPlayingRequest := GetCurrentlyPlayingRequest(listeningSession)
-		if currentlyPlayingRequest != nil {
-			currentlyPlayingRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*GetTrackMetadataBySpotifyTrackId(currentlyPlayingRequest.SpotifyTrackId))
-			result.CurrentlyPlaying = &currentlyPlayingRequestTrack
-		}
-
-		upNextRequest := GetUpNextRequest(listeningSession)
-		if upNextRequest != nil {
-			upNextRequestTrack := dto.TrackMetadataDto{}.FromDatabaseModel(*GetTrackMetadataBySpotifyTrackId(upNextRequest.SpotifyTrackId))
-			result.UpNext = &upNextRequestTrack
-		}
-
-		result.Queue = []dto.TrackMetadataDto{}
-		for _, request := range GetSessionQueueInDemocraticOrder(listeningSession) {
-			requestTrack := GetTrackMetadataBySpotifyTrackId(request.SpotifyTrackId)
-			result.Queue = append(result.Queue, dto.TrackMetadataDto{}.FromDatabaseModel(*requestTrack))
-		}
-
-		result.QueueLastUpdated = GetQueueLastUpdated(listeningSession)
-	}
-
-	return result
 }
 
 func GetQueueLastUpdated(session model.SimpleListeningSession) time.Time {

@@ -1,9 +1,7 @@
 package model
 
-import "gorm.io/gorm"
-
 type SimpleListeningSession struct {
-	gorm.Model
+	BaseModel
 	Active             bool
 	OwnerId            uint
 	JoinId             *string

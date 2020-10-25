@@ -3,16 +3,11 @@ package model
 import (
 	"github.com/47-11/spotifete/util"
 	"github.com/zmb3/spotify"
-	"gorm.io/gorm"
 	"strings"
-	"time"
 )
 
 type TrackMetadata struct {
-	ID                     uint
-	CreatedAt              time.Time
-	UpdatedAt              time.Time
-	DeletedAt              gorm.DeletedAt
+	BaseModelWithoutPrimaryKey
 	SpotifyTrackId         string `gorm:"primaryKey"`
 	TrackName              string
 	ArtistName             string

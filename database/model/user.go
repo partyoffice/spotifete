@@ -2,12 +2,11 @@ package model
 
 import (
 	"golang.org/x/oauth2"
-	"gorm.io/gorm"
 	"time"
 )
 
 type SimpleUser struct {
-	gorm.Model
+	BaseModel
 	SpotifyId           string
 	SpotifyDisplayName  string
 	SpotifyAccessToken  string    `json:"-"`
