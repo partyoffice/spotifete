@@ -41,7 +41,7 @@ $(document).ready(function () {
                                     <img src="${suggestionData.ImageThumbnailUrl}" class="mr-3" alt="...">
                                     <div class="media-body">
                                         <h5 class="mt-0">${suggestionData.Name}</h5>
-                                        <p>${suggestionData.CreatedBy} - ${suggestionData.TrackCount} tracks</p>
+                                        <p>${suggestionData.OwnerName} - ${suggestionData.TrackCount} tracks</p>
                                     </div>
                                 </div>
                             </div>`;
