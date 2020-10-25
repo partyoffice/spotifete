@@ -95,8 +95,8 @@
             <div class="carousel-item">
                 <img src="/static/CreateSession.jpeg"class="img" width="1200" height="600">
                 <div class="carousel-caption">
+                    <h3>Your sessions</h3>
                     {{ if .user }}
-                        <h3>Your sessions</h3>
                         <div class="session_links">
                         <ul class="session_list mx-auto">
                             {{ with .userSessions }}
@@ -115,7 +115,6 @@
                         </a>
                         <br/>
                     {{ else }}
-                        <h3>Your Sessions</h3>
                         <a href="/login" class="btn btn-primary btn-lg">
                             <span class="fab fa-spotify"></span>
                             Log in via Spotify to create a new session or view your existing ones
