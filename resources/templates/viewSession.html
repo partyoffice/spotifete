@@ -77,7 +77,7 @@
     <div class="text-center">
         <h1 class="display-4">Spotifete</h1>
         <h3>{{ .session.Title }}</h3>
-        <span class="lead">You can join using the code {{ .session.JoinIdHumanReadable }}</span>
+        <span class="lead">You can join using the code {{ .session.JoinId }}</span>
         <button type="button" title="show qr code" class="btn btn-primary" data-toggle="modal" data-target="#shareSessionModal">
             <span class="fas fa-share-square"></span>
         </button>
@@ -91,7 +91,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>You can join using the code <strong>{{ .session.JoinIdHumanReadable }}</strong> or by scanning the QR Code with the App:</p>
+                        <p>You can join using the code <strong>{{ .session.JoinId }}</strong> or by scanning the QR Code with the App:</p>
                         <img id="qrCodeImage" src="/api/v1/sessions/{{ .session.JoinId }}/qrcode?size=512&disableBorder=true" alt="Scan this QR code with your phone to join this session." />
                     </div>
                 </div>
