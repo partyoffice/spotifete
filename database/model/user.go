@@ -10,10 +10,10 @@ type SimpleUser struct {
 	gorm.Model
 	SpotifyId           string
 	SpotifyDisplayName  string
-	SpotifyAccessToken  string
-	SpotifyRefreshToken string
-	SpotifyTokenType    string
-	SpotifyTokenExpiry  time.Time
+	SpotifyAccessToken  string    `json:"-"`
+	SpotifyRefreshToken string    `json:"-"`
+	SpotifyTokenType    string    `json:"-"`
+	SpotifyTokenExpiry  time.Time `json:"-"`
 }
 
 func (SimpleUser) TableName() string {
