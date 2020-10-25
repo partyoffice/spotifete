@@ -132,27 +132,30 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
+	currentlyPlayingRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
+	upNextRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
+	queue := listeningSession.GetSessionQueueInDemocraticOrder(*session)
+
 	displayError := c.Query("displayError")
 
 	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session).UTC().Format(time.RFC3339Nano)
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.UserId == nil {
-		c.HTML(http.StatusOK, "viewSession.html", gin.H{
-			"queueLastUpdated": queueLastUpdated,
-			"session":          session,
-			"displayError":     displayError,
+
+	var user *model.SimpleUser
+	if loginSession != nil && loginSession.UserId != nil {
+		// TODO: Use eager loading
+		user = users.FindSimpleUser(model.SimpleUser{
+			BaseModel: model.BaseModel{ID: *loginSession.UserId},
 		})
-		return
 	}
 
-	// TODO: Use eager loading
-	loggedInUser := users.FindSimpleUser(model.SimpleUser{
-		BaseModel: model.BaseModel{ID: *loginSession.UserId},
-	})
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"queueLastUpdated": queueLastUpdated,
 		"session":          session,
-		"user":             loggedInUser,
+		"currentlyPlaying": currentlyPlayingRequest,
+		"upNext":           upNextRequest,
+		"queue":            queue,
+		"user":             user,
 		"displayError":     displayError,
 	})
 }

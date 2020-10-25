@@ -127,17 +127,17 @@
         </tr>
         </thead>
         <tbody>
-        {{ if .session.CurrentlyPlaying }}
+        {{ if .currentlyPlaying }}
             <tr class="bg-info">
                 <th scope="row">
                     Currently playing
                 </th>
                 <td>
                     <div class="media">
-                        <img src="{{ .session.CurrentlyPlaying.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .session.CurrentlyPlaying.AlbumName }}">
+                        <img src="{{ .currentlyPlaying.TrackMetadata.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .currentlyPlaying.TrackMetadata.AlbumName }}">
                         <div class="media-body">
-                            <h5 class="mt-0">{{ .session.CurrentlyPlaying.TrackName }}</h5>
-                            <p>{{ .session.CurrentlyPlaying.ArtistName }} - {{ .session.CurrentlyPlaying.AlbumName }}</p>
+                            <h5 class="mt-0">{{ .currentlyPlaying.TrackMetadata.TrackName }}</h5>
+                            <p>{{ .currentlyPlaying.TrackMetadata.ArtistName }} - {{ .currentlyPlaying.TrackMetadata.AlbumName }}</p>
                         </div>
                     </div>
                 </td>
@@ -148,34 +148,34 @@
             </tr>
         {{ end }}
 
-        {{ if .session.UpNext }}
+        {{ if .upNext }}
             <tr>
                 <th scope="row">
                     Up next
                 </th>
                 <td>
                     <div class="media">
-                        <img src="{{ .session.UpNext.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .session.UpNext.AlbumName }}">
+                        <img src="{{ .upNext.TrackMetadata.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .upNext.TrackMetadata.AlbumName }}">
                         <div class="media-body">
-                            <h5 class="mt-0">{{ .session.UpNext.TrackName }}</h5>
-                            <p>{{ .session.UpNext.ArtistName }} - {{ .session.UpNext.AlbumName }}</p>
+                            <h5 class="mt-0">{{ .upNext.TrackMetadata.TrackName }}</h5>
+                            <p>{{ .upNext.TrackMetadata.ArtistName }} - {{ .upNext.TrackMetadata.AlbumName }}</p>
                         </div>
                     </div>
                 </td>
             </tr>
         {{ end }}
 
-        {{ range $index, $element := .session.Queue }}
+        {{ range $index, $element := .queue }}
             <tr>
                 <th scope="row">
                     {{ $index }}
                 </th>
                 <td>
                     <div class="media">
-                        <img src="{{ .AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .AlbumName }}">
+                        <img src="{{ .TrackMetadata.AlbumImageThumbnailUrl }}" class="mr-3" alt="{{ .TrackMetadata.AlbumName }}">
                         <div class="media-body">
-                            <h5 class="mt-0">{{ .TrackName }}</h5>
-                            <p>{{ .ArtistName }} - {{ .AlbumName }}</p>
+                            <h5 class="mt-0">{{ .TrackMetadata.TrackName }}</h5>
+                            <p>{{ .TrackMetadata.ArtistName }} - {{ .TrackMetadata.AlbumName }}</p>
                         </div>
                     </div>
                 </td>
