@@ -44,7 +44,7 @@ func (ApiV1Controller) Index(c *gin.Context) {
 func (ApiV1Controller) GetSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 
-	session := listeningSession.GetSessionByJoinId(sessionJoinId)
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{JoinId: &sessionJoinId})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 	} else {
@@ -164,17 +164,15 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 		limit = 10
 	}
 
-	session := listeningSession.GetSessionByJoinId(listeningSessionJoinId)
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &listeningSessionJoinId,
+	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	// TODO: Use eager loading for listening session
-	spotifeteUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: session.OwnerId},
-	})
-	client := users.Client(*spotifeteUser)
+	client := users.Client(session.Owner)
 
 	tracks, spotifeteError := listeningSession.SearchTrack(*client, query, limit)
 	if spotifeteError != nil {
@@ -215,17 +213,15 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 		limit = 10
 	}
 
-	session := listeningSession.GetSessionByJoinId(listeningSessionJoinId)
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &listeningSessionJoinId,
+	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
-	// TODO: Use eager loading
-	spotifeteUser := users.FindSimpleUser(model.SimpleUser{
-		Model: gorm.Model{ID: session.OwnerId},
-	})
-	client := users.Client(*spotifeteUser)
+	client := users.Client(session.Owner)
 
 	playlists, spotifeteError := listeningSession.SearchPlaylist(*client, query, limit)
 	if spotifeteError != nil {
@@ -249,7 +245,9 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 	}
 
 	sessionJoinId := c.Param("joinId")
-	session := listeningSession.GetSessionByJoinId(sessionJoinId)
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &sessionJoinId,
+	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
@@ -259,7 +257,7 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 		return
 	}
 
-	if listeningSession.IsTrackInQueue(*session, requestBody.TrackId) {
+	if listeningSession.IsTrackInQueue(session.SimpleListeningSession, requestBody.TrackId) {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "that song is already in the queue"})
 		return
 	}
@@ -274,7 +272,9 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 
 func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
-	session := listeningSession.GetSessionByJoinId(sessionJoinId)
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &sessionJoinId,
+	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return

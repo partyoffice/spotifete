@@ -125,7 +125,9 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 
 func (TemplateController) ViewSession(c *gin.Context) {
 	joinId := c.Param("joinId")
-	session := listeningSession.GetSessionByJoinId(joinId)
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
 	if session == nil {
 		c.String(http.StatusNotFound, "Session not found.")
 		return
@@ -160,7 +162,9 @@ func (TemplateController) ViewSession(c *gin.Context) {
 
 func (TemplateController) RequestTrack(c *gin.Context) {
 	joinId := c.Param("joinId")
-	session := listeningSession.GetSessionByJoinId(joinId)
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
 	if session == nil {
 		c.String(http.StatusNotFound, "session not found")
 		return
@@ -178,7 +182,9 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 	joinId := c.Param("joinId")
-	session := listeningSession.GetSessionByJoinId(joinId)
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
 	if session == nil {
 		c.String(http.StatusNotFound, "session not found")
 		return

@@ -45,7 +45,7 @@ func (u SimpleUser) SetToken(token *oauth2.Token) SimpleUser {
 type FullUser struct {
 	SimpleUser
 
-	ListeningSessions []ListeningSession `gorm:"foreignKey:owner_id"`
+	ListeningSessions []SimpleListeningSession `gorm:"foreignKey:owner_id"`
 }
 
 func (FullUser) TableName() string {
