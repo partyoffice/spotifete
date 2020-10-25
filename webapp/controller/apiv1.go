@@ -2,12 +2,15 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/authentication"
+	"github.com/47-11/spotifete/database/model"
 	"github.com/47-11/spotifete/listeningSession"
+	"github.com/47-11/spotifete/model/dto"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/user"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"strings"
@@ -50,18 +53,19 @@ func (ApiV1Controller) GetSession(c *gin.Context) {
 }
 
 func (controller ApiV1Controller) GetUser(c *gin.Context) {
-	userId := c.Param("userId")
+	spotifyUserId := c.Param("userId")
 
-	if userId == "current" {
+	if spotifyUserId == "current" {
 		controller.GetCurrentUser(c)
 		return
 	}
 
-	spotifeteUser := user.GetUserBySpotifyId(userId)
+	spotifeteUser := user.FindFullUser(model.SimpleUser{SpotifyId: spotifyUserId})
+
 	if spotifeteUser == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "user not found"})
 	} else {
-		c.JSON(http.StatusOK, user.CreateDto(*spotifeteUser))
+		c.JSON(http.StatusOK, dto.NewFullUserDto(*spotifeteUser))
 	}
 }
 
@@ -84,8 +88,11 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	spotifeteUser := user.GetUserById(*loginSession.UserId)
-	c.JSON(http.StatusOK, user.CreateDto(*spotifeteUser))
+	// TODO: Use eager loading for login session
+	spotifeteUser := user.FindFullUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
+	c.JSON(http.StatusOK, dto.NewFullUserDto(*spotifeteUser))
 }
 
 func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
@@ -163,8 +170,11 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 		return
 	}
 
-	spotifeteUser := user.GetUserById(session.OwnerId)
-	client := authentication.GetClientForUser(*spotifeteUser)
+	// TODO: Use eager loading for listening session
+	spotifeteUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: session.OwnerId},
+	})
+	client := user.Client(*spotifeteUser)
 
 	tracks, spotifeteError := listeningSession.SearchTrack(*client, query, limit)
 	if spotifeteError != nil {
@@ -211,8 +221,11 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 		return
 	}
 
-	spotifeteUser := user.GetUserById(session.OwnerId)
-	client := authentication.GetClientForUser(*spotifeteUser)
+	// TODO: Use eager loading
+	spotifeteUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: session.OwnerId},
+	})
+	client := user.Client(*spotifeteUser)
 
 	playlists, spotifeteError := listeningSession.SearchPlaylist(*client, query, limit)
 	if spotifeteError != nil {
@@ -300,7 +313,10 @@ func (ApiV1Controller) CreateListeningSession(c *gin.Context) {
 		return
 	}
 
-	owner := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	owner := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 	createdSession, spotifeteError := listeningSession.NewSession(*owner, *requestBody.ListeningSessionTitle)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
@@ -332,7 +348,10 @@ func (ApiV1Controller) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	spotifeteUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	spotifeteUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 
 	spotifeteError := listeningSession.CloseSession(*spotifeteUser, sessionJoinId)
 	if spotifeteError == nil {

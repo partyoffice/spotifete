@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/config"
+	"github.com/47-11/spotifete/database/model"
 	"github.com/47-11/spotifete/listeningSession"
 	"github.com/47-11/spotifete/user"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
@@ -43,7 +45,10 @@ func (TemplateController) Index(c *gin.Context) {
 		return
 	}
 
-	loggedInUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	loggedInUser := user.FindFullUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"time":               time.Now(),
 		"activeSessionCount": listeningSession.GetActiveSessionCount(),
@@ -82,7 +87,10 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 		return
 	}
 
-	loggedInUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
 		"user": loggedInUser,
 	})
@@ -95,7 +103,10 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	loggedInUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 
 	title := c.PostForm("title")
 	if len(title) == 0 {
@@ -135,7 +146,10 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
-	loggedInUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"queueLastUpdated": queueLastUpdated,
 		"session":          ListeningSessionDto,
@@ -176,7 +190,10 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 		return
 	}
 
-	loggedInUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 
 	playlistId := c.PostForm("playlistId")
 	spotifeteError := listeningSession.ChangeFallbackPlaylist(*session, *loggedInUser, playlistId)
@@ -200,7 +217,10 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 		return
 	}
 
-	loggedInUser := user.GetUserById(*loginSession.UserId)
+	// TODO: Use eager loading
+	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+		Model: gorm.Model{ID: *loginSession.UserId},
+	})
 
 	spotifeteError := listeningSession.CloseSession(*loggedInUser, joinId)
 	if spotifeteError != nil {

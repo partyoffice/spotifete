@@ -6,7 +6,7 @@ type LoginSession struct {
 	gorm.Model
 	SessionId        string
 	UserId           *uint
-	User             *User `gorm:"foreignKey:user_id"`
+	User             *SimpleUser `gorm:"foreignKey:user_id"`
 	Active           bool
 	CallbackRedirect string
 }

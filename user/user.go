@@ -3,16 +3,10 @@ package user
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	dto "github.com/47-11/spotifete/model/dto"
-	"github.com/zmb3/spotify"
-	"gorm.io/gorm"
 )
 
-func GetUserById(id uint) *model.User {
-	var users []model.User
-	database.GetConnection().Where(model.User{
-		Model: gorm.Model{ID: id},
-	}).Preload("ListeningSessions").Find(&users)
+func FindSimpleUser(filter model.SimpleUser) *model.SimpleUser {
+	users := FindSimpleUsers(filter)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -21,9 +15,14 @@ func GetUserById(id uint) *model.User {
 	}
 }
 
-func GetUserBySpotifyId(spotifyId string) *model.User {
-	var users []model.User
-	database.GetConnection().Where(model.User{SpotifyId: spotifyId}).Find(&users)
+func FindSimpleUsers(filter model.SimpleUser) []model.SimpleUser {
+	var users []model.SimpleUser
+	database.GetConnection().Where(filter).Find(&users)
+	return users
+}
+
+func FindFullUser(filter model.SimpleUser) *model.FullUser {
+	users := FindFullUsers(filter)
 
 	if len(users) == 1 {
 		return &users[0]
@@ -32,31 +31,8 @@ func GetUserBySpotifyId(spotifyId string) *model.User {
 	}
 }
 
-func GetOrCreateUser(spotifyUser *spotify.PrivateUser) model.User {
-	var users []model.User
-	database.GetConnection().Where(model.User{SpotifyId: spotifyUser.ID}).Find(&users)
-
-	if len(users) == 1 {
-		return users[0]
-	} else {
-		// No user found -> Create new
-		newUser := model.User{
-			Model:              gorm.Model{},
-			SpotifyId:          spotifyUser.ID,
-			SpotifyDisplayName: spotifyUser.DisplayName,
-		}
-
-		database.GetConnection().Create(&newUser)
-
-		return newUser
-	}
-}
-
-func CreateDto(user model.User) dto.UserDto {
-	result := dto.UserDto{}
-
-	result.SpotifyId = user.SpotifyId
-	result.SpotifyDisplayName = user.SpotifyDisplayName
-
-	return result
+func FindFullUsers(filter model.SimpleUser) []model.FullUser {
+	var users []model.FullUser
+	database.GetConnection().Where(filter).Preload("ListeningSessions").Find(&users)
+	return users
 }

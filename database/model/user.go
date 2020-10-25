@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type User struct {
+type SimpleUser struct {
 	gorm.Model
 	SpotifyId           string
 	SpotifyDisplayName  string
@@ -14,11 +14,13 @@ type User struct {
 	SpotifyRefreshToken string
 	SpotifyTokenType    string
 	SpotifyTokenExpiry  time.Time
-
-	ListeningSessions *[]ListeningSession `gorm:"foreignKey:owner_id"`
 }
 
-func (u User) GetToken() *oauth2.Token {
+func (SimpleUser) TableName() string {
+	return "users"
+}
+
+func (u SimpleUser) GetToken() *oauth2.Token {
 	if len(u.SpotifyAccessToken) > 0 && len(u.SpotifyRefreshToken) > 0 && len(u.SpotifyTokenType) > 0 {
 		return &oauth2.Token{
 			AccessToken:  u.SpotifyAccessToken,
@@ -29,4 +31,23 @@ func (u User) GetToken() *oauth2.Token {
 	} else {
 		return nil
 	}
+}
+
+func (u SimpleUser) SetToken(token *oauth2.Token) SimpleUser {
+	u.SpotifyAccessToken = token.AccessToken
+	u.SpotifyRefreshToken = token.RefreshToken
+	u.SpotifyTokenType = token.TokenType
+	u.SpotifyTokenExpiry = token.Expiry
+
+	return u
+}
+
+type FullUser struct {
+	SimpleUser
+
+	ListeningSessions []ListeningSession `gorm:"foreignKey:owner_id"`
+}
+
+func (FullUser) TableName() string {
+	return "users"
 }

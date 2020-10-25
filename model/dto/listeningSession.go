@@ -5,7 +5,7 @@ import (
 )
 
 type ListeningSessionDto struct {
-	Owner               UserDto              `json:"owner"`
+	Owner               SimpleUserDto        `json:"owner"`
 	JoinId              string               `json:"joinId"`
 	JoinIdHumanReadable string               `json:"joinIdHumanReadable"`
 	Title               string               `json:"title"`
