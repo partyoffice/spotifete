@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/authentication"
+	"github.com/47-11/spotifete/listeningSession"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -17,7 +18,7 @@ func (controller ApiV2Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router.PATCH("/auth/session/id/:sessionId/invalidate", authentication.ApiInvalidateSession)
 	router.Any("/auth/success", authentication.ApiCallbackSuccess)
 	router.POST("/session/new")
-	router.GET("/session/id/:joinId")
+	router.GET("/session/id/:joinId", listeningSession.ApiGetSession)
 	router.DELETE("/session/id/:joinId")
 	router.GET("/session/id/:joinId/search/track")
 	router.GET("/session/id/:joinId/search/playlist")
