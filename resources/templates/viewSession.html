@@ -12,8 +12,8 @@
     <script type="text/javascript" src="/static/typeahead/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="/static/js/common.js"></script>
     <script type="text/javascript" src="/static/js/viewSession.js"></script>
-    {{ if .user }}{{ if eq .session.Owner.SpotifyId  .user.SpotifyId }}
-    <script type="text/javascript" src="/static/js/viewSession_owner.js"></script>
+    {{ if .user }}{{ if eq .session.OwnerId  .user.Model.ID }}
+        <script type="text/javascript" src="/static/js/viewSession_owner.js"></script>
     {{ end }}{{ end }}
 </head>
 <body class="bg-dark text-white">
@@ -191,17 +191,19 @@
 
     <!-- TODO: Find out if there is a way to do this check properly -->
     {{ if .user }}
-        {{ if eq .session.Owner.SpotifyId  .user.SpotifyId }}
-        <!-- Close session -->
-        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#closeSessionModal">
-            Close Session
-        </button>
-        <div class="modal fade text-dark" id="closeSessionModal" tabindex="-1" role="dialog" aria-labelledby="Close Session" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="closeSessionModalLabel">Do you really want to close your Session?</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        {{ if eq .session.OwnerId  .user.ID }}
+            <!-- Close session -->
+            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#closeSessionModal">
+                Close Session
+            </button>
+            <div class="modal fade text-dark" id="closeSessionModal" tabindex="-1" role="dialog"
+                 aria-labelledby="Close Session" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="closeSessionModalLabel">Do you really want to close your
+                                Session?</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>

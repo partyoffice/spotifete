@@ -488,6 +488,7 @@ func CreateDto(listeningSession model.ListeningSession, resolveAdditionalInforma
 	result.Title = listeningSession.Title
 
 	if resolveAdditionalInformation {
+		result.OwnerId = listeningSession.OwnerId
 		result.QueuePlaylistId = listeningSession.QueuePlaylist
 
 		if listeningSession.FallbackPlaylist != nil {
