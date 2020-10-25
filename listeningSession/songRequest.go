@@ -17,6 +17,6 @@ func FindSongRequest(filter model.SongRequest) *model.SongRequest {
 
 func FindSongRequests(filter model.SongRequest) []model.SongRequest {
 	var songRequests []model.SongRequest
-	database.GetConnection().Where(filter).Find(&songRequests)
+	database.GetConnection().Where(filter).Joins("TrackMetadata").Find(&songRequests)
 	return songRequests
 }
