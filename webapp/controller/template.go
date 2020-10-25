@@ -6,7 +6,7 @@ import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/47-11/spotifete/listeningSession"
-	"github.com/47-11/spotifete/user"
+	"github.com/47-11/spotifete/users"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
@@ -46,7 +46,7 @@ func (TemplateController) Index(c *gin.Context) {
 	}
 
 	// TODO: Use eager loading
-	loggedInUser := user.FindFullUser(model.SimpleUser{
+	loggedInUser := users.FindFullUser(model.SimpleUser{
 		Model: gorm.Model{ID: *loginSession.UserId},
 	})
 	c.HTML(http.StatusOK, "index.html", gin.H{
@@ -88,7 +88,7 @@ func (TemplateController) NewListeningSession(c *gin.Context) {
 	}
 
 	// TODO: Use eager loading
-	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+	loggedInUser := users.FindSimpleUser(model.SimpleUser{
 		Model: gorm.Model{ID: *loginSession.UserId},
 	})
 	c.HTML(http.StatusOK, "newSession.html", gin.H{
@@ -104,7 +104,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 	}
 
 	// TODO: Use eager loading
-	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+	loggedInUser := users.FindSimpleUser(model.SimpleUser{
 		Model: gorm.Model{ID: *loginSession.UserId},
 	})
 
@@ -147,7 +147,7 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	}
 
 	// TODO: Use eager loading
-	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+	loggedInUser := users.FindSimpleUser(model.SimpleUser{
 		Model: gorm.Model{ID: *loginSession.UserId},
 	})
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
@@ -191,7 +191,7 @@ func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 	}
 
 	// TODO: Use eager loading
-	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+	loggedInUser := users.FindSimpleUser(model.SimpleUser{
 		Model: gorm.Model{ID: *loginSession.UserId},
 	})
 
@@ -218,7 +218,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 	}
 
 	// TODO: Use eager loading
-	loggedInUser := user.FindSimpleUser(model.SimpleUser{
+	loggedInUser := users.FindSimpleUser(model.SimpleUser{
 		Model: gorm.Model{ID: *loginSession.UserId},
 	})
 

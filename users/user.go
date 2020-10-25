@@ -1,4 +1,4 @@
-package user
+package users
 
 import (
 	"github.com/47-11/spotifete/database"

@@ -8,7 +8,7 @@ import (
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
 	dto "github.com/47-11/spotifete/model/dto"
-	users "github.com/47-11/spotifete/user"
+	"github.com/47-11/spotifete/users"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
 	"gorm.io/gorm"

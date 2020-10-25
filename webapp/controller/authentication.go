@@ -4,7 +4,7 @@ import (
 	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/error"
-	"github.com/47-11/spotifete/user"
+	"github.com/47-11/spotifete/users"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -35,7 +35,7 @@ func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 		return
 	}
 
-	_, spotifeteError = user.CreateAuthenticatedUser(token, loginSession)
+	_, spotifeteError = users.CreateAuthenticatedUser(token, loginSession)
 	if spotifeteError != nil {
 		spotifeteError.SetStringResponse(c)
 		return
