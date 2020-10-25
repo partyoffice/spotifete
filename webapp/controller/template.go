@@ -133,7 +133,7 @@ func (TemplateController) ViewSession(c *gin.Context) {
 	}
 
 	currentlyPlayingRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
-	upNextRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
+	upNextRequest := listeningSession.GetUpNextRequest(*session)
 	queue := listeningSession.GetSessionQueueInDemocraticOrder(*session)
 
 	displayError := c.Query("displayError")
