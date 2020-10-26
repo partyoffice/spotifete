@@ -1,7 +1,7 @@
 package shared
 
 import (
-	. "github.com/47-11/spotifete/error"
+	. "github.com/47-11/spotifete/shared"
 	"github.com/gin-gonic/gin"
 )
 

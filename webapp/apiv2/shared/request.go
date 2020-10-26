@@ -3,7 +3,7 @@ package shared
 import (
 	"github.com/47-11/spotifete/authentication"
 	. "github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/error"
+	. "github.com/47-11/spotifete/shared"
 )
 
 type BaseRequest interface {

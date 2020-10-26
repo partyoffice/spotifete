@@ -1,7 +1,7 @@
 package listeningSession
 
 import (
-	. "github.com/47-11/spotifete/error"
+	. "github.com/47-11/spotifete/shared"
 	"github.com/47-11/spotifete/webapp/apiv2/shared"
 )
 

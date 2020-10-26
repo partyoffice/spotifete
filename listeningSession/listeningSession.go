@@ -6,7 +6,7 @@ import (
 	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/error"
+	. "github.com/47-11/spotifete/shared"
 	"github.com/47-11/spotifete/users"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"

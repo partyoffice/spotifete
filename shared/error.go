@@ -1,4 +1,4 @@
-package error
+package shared
 
 import (
 	"github.com/getsentry/sentry-go"
