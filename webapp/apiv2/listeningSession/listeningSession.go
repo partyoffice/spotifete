@@ -178,3 +178,34 @@ func searchPlaylist(c *gin.Context) {
 		SetJsonError(*spotifeteError, c)
 	}
 }
+
+func requestTrack(c *gin.Context) {
+	request := RequestTrackRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	spotifeteError := request.Validate()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	joinId := c.Param("joinId")
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
+		return
+	}
+
+	_, spotifeteError = listeningSession.RequestSong(*session, request.TrackId)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
+}

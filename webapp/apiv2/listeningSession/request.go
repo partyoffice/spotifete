@@ -17,3 +17,15 @@ func (r NewSessionRequest) Validate() *SpotifeteError {
 
 	return nil
 }
+
+type RequestTrackRequest struct {
+	TrackId string `json:"track_id"`
+}
+
+func (r RequestTrackRequest) Validate() *SpotifeteError {
+	if "" == r.TrackId {
+		return NewUserError("Missing parameter track_id.")
+	}
+
+	return nil
+}
