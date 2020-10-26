@@ -2,11 +2,11 @@ package model
 
 type SongRequest struct {
 	BaseModel
-	SessionId      uint
-	UserId         *uint
-	SpotifyTrackId string
-	TrackMetadata  TrackMetadata `gorm:"foreignKey:spotify_track_id"`
-	Status         SongRequestStatus
+	SessionId      uint              `json:"session_id"`
+	UserId         *uint             `json:"user_id"`
+	SpotifyTrackId string            `json:"spotify_track_id"`
+	TrackMetadata  TrackMetadata     `gorm:"foreignKey:spotify_track_id" json:"track_metadata"`
+	Status         SongRequestStatus `json:"status"`
 }
 
 type SongRequestStatus string

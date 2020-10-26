@@ -15,6 +15,12 @@ type SearchPlaylistResponse struct {
 	Playlists []model.PlaylistMetadata `json:"playlists"`
 }
 
+type GetSessionQueueResponse struct {
+	CurrentlyPlayingRequest *model.SongRequest  `json:"currently_playing"`
+	UpNextRequest           *model.SongRequest  `json:"up_next"`
+	Queue                   []model.SongRequest `json:"queue"`
+}
+
 type QueueLastUpdatedResponse struct {
 	QueueLastUpdated time.Time `json:"queue_last_updated"`
 }

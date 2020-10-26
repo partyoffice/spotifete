@@ -74,6 +74,26 @@ func closeSession(c *gin.Context) {
 	}
 }
 
+func getSessionQueue(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	currentlyPlayingRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
+	upNextRequest := listeningSession.GetUpNextRequest(*session)
+	queue := listeningSession.GetSessionQueueInDemocraticOrder(*session)
+	c.JSON(http.StatusOK, GetSessionQueueResponse{
+		CurrentlyPlayingRequest: currentlyPlayingRequest,
+		UpNextRequest:           upNextRequest,
+		Queue:                   queue,
+	})
+}
+
 func queueLastUpdated(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
