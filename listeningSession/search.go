@@ -3,12 +3,18 @@ package listeningSession
 import (
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/shared"
+	"github.com/47-11/spotifete/users"
 	"github.com/zmb3/spotify"
 	"net/http"
 	"strings"
 )
 
-func SearchTrack(client spotify.Client, query string, limit int) ([]model.TrackMetadata, *SpotifeteError) {
+func SearchTrack(listeningSession model.FullListeningSession, query string, limit int) ([]model.TrackMetadata, *SpotifeteError) {
+	client := users.Client(listeningSession.Owner)
+	return searchTrack(*client, query, limit)
+}
+
+func searchTrack(client spotify.Client, query string, limit int) ([]model.TrackMetadata, *SpotifeteError) {
 	cleanedQuery := strings.TrimSpace(query) + "*"
 
 	currentUser, err := client.CurrentUser()
@@ -33,7 +39,12 @@ func SearchTrack(client spotify.Client, query string, limit int) ([]model.TrackM
 	return resultMetadata, nil
 }
 
-func SearchPlaylist(client spotify.Client, query string, limit int) ([]model.PlaylistMetadata, *SpotifeteError) {
+func SearchPlaylist(listeningSession model.FullListeningSession, query string, limit int) ([]model.PlaylistMetadata, *SpotifeteError) {
+	client := users.Client(listeningSession.Owner)
+	return searchPlaylist(*client, query, limit)
+}
+
+func searchPlaylist(client spotify.Client, query string, limit int) ([]model.PlaylistMetadata, *SpotifeteError) {
 	cleanedQuery := strings.TrimSpace(query) + "*"
 	result, err := client.SearchOpt(cleanedQuery, spotify.SearchTypePlaylist, &spotify.Options{
 		Limit: &limit,

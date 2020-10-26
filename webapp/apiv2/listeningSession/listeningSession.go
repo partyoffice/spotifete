@@ -6,6 +6,7 @@ import (
 	"github.com/47-11/spotifete/webapp/apiv2/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 func newSession(c *gin.Context) {
@@ -71,4 +72,66 @@ func closeSession(c *gin.Context) {
 	} else {
 		shared.SetJsonError(*spotifeteError, c)
 	}
+}
+
+func searchTrack(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		return
+	}
+
+	query := c.Query("query")
+	if len(query) == 0 {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Missing parameter query."})
+		return
+	}
+
+	limitParameter := c.Query("limit")
+	var limit = 20
+	if len(limitParameter) > 0 {
+		parsedLimit, err := strconv.ParseUint(limitParameter, 10, 0)
+		if err == nil {
+			limit = int(parsedLimit)
+		} else {
+			c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Invalid limit."})
+			return
+		}
+	}
+
+	listeningSession.SearchTrack(*session, query, limit)
+}
+
+func searchPlaylist(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		return
+	}
+
+	query := c.Query("query")
+	if len(query) == 0 {
+		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Missing parameter query."})
+		return
+	}
+
+	limitParameter := c.Query("limit")
+	var limit = 20
+	if len(limitParameter) > 0 {
+		parsedLimit, err := strconv.ParseUint(limitParameter, 10, 0)
+		if err == nil {
+			limit = int(parsedLimit)
+		} else {
+			c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Invalid limit."})
+			return
+		}
+	}
+
+	listeningSession.SearchPlaylist(*session, query, limit)
 }

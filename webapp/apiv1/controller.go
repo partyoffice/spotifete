@@ -166,9 +166,7 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 		return
 	}
 
-	client := users.Client(session.Owner)
-
-	tracks, spotifeteError := listeningSession.SearchTrack(*client, query, limit)
+	tracks, spotifeteError := listeningSession.SearchTrack(*session, query, limit)
 	if spotifeteError != nil {
 		shared.SetJsonError(*spotifeteError, c)
 		return
@@ -215,9 +213,7 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 		return
 	}
 
-	client := users.Client(session.Owner)
-
-	playlists, spotifeteError := listeningSession.SearchPlaylist(*client, query, limit)
+	playlists, spotifeteError := listeningSession.SearchPlaylist(*session, query, limit)
 	if spotifeteError != nil {
 		shared.SetJsonError(*spotifeteError, c)
 		return
