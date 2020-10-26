@@ -489,23 +489,6 @@ func GetDistinctRequestedTracks(session model.SimpleListeningSession) (trackIds 
 	return
 }
 
-func ChangeFallbackPlaylist(session model.SimpleListeningSession, user model.SimpleUser, playlistId string) *SpotifeteError {
-	if session.OwnerId != user.ID {
-		return NewUserError("Only the session owner can change the fallback playlist.")
-	}
-
-	client := users.Client(user)
-	playlistMetadata, err := AddOrUpdatePlaylistMetadata(*client, spotify.ID(playlistId))
-	if err != nil {
-		return err
-	}
-
-	session.FallbackPlaylistId = &playlistMetadata.SpotifyPlaylistId
-	database.GetConnection().Save(session)
-
-	return nil
-}
-
 func isTrackAvailableInUserMarket(user spotify.PrivateUser, track spotify.FullTrack) bool {
 	for _, availableMarket := range track.AvailableMarkets {
 		if availableMarket == user.Country {
