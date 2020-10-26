@@ -2,11 +2,11 @@ package listeningSession
 
 import (
 	. "github.com/47-11/spotifete/shared"
-	"github.com/47-11/spotifete/webapp/apiv2/shared"
+	. "github.com/47-11/spotifete/webapp/apiv2/shared"
 )
 
 type NewSessionRequest struct {
-	shared.AuthenticatedRequest
+	AuthenticatedRequest
 	ListeningSessionTitle string `json:"listening_session_title"`
 }
 
@@ -25,6 +25,19 @@ type RequestTrackRequest struct {
 func (r RequestTrackRequest) Validate() *SpotifeteError {
 	if "" == r.TrackId {
 		return NewUserError("Missing parameter track_id.")
+	}
+
+	return nil
+}
+
+type ChangeFallbackPlaylistRequest struct {
+	AuthenticatedRequest
+	NewFallbackPlaylistId string `json:"new_fallback_playlist_id"`
+}
+
+func (r ChangeFallbackPlaylistRequest) Validate() *SpotifeteError {
+	if "" == r.NewFallbackPlaylistId {
+		return NewUserError("Missing parameter new_fallback_playlist_id.")
 	}
 
 	return nil

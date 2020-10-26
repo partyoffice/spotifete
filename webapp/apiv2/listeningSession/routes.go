@@ -16,5 +16,5 @@ func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router.GET("/id/:joinId/search/track", searchTrack)
 	router.GET("/id/:joinId/search/playlist", searchPlaylist)
 	router.POST("/id/:joinId/request-track", requestTrack)
-	router.POST("/id/:joinId/fallback-playlist")
+	router.PUT("/id/:joinId/fallback-playlist", changeFallbackPlaylist)
 }

@@ -229,3 +229,40 @@ func requestTrack(c *gin.Context) {
 		SetJsonError(*spotifeteError, c)
 	}
 }
+
+func changeFallbackPlaylist(c *gin.Context) {
+	request := ChangeFallbackPlaylistRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	spotifeteError := request.Validate()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	authenticatedUser, spotifeteError := request.GetUser()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	joinId := c.Param("joinId")
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
+		return
+	}
+
+	spotifeteError = listeningSession.ChangeFallbackPlaylist(*session, authenticatedUser, request.NewFallbackPlaylistId)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
+}
