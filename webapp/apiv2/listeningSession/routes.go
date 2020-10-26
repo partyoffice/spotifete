@@ -10,9 +10,10 @@ func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router.POST("/new", newSession)
 	router.GET("/id/:joinId", getSession)
 	router.DELETE("/id/:joinId", closeSession)
+	router.GET("/id/:joinId/queue-last-updated", queueLastUpdated)
+	router.GET("/id/:joinId/qrcode", qrCode)
 	router.GET("/id/:joinId/search/track", searchTrack)
 	router.GET("/id/:joinId/search/playlist", searchPlaylist)
 	router.POST("/id/:joinId/request-track")
-	router.GET("/id/:joinId/queue-last-updated", queueLastUpdated)
-	router.GET("/id/:joinId/qrcode", qrCode)
+	router.POST("/id/:joinId/fallback-playlist")
 }

@@ -74,6 +74,33 @@ func closeSession(c *gin.Context) {
 	}
 }
 
+func queueLastUpdated(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
+		return
+	}
+
+	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session)
+	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: queueLastUpdated})
+}
+
+func qrCode(c *gin.Context) {
+	joinId := c.Param("joinId")
+	disableBorder := "true" == c.Query("disableBorder")
+
+	qrCode, spotifeteError := listeningSession.QrCodeAsPng(joinId, disableBorder, 512)
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	c.Data(http.StatusOK, "image/png", qrCode.Bytes())
+}
+
 func searchTrack(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
@@ -150,31 +177,4 @@ func searchPlaylist(c *gin.Context) {
 	} else {
 		SetJsonError(*spotifeteError, c)
 	}
-}
-
-func queueLastUpdated(c *gin.Context) {
-	joinId := c.Param("joinId")
-	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
-	})
-	if session == nil {
-		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
-		return
-	}
-
-	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session)
-	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: queueLastUpdated})
-}
-
-func qrCode(c *gin.Context) {
-	joinId := c.Param("joinId")
-	disableBorder := "true" == c.Query("disableBorder")
-
-	qrCode, spotifeteError := listeningSession.QrCodeAsPng(joinId, disableBorder, 512)
-	if spotifeteError != nil {
-		SetJsonError(*spotifeteError, c)
-		return
-	}
-
-	c.Data(http.StatusOK, "image/png", qrCode.Bytes())
 }
