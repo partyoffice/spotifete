@@ -76,7 +76,7 @@ function requestTrack(trackId) {
 
 function pollQueueLastUpdated() {
     $.ajax({
-        url: `/api/v1/sessions/${currentSessionJoinId}/queuelastupdated`
+        url: `/api/v2/session/id/${$('#currentSessionJoinId').val()}/queue-last-updated`
     }).done(function(data) {
         if (Date.parse(data.queueLastUpdated) > Date.parse(queueLastUpdated)) {
             location.reload();
