@@ -92,7 +92,7 @@
                     </div>
                     <div class="modal-body">
                         <p>You can join using the code <strong>{{ .session.JoinId }}</strong> or by scanning the QR Code with the App:</p>
-                        <img id="qrCodeImage" src="/api/v1/sessions/{{ .session.JoinId }}/qrcode?size=512&disableBorder=true" alt="Scan this QR code with your phone to join this session." />
+                        <img id="qrCodeImage" src="/api/v2/session/id/{{ .session.JoinId }}/qrcode?disableBorder=true" alt="Scan this QR code with your phone to join this session." />
                     </div>
                 </div>
             </div>
