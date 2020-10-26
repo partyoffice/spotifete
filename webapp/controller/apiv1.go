@@ -2,8 +2,10 @@ package controller
 
 import (
 	"github.com/47-11/spotifete/authentication"
+	"github.com/47-11/spotifete/authentication/api"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/47-11/spotifete/listeningSession"
+	api2 "github.com/47-11/spotifete/listeningSession/api"
 	. "github.com/47-11/spotifete/model/webapp/api/v1"
 	"github.com/47-11/spotifete/shared"
 	"github.com/47-11/spotifete/users"
@@ -21,18 +23,18 @@ func (controller ApiV1Controller) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	router := baseRouter.Group("/api/v1")
 
 	router.GET("/", controller.Index)
-	router.GET("/spotify/auth/new", authentication.ApiNewSession)
-	router.GET("/spotify/auth/authenticated", authentication.ApiIsSessionAuthenticated)
-	router.PATCH("/spotify/auth/invalidate", authentication.ApiInvalidateSession)
-	router.GET("/spotify/auth/success", authentication.ApiCallbackSuccess)
+	router.GET("/spotify/auth/new", api.NewSession)
+	router.GET("/spotify/auth/authenticated", api.IsSessionAuthenticated)
+	router.PATCH("/spotify/auth/invalidate", api.InvalidateSession)
+	router.GET("/spotify/auth/success", api.CallbackSuccess)
 	router.GET("/spotify/search/track", controller.SearchSpotifyTrack)
 	router.GET("/spotify/search/playlist", controller.SearchSpotifyPlaylist)
-	router.GET("/sessions/:joinId", listeningSession.ApiGetSession)
-	router.DELETE("sessions/:joinId", listeningSession.ApiCloseSession)
+	router.GET("/sessions/:joinId", api2.GetSession)
+	router.DELETE("sessions/:joinId", api2.CloseSession)
 	router.POST("/sessions/:joinId/request", controller.RequestSong)
 	router.GET("/sessions/:joinId/queuelastupdated", controller.QueueLastUpdated)
 	router.GET("/sessions/:joinId/qrcode", controller.CreateQrCodeForListeningSession)
-	router.POST("/sessions", listeningSession.ApiNewSession)
+	router.POST("/sessions", api2.NewSession)
 	router.GET("/users/:userId", controller.GetUser)
 }
 

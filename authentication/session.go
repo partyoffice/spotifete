@@ -65,7 +65,7 @@ func sessionIdExists(sessionId string) bool {
 	return count > 0
 }
 
-func isSessionAuthenticatedBySessionId(sessionId string) (isAuthenticated bool, spotifeteError *SpotifeteError) {
+func IsSessionAuthenticatedBySessionId(sessionId string) (isAuthenticated bool, spotifeteError *SpotifeteError) {
 	session := GetValidSession(sessionId)
 	if session == nil {
 		return false, NewUserError("Session not found.")

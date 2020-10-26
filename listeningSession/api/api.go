@@ -1,16 +1,16 @@
-package listeningSession
+package api
 
 import (
 	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/database/model"
-	"github.com/47-11/spotifete/listeningSession/model/api"
+	"github.com/47-11/spotifete/listeningSession"
 	"github.com/47-11/spotifete/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func ApiNewSession(c *gin.Context) {
-	request := api.NewSessionRequest{}
+func NewSession(c *gin.Context) {
+	request := NewSessionRequest{}
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
@@ -34,7 +34,7 @@ func ApiNewSession(c *gin.Context) {
 		return
 	}
 
-	createdSession, spotifeteError := NewSession(*loginSession.User, request.ListeningSessionTitle)
+	createdSession, spotifeteError := listeningSession.NewSession(*loginSession.User, request.ListeningSessionTitle)
 	if spotifeteError != nil {
 		spotifeteError.SetJsonResponse(c)
 		return
@@ -43,9 +43,9 @@ func ApiNewSession(c *gin.Context) {
 	c.JSON(http.StatusOK, createdSession)
 }
 
-func ApiGetSession(c *gin.Context) {
+func GetSession(c *gin.Context) {
 	joinId := c.Param("joinId")
-	session := FindFullListeningSession(model.SimpleListeningSession{
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
 		JoinId: &joinId,
 	})
 
@@ -56,7 +56,7 @@ func ApiGetSession(c *gin.Context) {
 	}
 }
 
-func ApiCloseSession(c *gin.Context) {
+func CloseSession(c *gin.Context) {
 	request := shared.AuthenticatedRequest{}
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
@@ -81,5 +81,5 @@ func ApiCloseSession(c *gin.Context) {
 		return
 	}
 
-	CloseSession(*loginSession.User, request.LoginSessionId)
+	listeningSession.CloseSession(*loginSession.User, request.LoginSessionId)
 }
