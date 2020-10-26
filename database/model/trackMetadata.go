@@ -7,7 +7,7 @@ import (
 )
 
 type TrackMetadata struct {
-	BaseModelWithoutPrimaryKey
+	BaseModelWithoutId
 	SpotifyTrackId         string `gorm:"primaryKey"`
 	TrackName              string
 	ArtistName             string

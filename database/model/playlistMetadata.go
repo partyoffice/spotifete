@@ -6,7 +6,7 @@ import (
 )
 
 type PlaylistMetadata struct {
-	BaseModelWithoutPrimaryKey
+	BaseModelWithoutId
 	SpotifyPlaylistId string `gorm:"primaryKey"`
 	Name              string
 	TrackCount        uint

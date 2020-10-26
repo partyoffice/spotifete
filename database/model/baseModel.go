@@ -12,8 +12,7 @@ type BaseModel struct {
 	DeletedAt gorm.DeletedAt `json:"-"`
 }
 
-type BaseModelWithoutPrimaryKey struct {
-	ID        uint           `json:"-"`
+type BaseModelWithoutId struct {
 	CreatedAt time.Time      `json:"-"`
 	UpdatedAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `json:"-"`
