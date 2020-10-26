@@ -2,10 +2,6 @@ package shared
 
 import . "github.com/47-11/spotifete/error"
 
-type ErrorResponse struct {
-	Message string `json:"message"`
-}
-
 type BaseRequest interface {
 	Validate() *SpotifeteError
 }

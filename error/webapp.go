@@ -1,12 +1,15 @@
 package error
 
 import (
-	"github.com/47-11/spotifete/shared"
 	"github.com/gin-gonic/gin"
 )
 
+type Response struct {
+	Message string `json:"message"`
+}
+
 func (e SpotifeteError) SetJsonResponse(ctx *gin.Context) {
-	ctx.JSON(e.HttpStatus, shared.ErrorResponse{Message: e.MessageForUser})
+	ctx.JSON(e.HttpStatus, Response{Message: e.MessageForUser})
 }
 
 func (e SpotifeteError) SetStringResponse(ctx *gin.Context) {
