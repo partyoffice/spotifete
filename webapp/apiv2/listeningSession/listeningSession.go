@@ -3,7 +3,7 @@ package listeningSession
 import (
 	"github.com/47-11/spotifete/database/model"
 	"github.com/47-11/spotifete/listeningSession"
-	"github.com/47-11/spotifete/webapp/apiv2/shared"
+	. "github.com/47-11/spotifete/webapp/apiv2/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -13,25 +13,25 @@ func newSession(c *gin.Context) {
 	request := NewSessionRequest{}
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
 		return
 	}
 
 	spotifeteError := request.Validate()
 	if spotifeteError != nil {
-		shared.SetJsonError(*spotifeteError, c)
+		SetJsonError(*spotifeteError, c)
 		return
 	}
 
 	authenticatedUser, spotifeteError := request.GetUser()
 	if spotifeteError != nil {
-		shared.SetJsonError(*spotifeteError, c)
+		SetJsonError(*spotifeteError, c)
 		return
 	}
 
 	createdSession, spotifeteError := listeningSession.NewSession(authenticatedUser, request.ListeningSessionTitle)
 	if spotifeteError != nil {
-		shared.SetJsonError(*spotifeteError, c)
+		SetJsonError(*spotifeteError, c)
 		return
 	}
 
@@ -45,23 +45,23 @@ func getSession(c *gin.Context) {
 	})
 
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
 	} else {
 		c.JSON(http.StatusOK, session)
 	}
 }
 
 func closeSession(c *gin.Context) {
-	request := shared.AuthenticatedRequest{}
+	request := AuthenticatedRequest{}
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
 		return
 	}
 
 	authenticatedUser, spotifeteError := request.GetUser()
 	if spotifeteError != nil {
-		shared.SetJsonError(*spotifeteError, c)
+		SetJsonError(*spotifeteError, c)
 		return
 	}
 
@@ -70,7 +70,7 @@ func closeSession(c *gin.Context) {
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {
-		shared.SetJsonError(*spotifeteError, c)
+		SetJsonError(*spotifeteError, c)
 	}
 }
 
@@ -80,13 +80,13 @@ func searchTrack(c *gin.Context) {
 		JoinId: &joinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
 		return
 	}
 
 	query := c.Query("query")
 	if len(query) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Missing parameter query."})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Missing parameter query."})
 		return
 	}
 
@@ -97,12 +97,20 @@ func searchTrack(c *gin.Context) {
 		if err == nil {
 			limit = int(parsedLimit)
 		} else {
-			c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Invalid limit."})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Invalid limit."})
 			return
 		}
 	}
 
-	listeningSession.SearchTrack(*session, query, limit)
+	tracks, spotifeteError := listeningSession.SearchTrack(*session, query, limit)
+	if spotifeteError == nil {
+		c.JSON(http.StatusOK, SearchTracksResponse{
+			Query:  query,
+			Tracks: tracks,
+		})
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
 }
 
 func searchPlaylist(c *gin.Context) {
@@ -111,13 +119,13 @@ func searchPlaylist(c *gin.Context) {
 		JoinId: &joinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
 		return
 	}
 
 	query := c.Query("query")
 	if len(query) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Missing parameter query."})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Missing parameter query."})
 		return
 	}
 
@@ -128,12 +136,20 @@ func searchPlaylist(c *gin.Context) {
 		if err == nil {
 			limit = int(parsedLimit)
 		} else {
-			c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "Invalid limit."})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Invalid limit."})
 			return
 		}
 	}
 
-	listeningSession.SearchPlaylist(*session, query, limit)
+	playlists, spotifeteError := listeningSession.SearchPlaylist(*session, query, limit)
+	if spotifeteError == nil {
+		c.JSON(http.StatusOK, SearchPlaylistResponse{
+			Query:     query,
+			Playlists: playlists,
+		})
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
 }
 
 func queueLastUpdated(c *gin.Context) {
@@ -142,7 +158,7 @@ func queueLastUpdated(c *gin.Context) {
 		JoinId: &joinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
 		return
 	}
 
