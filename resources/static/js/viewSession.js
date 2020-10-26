@@ -78,7 +78,7 @@ function pollQueueLastUpdated() {
     $.ajax({
         url: `/api/v2/session/id/${$('#currentSessionJoinId').val()}/queue-last-updated`
     }).done(function(data) {
-        if (Date.parse(data.queueLastUpdated) > Date.parse(queueLastUpdated)) {
+        if (Date.parse(data.queue_last_updated) > Date.parse(queueLastUpdated)) {
             location.reload();
         } else {
             setTimeout(function(){
