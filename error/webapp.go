@@ -4,12 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Response struct {
+type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
 func (e SpotifeteError) SetJsonResponse(ctx *gin.Context) {
-	ctx.JSON(e.HttpStatus, Response{Message: e.MessageForUser})
+	ctx.JSON(e.HttpStatus, ErrorResponse{Message: e.MessageForUser})
 }
 
 func (e SpotifeteError) SetStringResponse(ctx *gin.Context) {

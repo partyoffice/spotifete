@@ -53,7 +53,7 @@ func (controller ApiV1Controller) GetUser(c *gin.Context) {
 	fullUser := users.FindSimpleUser(model.SimpleUser{SpotifyId: spotifyUserId})
 
 	if fullUser == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "user not found"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "user not found"})
 	} else {
 		c.JSON(http.StatusOK, fullUser)
 	}
@@ -63,18 +63,18 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 	loginSessionId := c.Query("sessionId")
 
 	if len(loginSessionId) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session id not given"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session id not given"})
 		return
 	}
 
 	loginSession := authentication.GetValidSession(loginSessionId)
 	if loginSession == nil {
-		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "invalid login session"})
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "invalid login session"})
 		return
 	}
 
 	if loginSession.UserId == nil {
-		c.JSON(http.StatusUnauthorized, shared.ErrorResponse{Message: "not authenticated to spotify yet"})
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "not authenticated to spotify yet"})
 		return
 	}
 
@@ -84,13 +84,13 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 	listeningSessionJoinId := c.Query("session")
 	if len(listeningSessionJoinId) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session not specified"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
 		return
 	}
 
 	query := c.Query("query")
 	if len(query) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "query not given"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "query not given"})
 		return
 	}
 
@@ -99,7 +99,7 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 	if len(limitPatameter) > 0 {
 		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invaid limit"})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invaid limit"})
 			return
 		}
 
@@ -112,7 +112,7 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 		JoinId: &listeningSessionJoinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
@@ -133,13 +133,13 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 	listeningSessionJoinId := c.Query("session")
 	if len(listeningSessionJoinId) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session not specified"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session not specified"})
 		return
 	}
 
 	query := c.Query("query")
 	if len(query) == 0 {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "query not given"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "query not given"})
 		return
 	}
 
@@ -148,7 +148,7 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 	if len(limitPatameter) > 0 {
 		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invaid limit"})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invaid limit"})
 			return
 		}
 
@@ -161,7 +161,7 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 		JoinId: &listeningSessionJoinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
@@ -184,7 +184,7 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		logger.Info("Invalid request body: " + err.Error())
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody body: " + err.Error()})
 		return
 	}
 
@@ -193,16 +193,16 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 		JoinId: &sessionJoinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 	if !session.Active {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "session is closed"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "session is closed"})
 		return
 	}
 
 	if listeningSession.IsTrackInQueue(session.SimpleListeningSession, requestBody.TrackId) {
-		c.JSON(http.StatusBadRequest, shared.ErrorResponse{Message: "that song is already in the queue"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "that song is already in the queue"})
 		return
 	}
 
@@ -220,7 +220,7 @@ func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 		JoinId: &sessionJoinId,
 	})
 	if session == nil {
-		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "session not found"})
 		return
 	}
 
@@ -253,7 +253,7 @@ func (ApiV1Controller) CreateQrCodeForListeningSession(c *gin.Context) {
 	if err != nil {
 		sentry.CaptureException(err)
 		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, shared.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 		return
 	}
 
