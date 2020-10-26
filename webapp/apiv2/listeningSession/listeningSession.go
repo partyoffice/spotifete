@@ -135,3 +135,17 @@ func searchPlaylist(c *gin.Context) {
 
 	listeningSession.SearchPlaylist(*session, query, limit)
 }
+
+func queueLastUpdated(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "Session not found."})
+		return
+	}
+
+	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session)
+	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: queueLastUpdated})
+}
