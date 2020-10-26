@@ -165,3 +165,16 @@ func queueLastUpdated(c *gin.Context) {
 	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session)
 	c.JSON(http.StatusOK, QueueLastUpdatedResponse{QueueLastUpdated: queueLastUpdated})
 }
+
+func qrCode(c *gin.Context) {
+	joinId := c.Param("joinId")
+	disableBorder := "true" == c.Query("disableBorder")
+
+	qrCode, spotifeteError := listeningSession.QrCodeAsPng(joinId, disableBorder, 512)
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	c.Data(http.StatusOK, "image/png", qrCode.Bytes())
+}

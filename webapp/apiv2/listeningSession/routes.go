@@ -14,5 +14,5 @@ func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router.GET("/id/:joinId/search/playlist", searchPlaylist)
 	router.POST("/id/:joinId/request-track")
 	router.GET("/id/:joinId/queue-last-updated", queueLastUpdated)
-	router.GET("/id/:joinId/qrcode")
+	router.GET("/id/:joinId/qrcode", qrCode)
 }
