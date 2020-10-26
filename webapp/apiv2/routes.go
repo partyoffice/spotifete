@@ -19,5 +19,5 @@ func SetupApiRoutes(baseRouter *gin.Engine) {
 }
 
 func index(c *gin.Context) {
-	c.String(http.StatusOK, "Spotifete API v2")
+	c.String(http.StatusOK, "Spotifete API v2. This api is still WIP and not completely implemented yet.")
 }
