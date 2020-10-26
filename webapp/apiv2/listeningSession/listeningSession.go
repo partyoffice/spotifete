@@ -266,3 +266,34 @@ func changeFallbackPlaylist(c *gin.Context) {
 		SetJsonError(*spotifeteError, c)
 	}
 }
+
+func removeFallbackPlaylist(c *gin.Context) {
+	request := AuthenticatedRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	authenticatedUser, spotifeteError := request.GetUser()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	joinId := c.Param("joinId")
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
+		return
+	}
+
+	spotifeteError = listeningSession.RemoveFallbackPlaylist(*session, authenticatedUser)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
+}
