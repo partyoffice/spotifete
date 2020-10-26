@@ -1,5 +1,4 @@
 $(document).ready(function () {
-    pollQueueLastUpdated();
 
     // Constructing the suggestion engine
     var engine = new Bloodhound({
