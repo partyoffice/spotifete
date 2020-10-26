@@ -1,8 +1,8 @@
-package api
+package listeningSession
 
 import (
 	. "github.com/47-11/spotifete/error"
-	"github.com/47-11/spotifete/shared"
+	"github.com/47-11/spotifete/webapp/apiv2/shared"
 )
 
 type NewSessionRequest struct {
@@ -11,13 +11,8 @@ type NewSessionRequest struct {
 }
 
 func (r NewSessionRequest) Validate() *SpotifeteError {
-	err := r.AuthenticatedRequest.Validate()
-	if err != nil {
-		return err
-	}
-
-	if r.ListeningSessionTitle == "" {
-		return NewUserError("listening_session_title must not be empty")
+	if "" == r.ListeningSessionTitle {
+		return NewUserError("Missing parameter listening_session_title.")
 	}
 
 	return nil

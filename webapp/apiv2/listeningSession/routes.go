@@ -1,10 +1,10 @@
-package api
+package listeningSession
 
 import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(baseRouterGroup *gin.RouterGroup) {
+func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router := baseRouterGroup.Group("/session")
 
 	router.POST("/new", newSession)

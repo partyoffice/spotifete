@@ -1,8 +1,8 @@
-package api
+package user
 
 import "github.com/gin-gonic/gin"
 
-func SetupRouter(baseRouterGroup *gin.RouterGroup) {
+func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router := baseRouterGroup.Group("/user")
 
 	router.GET("/me")

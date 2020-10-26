@@ -1,10 +1,10 @@
-package api
+package authentication
 
 import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(baseRouterGroup *gin.RouterGroup) {
+func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router := baseRouterGroup.Group("/auth")
 
 	router.GET("/session/new", newSession)

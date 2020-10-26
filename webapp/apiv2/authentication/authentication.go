@@ -1,7 +1,8 @@
-package api
+package authentication
 
 import (
 	"github.com/47-11/spotifete/authentication"
+	. "github.com/47-11/spotifete/webapp/apiv2/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -17,14 +18,15 @@ func newSession(c *gin.Context) {
 
 func isSessionAuthenticated(c *gin.Context) {
 	sessionId := c.Param("sessionId")
-	sessionAuthenticated, spotifeteError := authentication.IsSessionAuthenticatedBySessionId(sessionId)
-	if spotifeteError != nil {
-		spotifeteError.SetJsonResponse(c)
+	session := authentication.GetSession(sessionId)
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Unknown session id."})
 		return
 	}
 
-	response := IsSessionAuthenticatedResponse{Authenticated: sessionAuthenticated}
-	if sessionAuthenticated {
+	authenticated := session.IsAuthenticated()
+	response := IsSessionAuthenticatedResponse{Authenticated: authenticated}
+	if authenticated {
 		c.JSON(http.StatusOK, response)
 	} else {
 		c.JSON(http.StatusUnauthorized, response)

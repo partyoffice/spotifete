@@ -165,6 +165,10 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	session := FindSimpleListeningSession(model.SimpleListeningSession{
 		JoinId: &joinId,
 	})
+	if session == nil {
+		return NewUserError("Unknown listening session.")
+	}
+
 	if user.ID != session.OwnerId {
 		return NewUserError("Only the session owner can close a session.")
 	}

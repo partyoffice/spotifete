@@ -1,4 +1,4 @@
-package controller
+package webapp
 
 import (
 	"github.com/47-11/spotifete/authentication"
@@ -9,35 +9,28 @@ import (
 	"net/http"
 )
 
-type OAuth2AuthenticationController interface {
-	Controller
-	Callback(*gin.Context)
-}
-
-type SpotifyAuthenticationController struct{ OAuth2AuthenticationController }
-
-func (c SpotifyAuthenticationController) SetupWithBaseRouter(baseRouter *gin.Engine) {
+func SetupAuthenticationRouter(baseRouter *gin.Engine) {
 	group := baseRouter.Group("/auth")
 
-	group.GET("/callback", c.Callback)
+	group.GET("/callback", callback)
 }
 
-func (SpotifyAuthenticationController) Callback(c *gin.Context) {
+func callback(c *gin.Context) {
 	loginSession, spotifeteError := getValidLoginSessionFromContext(c)
 	if spotifeteError != nil {
-		spotifeteError.SetStringResponse(c)
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
 		return
 	}
 
 	token, spotifeteError := authentication.GetTokenFromCallback(c)
 	if spotifeteError != nil {
-		spotifeteError.SetStringResponse(c)
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
 		return
 	}
 
 	_, spotifeteError = users.CreateAuthenticatedUser(token, loginSession)
 	if spotifeteError != nil {
-		spotifeteError.SetStringResponse(c)
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
 		return
 	}
 
@@ -53,14 +46,18 @@ func (SpotifyAuthenticationController) Callback(c *gin.Context) {
 }
 
 func getValidLoginSessionFromContext(c *gin.Context) (model.LoginSession, *SpotifeteError) {
-	state := c.Query("state")
+	sessionId := c.Query("state")
 
-	session := authentication.GetValidSession(state)
+	session := authentication.GetSession(sessionId)
 	if session == nil {
 		return model.LoginSession{}, NewUserError("Unknown state.")
 	}
 
-	if session.UserId != nil {
+	if !session.IsValid() {
+		return model.LoginSession{}, NewUserError("Invalid state.")
+	}
+
+	if session.IsAuthenticated() {
 		return model.LoginSession{}, NewUserError("State has already been used.")
 	}
 

@@ -3,26 +3,14 @@ package authentication
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/error"
 	"math/rand"
-	"time"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-func GetValidSession(sessionId string) *model.LoginSession {
-	session := GetSession(sessionId)
-
-	if session != nil && IsSessionValid(*session) {
-		return session
-	} else {
-		return nil
-	}
-}
-
 func GetSession(sessionId string) *model.LoginSession {
 	var sessions []model.LoginSession
-	database.GetConnection().Where(model.LoginSession{SessionId: sessionId}).Joins("User").Find(&sessions)
+	database.GetConnection().Where("session_id = ?", sessionId).Joins("User").Find(&sessions)
 
 	if len(sessions) == 0 {
 		return nil
@@ -63,23 +51,6 @@ func sessionIdExists(sessionId string) bool {
 
 	database.GetConnection().Model(&model.LoginSession{}).Where(model.LoginSession{SessionId: sessionId}).Count(&count)
 	return count > 0
-}
-
-func IsSessionAuthenticatedBySessionId(sessionId string) (isAuthenticated bool, spotifeteError *SpotifeteError) {
-	session := GetValidSession(sessionId)
-	if session == nil {
-		return false, NewUserError("Session not found.")
-	}
-
-	return isSessionAuthenticated(*session), nil
-}
-
-func isSessionAuthenticated(session model.LoginSession) bool {
-	return session.UserId != nil
-}
-
-func IsSessionValid(session model.LoginSession) bool {
-	return session.Active && session.CreatedAt.AddDate(0, 0, 7).After(time.Now())
 }
 
 func InvalidateSession(sessionId string) {

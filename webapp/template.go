@@ -1,4 +1,4 @@
-package controller
+package webapp
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type TemplateController struct{ Controller }
+type TemplateController struct{}
 
 func (c TemplateController) SetupWithBaseRouter(baseRouter *gin.Engine) {
 	baseRouter.LoadHTMLGlob("resources/templates/*.html")
@@ -98,7 +98,7 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 
 	session, spotifeteError := listeningSession.NewSession(*loginSession.User, title)
 	if spotifeteError != nil {
-		spotifeteError.SetStringResponse(c)
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
 		return
 	}
 
@@ -200,7 +200,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	spotifeteError := listeningSession.CloseSession(*loginSession.User, joinId)
 	if spotifeteError != nil {
-		spotifeteError.SetStringResponse(c)
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
 		return
 	}
 

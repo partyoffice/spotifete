@@ -17,13 +17,13 @@ func GetValidSessionFromCookie(c *gin.Context) *model.LoginSession {
 		return nil
 	}
 
-	session := GetValidSession(*sessionId)
-	if session == nil {
+	session := GetSession(*sessionId)
+	if session != nil && session.IsValid() {
+		return session
+	} else {
 		InvalidateSession(*sessionId)
 		RemoveCookie(c)
 		return nil
-	} else {
-		return session
 	}
 }
 
