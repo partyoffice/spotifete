@@ -8,7 +8,7 @@ $(document).ready(function () {
             url: `/api/v2/session/id/${$('#currentSessionJoinId').val()}/search/playlist?limit=50&query=%%query%%`,
             wildcard: '%%query%%',
             transform: function (response) {
-                return response.results;
+                return response.playlists;
             }
         }
     });
