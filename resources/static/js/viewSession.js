@@ -12,7 +12,7 @@ $(document).ready(function () {
         datumTokenizer: Bloodhound.tokenizers.whitespace,
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: `/api/v1/spotify/search/track?session=${currentSessionJoinId}&limit=50&query=%%query%%`,
+            url: `/api/v2/session/id/${currentSessionJoinId}/search/track?limit=50&query=%%query%%`,
             wildcard: '%%query%%',
             transform: function (response) {
                 return response.results;
