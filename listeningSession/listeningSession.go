@@ -1,16 +1,12 @@
 package listeningSession
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/47-11/spotifete/config"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/shared"
 	"github.com/47-11/spotifete/users"
-	qrcode "github.com/skip2/go-qrcode"
 	"github.com/zmb3/spotify"
-	"image/jpeg"
 	"math/rand"
 	"net/http"
 	"sort"
@@ -103,22 +99,13 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 		return nil, NewError("Could not create spotify playlist.", err, http.StatusInternalServerError)
 	}
 
-	// Generate QR code for this session
-	qrCode, spotifeteError := GenerateQrCodeForSession(joinId, false)
+	qrCode, spotifeteError := QrCodeAsJpeg(joinId, false, 512)
 	if spotifeteError != nil {
 		return nil, spotifeteError
 	}
 
-	// Encode QR code as jpeg
-	jpegBuffer := new(bytes.Buffer)
-	err = jpeg.Encode(jpegBuffer, qrCode.Image(512), nil)
-	if err != nil {
-		return nil, NewError("Could not encode qr code as image.", err, http.StatusInternalServerError)
-	}
-
-	// Set QR code as playlist image in background
 	go func() {
-		err := client.SetPlaylistImage(playlist.ID, jpegBuffer)
+		err := client.SetPlaylistImage(playlist.ID, qrCode)
 		if err != nil {
 			NewInternalError("Could not set playlist image.", err)
 		}
@@ -498,20 +485,6 @@ func GetDistinctRequestedTracks(session model.SimpleListeningSession) (trackIds 
 	}
 
 	return
-}
-
-func GenerateQrCodeForSession(joinId string, disableBorder bool) (*qrcode.QRCode, *SpotifeteError) {
-	baseUrl := config.Get().SpotifeteConfiguration.BaseUrl
-	qrCodeContent := fmt.Sprintf("%s/session/view/%s", baseUrl, joinId)
-
-	// Generate QR code for this session
-	qrCode, err := qrcode.New(qrCodeContent, qrcode.Medium)
-	if err != nil {
-		return nil, NewError("Could not create QR code.", err, http.StatusInternalServerError)
-	}
-
-	qrCode.DisableBorder = disableBorder
-	return qrCode, nil
 }
 
 func ChangeFallbackPlaylist(session model.SimpleListeningSession, user model.SimpleUser, playlistId string) *SpotifeteError {

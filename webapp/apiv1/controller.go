@@ -6,7 +6,6 @@ import (
 	"github.com/47-11/spotifete/listeningSession"
 	"github.com/47-11/spotifete/users"
 	"github.com/47-11/spotifete/webapp/apiv2/shared"
-	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
 	"net/http"
@@ -363,21 +362,13 @@ func (ApiV1Controller) CreateQrCodeForListeningSession(c *gin.Context) {
 		size = parsed
 	}
 
-	qrCode, spotifeteError := listeningSession.GenerateQrCodeForSession(joinId, disableBorder)
+	qrCode, spotifeteError := listeningSession.QrCodeAsPng(joinId, disableBorder, size)
 	if spotifeteError != nil {
 		shared.SetJsonError(*spotifeteError, c)
 		return
 	}
 
-	qrCodeImageBytes, err := qrCode.PNG(size)
-	if err != nil {
-		sentry.CaptureException(err)
-		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, shared.ErrorResponse{Message: err.Error()})
-		return
-	}
-
-	c.Data(http.StatusOK, "image/png", qrCodeImageBytes)
+	c.Data(http.StatusOK, "image/png", qrCode.Bytes())
 }
 
 func (ApiV1Controller) CallbackSuccess(c *gin.Context) {
