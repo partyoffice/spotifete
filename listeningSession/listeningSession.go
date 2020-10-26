@@ -223,8 +223,10 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 	// When using GetTrack Spotify does not include the available markets
 	// TODO: Use GetTrack again when Spotify fixed their API
 	spotifyTracks, err := client.GetTracks(spotify.ID(trackId))
-	if err != nil || len(spotifyTracks) == 0 {
+	if err != nil {
 		return model.SongRequest{}, NewError("Could not get track information from Spotify.", err, http.StatusInternalServerError)
+	} else if len(spotifyTracks) == 0 || spotifyTracks[0] == nil {
+		return model.SongRequest{}, NewUserError("Track not found.")
 	}
 	spotifyTrack := spotifyTracks[0]
 
