@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func NewSession(c *gin.Context) {
+func newSession(c *gin.Context) {
 	request := NewSessionRequest{}
 	err := c.ShouldBindJSON(&request)
 	if err != nil {
@@ -43,7 +43,7 @@ func NewSession(c *gin.Context) {
 	c.JSON(http.StatusOK, createdSession)
 }
 
-func GetSession(c *gin.Context) {
+func getSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
 		JoinId: &joinId,
@@ -56,7 +56,7 @@ func GetSession(c *gin.Context) {
 	}
 }
 
-func CloseSession(c *gin.Context) {
+func closeSession(c *gin.Context) {
 	request := shared.AuthenticatedRequest{}
 	err := c.ShouldBindJSON(&request)
 	if err != nil {

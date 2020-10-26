@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func NewSession(c *gin.Context) {
+func newSession(c *gin.Context) {
 	session, spotifyAuthenticationUrl := authentication.NewSession("/api/v2/auth/success")
 
 	c.JSON(http.StatusOK, NewSessionResponse{
@@ -15,7 +15,7 @@ func NewSession(c *gin.Context) {
 	})
 }
 
-func IsSessionAuthenticated(c *gin.Context) {
+func isSessionAuthenticated(c *gin.Context) {
 	sessionId := c.Param("sessionId")
 	sessionAuthenticated, spotifeteError := authentication.IsSessionAuthenticatedBySessionId(sessionId)
 	if spotifeteError != nil {
@@ -31,14 +31,14 @@ func IsSessionAuthenticated(c *gin.Context) {
 	}
 }
 
-func InvalidateSession(c *gin.Context) {
+func invalidateSession(c *gin.Context) {
 	sessionId := c.Param("sessionId")
 	authentication.InvalidateSession(sessionId)
 
 	c.Status(http.StatusNoContent)
 }
 
-func CallbackSuccess(c *gin.Context) {
+func callbackSuccess(c *gin.Context) {
 	// TODO: Do something nicer here
 	c.String(http.StatusOK, "Authentication successful! You can close this window now.")
 }
