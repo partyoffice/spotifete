@@ -194,7 +194,7 @@ func (TemplateController) CloseListeningSession(c *gin.Context) {
 
 	loginSession := authentication.GetValidSessionFromCookie(c)
 	if loginSession == nil || loginSession.User == nil {
-		c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
 		return
 	}
 
