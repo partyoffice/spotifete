@@ -8,11 +8,11 @@ import (
 
 type TrackMetadata struct {
 	BaseModelWithoutId
-	SpotifyTrackId         string `gorm:"primaryKey"`
-	TrackName              string
-	ArtistName             string
-	AlbumName              string
-	AlbumImageThumbnailUrl string
+	SpotifyTrackId         string `gorm:"primaryKey" json:"spotify_track_id"`
+	TrackName              string `json:"track_name"`
+	ArtistName             string `json:"artist_name"`
+	AlbumName              string `json:"album_name"`
+	AlbumImageThumbnailUrl string `json:"album_image_thumbnail_url"`
 }
 
 func (trackMetadata TrackMetadata) SetMetadata(spotifyTrack spotify.FullTrack) TrackMetadata {
