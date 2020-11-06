@@ -4,6 +4,7 @@ import (
 	"github.com/47-11/spotifete/authentication"
 	. "github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/shared"
+	"github.com/47-11/spotifete/users"
 )
 
 type BaseRequest interface {
@@ -14,7 +15,26 @@ type AuthenticatedRequest struct {
 	LoginSessionId string `json:"login_session_id"`
 }
 
-func (r AuthenticatedRequest) GetUser() (SimpleUser, *SpotifeteError) {
+func (r AuthenticatedRequest) GetFullUser() (FullUser, *SpotifeteError) {
+	simpleUser, spotifeteError := r.GetSimpleUser()
+	if spotifeteError != nil {
+		return FullUser{}, spotifeteError
+	}
+
+	fullUser := users.FindFullUser(SimpleUser{
+		BaseModel: BaseModel{
+			ID: simpleUser.ID,
+		},
+	})
+
+	if fullUser == nil {
+		return FullUser{}, NewInternalError("Could not find full user with ID "+string(simpleUser.ID), nil)
+	} else {
+		return *fullUser, nil
+	}
+}
+
+func (r AuthenticatedRequest) GetSimpleUser() (SimpleUser, *SpotifeteError) {
 	if "" == r.LoginSessionId {
 		return SimpleUser{}, NewUserError("Missing parameter login_session_id.")
 	}

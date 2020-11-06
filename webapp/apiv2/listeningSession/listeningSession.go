@@ -23,7 +23,7 @@ func newSession(c *gin.Context) {
 		return
 	}
 
-	authenticatedUser, spotifeteError := request.GetUser()
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
 	if spotifeteError != nil {
 		SetJsonError(*spotifeteError, c)
 		return
@@ -59,7 +59,7 @@ func closeSession(c *gin.Context) {
 		return
 	}
 
-	authenticatedUser, spotifeteError := request.GetUser()
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
 	if spotifeteError != nil {
 		SetJsonError(*spotifeteError, c)
 		return
@@ -244,7 +244,7 @@ func changeFallbackPlaylist(c *gin.Context) {
 		return
 	}
 
-	authenticatedUser, spotifeteError := request.GetUser()
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
 	if spotifeteError != nil {
 		SetJsonError(*spotifeteError, c)
 		return
@@ -275,7 +275,7 @@ func removeFallbackPlaylist(c *gin.Context) {
 		return
 	}
 
-	authenticatedUser, spotifeteError := request.GetUser()
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
 	if spotifeteError != nil {
 		SetJsonError(*spotifeteError, c)
 		return
