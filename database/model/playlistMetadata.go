@@ -7,11 +7,11 @@ import (
 
 type PlaylistMetadata struct {
 	BaseModelWithoutId
-	SpotifyPlaylistId string `gorm:"primaryKey"`
-	Name              string
-	TrackCount        uint
-	ImageThumbnailUrl string
-	OwnerName         string
+	SpotifyPlaylistId string `gorm:"primaryKey" json:"spotify_playlist_id"`
+	Name              string `json:"name"`
+	TrackCount        uint   `json:"track_count"`
+	ImageThumbnailUrl string `json:"image_thumbnail_url"`
+	OwnerName         string `json:"owner_name"`
 }
 
 func (playlistMetadata PlaylistMetadata) FromFullPlaylist(fullPlaylist spotify.FullPlaylist) PlaylistMetadata {

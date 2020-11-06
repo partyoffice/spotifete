@@ -7,8 +7,8 @@ import (
 
 type SimpleUser struct {
 	BaseModel
-	SpotifyId           string
-	SpotifyDisplayName  string
+	SpotifyId           string    `json:"spotify_id"`
+	SpotifyDisplayName  string    `json:"spotify_display_name"`
 	SpotifyAccessToken  string    `json:"-"`
 	SpotifyRefreshToken string    `json:"-"`
 	SpotifyTokenType    string    `json:"-"`
@@ -44,7 +44,7 @@ func (u SimpleUser) SetToken(token *oauth2.Token) SimpleUser {
 type FullUser struct {
 	SimpleUser
 
-	ListeningSessions []SimpleListeningSession `gorm:"foreignKey:owner_id"`
+	ListeningSessions []SimpleListeningSession `gorm:"foreignKey:owner_id" json:"listening_sessions"`
 }
 
 func (FullUser) TableName() string {
