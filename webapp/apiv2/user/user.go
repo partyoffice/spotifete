@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/authentication"
 	"github.com/47-11/spotifete/database/model"
 	"github.com/47-11/spotifete/shared"
@@ -32,7 +33,7 @@ func getCurrentUser(c *gin.Context) {
 		BaseModel: model.BaseModel{ID: *loginSession.UserId},
 	})
 	if fullUser == nil {
-		SetJsonError(*shared.NewInternalError("Could not find full user with ID "+string(*loginSession.UserId), nil), c)
+		SetJsonError(*shared.NewInternalError(fmt.Sprintf("Could not find full user with ID %d", *loginSession.UserId), nil), c)
 		return
 	}
 

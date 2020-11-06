@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/authentication"
 	. "github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/shared"
@@ -28,7 +29,7 @@ func (r AuthenticatedRequest) GetFullUser() (FullUser, *SpotifeteError) {
 	})
 
 	if fullUser == nil {
-		return FullUser{}, NewInternalError("Could not find full user with ID "+string(simpleUser.ID), nil)
+		return FullUser{}, NewInternalError(fmt.Sprintf("Could not find full user with ID %d", simpleUser.ID), nil)
 	} else {
 		return *fullUser, nil
 	}
