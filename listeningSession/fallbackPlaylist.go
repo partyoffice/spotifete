@@ -52,6 +52,9 @@ func findNextUnplayedFallbackPlaylistTrackOpt(session model.SimpleListeningSessi
 		return "", NewError("Could not get tracks in fallback playlist from Spotify.", err, http.StatusInternalServerError)
 	}
 
+	var trackIdsInQueue []string
+	database.GetConnection().Select("spotify_track_id").Model(&model.SongRequest{}).Where("session_id = ? and status <> ?", session.ID, model.StatusPlayed).Find(&trackIdsInQueue)
+
 	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
 	for _, playlistTrack := range playlistTracks.Tracks {
 		trackId := playlistTrack.Track.ID.String()
@@ -59,7 +62,7 @@ func findNextUnplayedFallbackPlaylistTrackOpt(session model.SimpleListeningSessi
 		var trackPlays int64
 		database.GetConnection().Model(model.SongRequest{}).Where(model.SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
-		if trackPlays <= int64(maximumPlays) {
+		if trackPlays <= int64(maximumPlays) && !StringSliceContains(trackIdsInQueue, trackId) {
 			// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
 			// TODO: Remove this if Spotify fixes their API
 			refreshedTracks, err := client.GetTracks(playlistTrack.Track.ID)

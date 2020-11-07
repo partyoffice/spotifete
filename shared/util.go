@@ -1,4 +1,4 @@
-package util
+package shared
 
 import "github.com/zmb3/spotify"
 
@@ -24,4 +24,14 @@ func findSmallestImage(images []spotify.Image) (smallestImage *spotify.Image) {
 	}
 
 	return smallestImage
+}
+
+func StringSliceContains(slice []string, element string) bool {
+	for _, current := range slice {
+		if current == element {
+			return true
+		}
+	}
+
+	return false
 }

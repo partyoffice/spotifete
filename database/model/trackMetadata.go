@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/47-11/spotifete/util"
+	"github.com/47-11/spotifete/shared"
 	"github.com/zmb3/spotify"
 	"strings"
 )
@@ -26,7 +26,7 @@ func (trackMetadata TrackMetadata) SetMetadata(spotifyTrack spotify.FullTrack) T
 	}
 
 	trackMetadata.ArtistName = strings.Join(artistNames, ", ")
-	trackMetadata.AlbumImageThumbnailUrl = util.FindSmallestImageUrlOrEmpty(spotifyTrack.Album.Images)
+	trackMetadata.AlbumImageThumbnailUrl = shared.FindSmallestImageUrlOrEmpty(spotifyTrack.Album.Images)
 
 	return trackMetadata
 }
