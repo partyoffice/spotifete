@@ -43,12 +43,12 @@ $(document).ready(function () {
             },
             templates: {
                 suggestion: function (suggestionData) {
-                    return `<div class="clickable" onclick="requestTrack('${suggestionData.SpotifyTrackId}')">
+                    return `<div class="clickable" onclick="requestTrack('${suggestionData.spotify_track_id}')">
                                 <div class="media">
-                                    <img src="${suggestionData.AlbumImageThumbnailUrl}" class="mr-3" alt="...">
+                                    <img src="${suggestionData.album_image_thumbnail_url}" class="mr-3" alt="${suggestionData.album_name}">
                                     <div class="media-body">
-                                        <h5 class="mt-0">${suggestionData.TrackName}</h5>
-                                        <p>${suggestionData.ArtistName} - ${suggestionData.AlbumName}</p>
+                                        <h5 class="mt-0">${suggestionData.track_name}</h5>
+                                        <p>${suggestionData.artist_name} - ${suggestionData.album_name}</p>
                                     </div>
                                 </div>
                             </div>`;
