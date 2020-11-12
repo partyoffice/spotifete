@@ -117,7 +117,7 @@ func deleteRequestFromQueue(c *gin.Context) {
 		return
 	}
 
-	authenticatedUser, spotifeteError := request.GetUser()
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
 	if spotifeteError != nil {
 		SetJsonError(*spotifeteError, c)
 		return
