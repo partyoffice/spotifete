@@ -42,3 +42,16 @@ func (r ChangeFallbackPlaylistRequest) Validate() *SpotifeteError {
 
 	return nil
 }
+
+type DeleteRequestFromQueueRequest struct {
+	AuthenticatedRequest
+	SpotifyTrackId string `json:"spotify_track_id""`
+}
+
+func (r DeleteRequestFromQueueRequest) Validate() *SpotifeteError {
+	if "" == r.SpotifyTrackId {
+		return NewUserError("Missing parameter spotify_track_id.")
+	}
+
+	return nil
+}

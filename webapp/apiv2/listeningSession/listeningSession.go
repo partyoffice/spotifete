@@ -94,6 +94,49 @@ func getSessionQueue(c *gin.Context) {
 	})
 }
 
+func deleteRequestFromQueue(c *gin.Context) {
+	joinId := c.Param("joinId")
+	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
+		JoinId: &joinId,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
+		return
+	}
+
+	request := DeleteRequestFromQueueRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	spotifeteError := request.Validate()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	authenticatedUser, spotifeteError := request.GetUser()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	if session.OwnerId != authenticatedUser.ID {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "Only the session owner can delete requests from the queue!"})
+		return
+	}
+
+	spotifeteError = listeningSession.DeleteRequestFromQueue(*session, request.SpotifyTrackId)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+
+	}
+}
+
 func queueLastUpdated(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{

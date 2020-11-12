@@ -11,6 +11,7 @@ func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router.GET("/id/:joinId", getSession)
 	router.DELETE("/id/:joinId", closeSession)
 	router.GET("/id/:joinId/queue", getSessionQueue)
+	router.DELETE("/id/:joinId/queue", deleteRequestFromQueue)
 	router.GET("/id/:joinId/queue/last-updated", queueLastUpdated)
 	router.GET("/id/:joinId/qrcode", qrCode)
 	router.GET("/id/:joinId/search/track", searchTrack)

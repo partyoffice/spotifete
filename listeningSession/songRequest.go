@@ -3,6 +3,7 @@ package listeningSession
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
+	"github.com/47-11/spotifete/shared"
 	"github.com/zmb3/spotify"
 	"sort"
 	"time"
@@ -86,4 +87,22 @@ func GetDistinctRequestedTracks(session model.SimpleListeningSession) (trackIds 
 	}
 
 	return
+}
+
+func DeleteRequestFromQueue(session model.SimpleListeningSession, spotifyTrackId string) *shared.SpotifeteError {
+	requestToDelete := FindSongRequest(model.SongRequest{
+		SessionId:      session.ID,
+		SpotifyTrackId: spotifyTrackId,
+	})
+	if requestToDelete == nil {
+		return shared.NewUserError("Request not found in queue.")
+	}
+
+	if requestToDelete.Status != model.StatusInQueue {
+		return shared.NewUserError("The request must be in the queue to be deleted.")
+	}
+
+	database.GetConnection().Delete(requestToDelete)
+
+	return nil
 }
