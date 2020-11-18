@@ -22,6 +22,7 @@ func (w SpotifeteWebapp) Setup() SpotifeteWebapp {
 	w = w.createAndConfigureRouter()
 	w = w.setupLogging()
 	w.setupRoutes()
+	w.setupCors()
 
 	return w
 }
@@ -77,6 +78,17 @@ func (w SpotifeteWebapp) setupRoutes() {
 
 	TemplateController{}.SetupWithBaseRouter(w.router)
 	apiv1.ApiV1Controller{}.SetupWithBaseRouter(w.router)
+}
+
+func (w SpotifeteWebapp) setupCors() {
+	w.router.Use(corsMiddleware())
+}
+
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers")
+	}
 }
 
 func (w SpotifeteWebapp) Run() {
