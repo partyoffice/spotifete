@@ -14,7 +14,6 @@ import (
 	"os"
 )
 
-
 type SpotifeteWebapp struct {
 	router  *gin.Engine
 	logFile *os.File
@@ -23,8 +22,8 @@ type SpotifeteWebapp struct {
 func (w SpotifeteWebapp) Setup() SpotifeteWebapp {
 	w = w.createAndConfigureRouter()
 	w = w.setupLogging()
+	w = w.setupCors()
 	w.setupRoutes()
-	w.setupCors()
 
 	return w
 }
@@ -73,6 +72,14 @@ func (w SpotifeteWebapp) setupSentryLogging() {
 	}))
 }
 
+func (w SpotifeteWebapp) setupCors() SpotifeteWebapp {
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	w.router.Use(cors.New(corsConfig))
+
+	return w
+}
+
 func (w SpotifeteWebapp) setupRoutes() {
 	SetupStaticRouter(w.router)
 	SetupAuthenticationRouter(w.router)
@@ -80,12 +87,6 @@ func (w SpotifeteWebapp) setupRoutes() {
 
 	TemplateController{}.SetupWithBaseRouter(w.router)
 	apiv1.ApiV1Controller{}.SetupWithBaseRouter(w.router)
-}
-
-func (w SpotifeteWebapp) setupCors() {
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	w.router.Use(cors.New(corsConfig))
 }
 
 func (w SpotifeteWebapp) Run() {
