@@ -7,11 +7,13 @@ import (
 	"github.com/47-11/spotifete/webapp/apiv2"
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
 	"io"
 	"os"
 )
+
 
 type SpotifeteWebapp struct {
 	router  *gin.Engine
@@ -81,14 +83,9 @@ func (w SpotifeteWebapp) setupRoutes() {
 }
 
 func (w SpotifeteWebapp) setupCors() {
-	w.router.Use(corsMiddleware())
-}
-
-func corsMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers")
-	}
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	w.router.Use(cors.New(corsConfig))
 }
 
 func (w SpotifeteWebapp) Run() {
