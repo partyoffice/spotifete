@@ -8,7 +8,9 @@ import (
 )
 
 func newSession(c *gin.Context) {
-	session, spotifyAuthenticationUrl := authentication.NewSession("/api/v2/auth/success")
+	callbackRedirectUrl := c.DefaultQuery("redirectTo", "/api/v2/auth/success")
+
+	session, spotifyAuthenticationUrl := authentication.NewSession(callbackRedirectUrl)
 
 	c.JSON(http.StatusOK, NewSessionResponse{
 		SpotifyAuthenticationUrl: spotifyAuthenticationUrl,
