@@ -35,7 +35,7 @@ func GetTrackMetadataBySpotifyTrackId(trackId string) *model.TrackMetadata {
 }
 
 func isTrackAvailableInUserMarket(user spotify.PrivateUser, track spotify.FullTrack) bool {
-	for _, availableMarket := range track.AvailableMarkets {
+	for _, availableMarket := range track.Album.AvailableMarkets {
 		if availableMarket == user.Country {
 			return true
 		}

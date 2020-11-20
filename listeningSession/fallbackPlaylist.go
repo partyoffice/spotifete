@@ -63,15 +63,7 @@ func findNextUnplayedFallbackPlaylistTrackOpt(session model.SimpleListeningSessi
 		database.GetConnection().Model(model.SongRequest{}).Where(model.SongRequest{SessionId: session.ID, SpotifyTrackId: trackId}).Count(&trackPlays)
 
 		if trackPlays <= int64(maximumPlays) && !StringSliceContains(trackIdsInQueue, trackId) {
-			// Playlist tracks don't include available markets anymore so we have to load the track information explicitly here :/
-			// TODO: Remove this if Spotify fixes their API
-			refreshedTracks, err := client.GetTracks(playlistTrack.Track.ID)
-			if err != nil || len(refreshedTracks) == 0 {
-				NewError("Could not fetch track information from Spotify.", err, http.StatusInternalServerError)
-			}
-			refreshedTrack := refreshedTracks[0]
-
-			if isTrackAvailableInUserMarket(*currentUser, *refreshedTrack) {
+			if isTrackAvailableInUserMarket(*currentUser, playlistTrack.Track) {
 				return trackId, nil
 			}
 		}
