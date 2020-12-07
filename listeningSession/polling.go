@@ -13,7 +13,7 @@ func StartPollSessionsLoop() {
 
 func pollSessionsLoop() {
 	for range time.Tick(5 * time.Second) {
-		pollSessions()
+		go pollSessions()
 	}
 }
 
