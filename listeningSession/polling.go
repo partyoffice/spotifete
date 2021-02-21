@@ -1,9 +1,7 @@
 package listeningSession
 
 import (
-	"fmt"
 	"github.com/47-11/spotifete/database/model"
-	"github.com/google/logger"
 	"time"
 )
 
@@ -18,16 +16,11 @@ func pollSessionsLoop() {
 }
 
 func pollSessions() {
-	logger.Info("Polling sessions...")
-
 	activeSessions := FindFullListeningSessions(model.SimpleListeningSession{
 		Active: true,
 	})
-	logger.Info(fmt.Sprintf("Found %d active sessions.", len(activeSessions)))
 
 	for _, session := range activeSessions {
 		UpdateSessionIfNecessary(session)
 	}
-
-	logger.Info("Finished polling sessions.")
 }

@@ -34,12 +34,8 @@ func GetTrackMetadataBySpotifyTrackId(trackId string) *model.TrackMetadata {
 	}
 }
 
-func isTrackAvailableInUserMarket(user spotify.PrivateUser, track spotify.FullTrack) bool {
-	for _, availableMarket := range track.Album.AvailableMarkets {
-		if availableMarket == user.Country {
-			return true
-		}
-	}
-
-	return false
+func getTrackPlayCount(session model.SimpleListeningSession, spotifyTrackId string) int64 {
+	var trackPlays int64
+	database.GetConnection().Model(model.SongRequest{}).Where(model.SongRequest{SessionId: session.ID, SpotifyTrackId: spotifyTrackId}).Count(&trackPlays)
+	return trackPlays
 }

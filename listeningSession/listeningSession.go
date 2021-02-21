@@ -187,18 +187,20 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 		return model.SongRequest{}, NewUserError("This tack is already in the queue.")
 	}
 
-	spotifyTrack, err := client.GetTrack(spotify.ID(trackId))
-	if err != nil {
-		return model.SongRequest{}, NewError("Could not get track information from spotify.", err, http.StatusInternalServerError)
-	}
-	updatedTrackMetadata := AddOrUpdateTrackMetadata(*spotifyTrack)
-
 	currentUser, err := client.CurrentUser()
 	if err != nil {
 		return model.SongRequest{}, NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
 	}
 
-	if !isTrackAvailableInUserMarket(*currentUser, *spotifyTrack) {
+	spotifyTrack, err := client.GetTrackOpt(spotify.ID(trackId), &spotify.Options{
+		Country: &currentUser.Country,
+	})
+	if err != nil {
+		return model.SongRequest{}, NewError("Could not get track information from spotify.", err, http.StatusInternalServerError)
+	}
+	updatedTrackMetadata := AddOrUpdateTrackMetadata(*spotifyTrack)
+
+	if spotifyTrack.IsPlayable == nil || !*spotifyTrack.IsPlayable {
 		return model.SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
