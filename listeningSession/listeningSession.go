@@ -9,6 +9,7 @@ import (
 	"github.com/zmb3/spotify"
 	"math/rand"
 	"net/http"
+	"strings"
 )
 
 var numberRunes = []rune("0123456789")
@@ -177,8 +178,9 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	return nil
 }
 
+// TODO: This is probably not thread-safe
 func RequestSong(session model.FullListeningSession, trackId string) (model.SongRequest, *SpotifeteError) {
-	client := users.Client(session.Owner)
+	client := Client(session)
 
 	// Prevent duplicates
 	if IsTrackInQueue(session.SimpleListeningSession, trackId) {
@@ -186,8 +188,10 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 	}
 
 	spotifyTrack, err := client.GetTrack(spotify.ID(trackId))
-
-	updatedTrackMetadata := AddOrUpdateTrackMetadata(*client, *spotifyTrack)
+	if err != nil {
+		return model.SongRequest{}, NewError("Could not get track information from spotify.", err, http.StatusInternalServerError)
+	}
+	updatedTrackMetadata := AddOrUpdateTrackMetadata(*spotifyTrack)
 
 	currentUser, err := client.CurrentUser()
 	if err != nil {
@@ -204,13 +208,10 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 
 	var newRequestStatus model.SongRequestStatus
 	if currentlyPlayingRequest == nil {
-		// No song is playing, that means the queue is empty -> Set this to play immediately
 		newRequestStatus = model.StatusCurrentlyPlaying
 	} else if upNextRequest == nil {
-		// A song is currently playing, but no follow up song is present -> Set this as the next song
 		newRequestStatus = model.StatusUpNext
 	} else {
-		// A song is currently playing and a follow up song is present. -> Just add this song to the normal queue
 		newRequestStatus = model.StatusInQueue
 	}
 
@@ -224,52 +225,22 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 
 	database.GetConnection().Create(&newSongRequest)
 
-	return newSongRequest, UpdateSessionPlaylistIfNecessary(session)
+	return newSongRequest, updateSessionPlaylistIfNecessary(session)
 }
 
 func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteError {
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
 	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
 
-	client := users.Client(session.Owner)
-
-	currentlyPlaying, err := client.PlayerCurrentlyPlaying()
-	if err != nil {
-		NewInternalError("Could not get currently playing track from Spotify.", err)
-		currentlyPlaying = nil
+	trackAdded, spotifeteError := addFallbackTrackIfNecessary(session, upNextRequest)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+	if trackAdded {
+		return UpdateSessionIfNecessary(session)
 	}
 
-	if session.FallbackPlaylistId != nil && upNextRequest == nil {
-		// No requests present and a fallback playlist is present
-		fallbackTrackId, spotifeteError := findNextUnplayedFallbackPlaylistTrack(session.SimpleListeningSession, *client)
-		if spotifeteError != nil {
-			return spotifeteError
-		}
-
-		newSongRequest, spotifeteError := RequestSong(session, fallbackTrackId)
-		if spotifeteError != nil {
-			return spotifeteError
-		}
-
-		switch newSongRequest.Status {
-		case model.StatusCurrentlyPlaying:
-			currentlyPlayingRequest = &newSongRequest
-			break
-		case model.StatusUpNext:
-			upNextRequest = &newSongRequest
-			break
-		}
-	}
-
-	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
-		// Nothing is running -> still update the playlist if neccessary
-		return UpdateSessionPlaylistIfNecessary(session)
-	}
-
-	currentlyPlayingSpotifyTrackId := currentlyPlaying.Item.ID.String()
-
-	if upNextRequest != nil && upNextRequest.SpotifyTrackId == currentlyPlayingSpotifyTrackId {
-		// The previous track finished and the playlist moved on the the next track. Time to update!
+	if isSessionUpdateNecessary(session, upNextRequest) {
+		currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
 		currentlyPlayingRequest.Status = model.StatusPlayed
 		database.GetConnection().Save(currentlyPlayingRequest)
 
@@ -284,10 +255,32 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 		}
 	}
 
-	return UpdateSessionPlaylistIfNecessary(session)
+	return updateSessionPlaylistIfNecessary(session)
 }
 
-func UpdateSessionPlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
+func isSessionUpdateNecessary(session model.FullListeningSession, upNextRequest *model.SongRequest) bool {
+	if upNextRequest == nil {
+		return false
+	}
+
+	currentlyPlaying, err := Client(session).PlayerCurrentlyPlaying()
+	if err != nil {
+		NewInternalError("Could not get currently playing track from Spotify.", err)
+		currentlyPlaying = nil
+	}
+
+	if currentlyPlaying == nil || currentlyPlaying.Item == nil {
+		return false
+	}
+
+	return isSessionPlaying(session, currentlyPlaying.PlaybackContext) && upNextRequest.SpotifyTrackId == currentlyPlaying.Item.ID.String()
+}
+
+func isSessionPlaying(session model.FullListeningSession, playbackContext spotify.PlaybackContext) bool {
+	return playbackContext.Type == "playlist" && strings.HasSuffix(string(playbackContext.URI), session.QueuePlaylistId)
+}
+
+func updateSessionPlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
 	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
 	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
 
@@ -295,7 +288,7 @@ func UpdateSessionPlaylistIfNecessary(session model.FullListeningSession) *Spoti
 		return nil
 	}
 
-	client := users.Client(session.Owner)
+	client := Client(session)
 
 	playlist, err := client.GetPlaylist(spotify.ID(session.QueuePlaylistId))
 	if err != nil {
@@ -306,26 +299,26 @@ func UpdateSessionPlaylistIfNecessary(session model.FullListeningSession) *Spoti
 
 	// First, check playlist length
 	if currentlyPlayingRequest != nil && upNextRequest != nil && len(playlistTracks) != 2 {
-		return updateSessionPlaylist(*client, session.SimpleListeningSession)
+		return updateSessionPlaylist(session)
 	}
 
 	if currentlyPlayingRequest != nil && upNextRequest == nil && len(playlistTracks) != 1 {
-		return updateSessionPlaylist(*client, session.SimpleListeningSession)
+		return updateSessionPlaylist(session)
 	}
 
 	if currentlyPlayingRequest == nil && upNextRequest == nil && len(playlistTracks) != 0 {
-		return updateSessionPlaylist(*client, session.SimpleListeningSession)
+		return updateSessionPlaylist(session)
 	}
 
 	// Second, check playlist content
 	if currentlyPlayingRequest != nil {
 		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequest.SpotifyTrackId {
-			return updateSessionPlaylist(*client, session.SimpleListeningSession)
+			return updateSessionPlaylist(session)
 		}
 
 		if upNextRequest != nil {
 			if playlistTracks[1].Track.ID.String() != upNextRequest.SpotifyTrackId {
-				return updateSessionPlaylist(*client, session.SimpleListeningSession)
+				return updateSessionPlaylist(session)
 			}
 		}
 	}
@@ -333,9 +326,10 @@ func UpdateSessionPlaylistIfNecessary(session model.FullListeningSession) *Spoti
 	return nil
 }
 
-func updateSessionPlaylist(client spotify.Client, session model.SimpleListeningSession) *SpotifeteError {
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session)
-	upNextRequest := GetUpNextRequest(session)
+func updateSessionPlaylist(session model.FullListeningSession) *SpotifeteError {
+	client := Client(session)
+	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
+	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
 
 	playlistId := spotify.ID(session.QueuePlaylistId)
 

@@ -10,7 +10,7 @@ import (
 )
 
 func SearchTrack(listeningSession model.FullListeningSession, query string, limit int) ([]model.TrackMetadata, *SpotifeteError) {
-	client := users.Client(listeningSession.Owner)
+	client := Client(listeningSession)
 	return searchTrack(*client, query, limit)
 }
 

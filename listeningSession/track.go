@@ -6,7 +6,7 @@ import (
 	"github.com/zmb3/spotify"
 )
 
-func AddOrUpdateTrackMetadata(client spotify.Client, spotifyTrack spotify.FullTrack) model.TrackMetadata {
+func AddOrUpdateTrackMetadata(spotifyTrack spotify.FullTrack) model.TrackMetadata {
 	track := GetTrackMetadataBySpotifyTrackId(spotifyTrack.ID.String())
 	if track != nil {
 		updatedTrack := track.SetMetadata(spotifyTrack)

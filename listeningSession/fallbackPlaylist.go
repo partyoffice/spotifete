@@ -14,11 +14,11 @@ func ChangeFallbackPlaylist(session model.SimpleListeningSession, user model.Sim
 		return NewUserError("Only the session owner can change the fallback playlist.")
 	}
 
-	client := users.Client(user)
-	playlistMetadata, err := AddOrUpdatePlaylistMetadata(*client, spotify.ID(playlistId))
+	newFallbackPlaylist, err := users.Client(user).GetPlaylist(spotify.ID(playlistId))
 	if err != nil {
-		return err
+		return NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
 	}
+	playlistMetadata := AddOrUpdatePlaylistMetadata(*newFallbackPlaylist)
 
 	session.FallbackPlaylistId = &playlistMetadata.SpotifyPlaylistId
 	database.GetConnection().Save(session)
@@ -37,11 +37,43 @@ func RemoveFallbackPlaylist(session model.SimpleListeningSession, user model.Sim
 	return nil
 }
 
-func findNextUnplayedFallbackPlaylistTrack(session model.SimpleListeningSession, client spotify.Client) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
-	return findNextUnplayedFallbackPlaylistTrackOpt(session, client, 0, 0)
+func addFallbackTrackIfNecessary(session model.FullListeningSession, upNextRequest *model.SongRequest) (trackAdded bool, error *SpotifeteError) {
+	if session.FallbackPlaylistId == nil {
+		return false, nil
+	}
+
+	if upNextRequest != nil {
+		return false, nil
+	}
+
+	spotifeteError := addFallbackTrack(session)
+	if spotifeteError != nil {
+		return false, spotifeteError
+	}
+
+	return true, nil
 }
 
-func findNextUnplayedFallbackPlaylistTrackOpt(session model.SimpleListeningSession, client spotify.Client, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+func addFallbackTrack(session model.FullListeningSession) (error *SpotifeteError) {
+	fallbackTrackId, spotifeteError := findNextUnplayedFallbackPlaylistTrack(session)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+
+	_, spotifeteError = RequestSong(session, fallbackTrackId)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+
+	return nil
+}
+
+func findNextUnplayedFallbackPlaylistTrack(session model.FullListeningSession) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+	return findNextUnplayedFallbackPlaylistTrackOpt(session, 0, 0)
+}
+
+func findNextUnplayedFallbackPlaylistTrackOpt(session model.FullListeningSession, maximumPlays uint, pageOffset int) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+	client := Client(session)
 	currentUser, err := client.CurrentUser()
 	if err != nil {
 		return "", NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
@@ -72,9 +104,9 @@ func findNextUnplayedFallbackPlaylistTrackOpt(session model.SimpleListeningSessi
 	// Nothing found :/
 	if len(playlistTracks.Tracks) < playlistTracks.Limit {
 		// Checked all playlist tracks -> increase maximum plays and start over
-		return findNextUnplayedFallbackPlaylistTrackOpt(session, client, maximumPlays+1, 0)
+		return findNextUnplayedFallbackPlaylistTrackOpt(session, maximumPlays+1, 0)
 	} else {
 		// There might still be tracks left that we did not check yet -> increase offset
-		return findNextUnplayedFallbackPlaylistTrackOpt(session, client, maximumPlays, playlistTracks.Offset+playlistTracks.Limit)
+		return findNextUnplayedFallbackPlaylistTrackOpt(session, maximumPlays, playlistTracks.Offset+playlistTracks.Limit)
 	}
 }

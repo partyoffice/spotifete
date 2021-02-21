@@ -3,30 +3,23 @@ package listeningSession
 import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
 	"github.com/zmb3/spotify"
-	"net/http"
 )
 
-func AddOrUpdatePlaylistMetadata(client spotify.Client, playlistId spotify.ID) (model.PlaylistMetadata, *SpotifeteError) {
-	spotifyPlaylist, err := client.GetPlaylist(playlistId)
-	if err != nil {
-		return model.PlaylistMetadata{}, NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
-	}
-
-	knownPlaylistMetadata := GetPlaylistMetadataBySpotifyPlaylistId(playlistId.String())
+func AddOrUpdatePlaylistMetadata(playlist spotify.FullPlaylist) model.PlaylistMetadata {
+	knownPlaylistMetadata := GetPlaylistMetadataBySpotifyPlaylistId(playlist.ID.String())
 	if knownPlaylistMetadata != nil {
-		updatedPlaylistMetadata := knownPlaylistMetadata.FromFullPlaylist(*spotifyPlaylist)
+		updatedPlaylistMetadata := knownPlaylistMetadata.FromFullPlaylist(playlist)
 
 		database.GetConnection().Save(&updatedPlaylistMetadata)
 
-		return updatedPlaylistMetadata, nil
+		return updatedPlaylistMetadata
 	} else {
-		newPlaylistMetadata := model.PlaylistMetadata{}.FromFullPlaylist(*spotifyPlaylist)
+		newPlaylistMetadata := model.PlaylistMetadata{}.FromFullPlaylist(playlist)
 
 		database.GetConnection().Create(&newPlaylistMetadata)
 
-		return newPlaylistMetadata, nil
+		return newPlaylistMetadata
 	}
 }
 
