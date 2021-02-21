@@ -1,6 +1,6 @@
 module github.com/47-11/spotifete
 
-go 1.15
+go 1.16
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
