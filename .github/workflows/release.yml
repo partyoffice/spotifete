@@ -6,10 +6,6 @@ on:
       version:
         description: 'The version number of the release'
         required: true
-      release-text:
-        description: 'A description of this release'
-        default: 'Release v${{ github.event.inputs.version }}'
-        required: false
 
 jobs:
   release:
@@ -61,7 +57,7 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.version }}
           release_name: Release v${{ github.event.inputs.version }}
-          body: ${{ github.event.inputs.release-text }}
+          body: 'Release v${{ github.event.inputs.version }}'
           draft: false
           prerelease: false
           
