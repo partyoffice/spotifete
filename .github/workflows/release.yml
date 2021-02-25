@@ -16,13 +16,13 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@v2
         with:
-          ref: 'master'
+          ref: 'develop'
       
       - name: Merge develop into master
         run: |
           git checkout --force -B master
           git merge develop --commit -m "[Release] Merge branch develop into master"
-          git checkout --force -B develop
+          git checkout --force develop
           git rebase master
           
       - name: Prepare release draft
