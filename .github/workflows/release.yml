@@ -20,7 +20,7 @@ jobs:
       
       - name: Merge develop into master
         run: |
-          git checkout -B master
+          git checkout master
           git merge develop -m "[Release] Merge branch develop into master"
           git checkout develop
           git rebase master
