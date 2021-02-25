@@ -16,6 +16,11 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@v2
         with:
+          ref: 'master'
+          
+      - name: Checkout develop
+        uses: actions/checkout@v2
+        with:
           ref: 'develop'
       
       - name: Merge develop into master
