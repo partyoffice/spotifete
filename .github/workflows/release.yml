@@ -49,6 +49,8 @@ jobs:
         with:
           branchtomerge: 'master'
           branch: 'develop'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish release
         uses: actions/create-release@v1
