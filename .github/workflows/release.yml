@@ -6,6 +6,10 @@ on:
       version:
         description: 'The version number of the release'
         required: true
+      release-text:
+        description: 'A description of this release'
+        default: 'Release v${{ github.event.inputs.version }}'
+        required: false
 
 jobs:
   release:
@@ -20,9 +24,9 @@ jobs:
       
       - name: Merge develop into master
         run: |
-          git checkout --force -B master
-          git merge develop --commit -m "[Release] Merge branch develop into master"
-          git checkout --force develop
+          git checkout -B master
+          git merge develop -m "[Release] Merge branch develop into master"
+          git checkout develop
           git rebase master
         
       - name: Login to Docker Hub
@@ -57,6 +61,7 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.version }}
           release_name: Release v${{ github.event.inputs.version }}
+          body: ${{ github.event.inputs.release-text }}
           draft: false
           prerelease: false
           
