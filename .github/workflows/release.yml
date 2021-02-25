@@ -58,5 +58,5 @@ jobs:
       - name: Merge master back into develop
         run: | 
           git checkout -f develop
-          git rebase --ff-only master
+          git merge --ff-only master
           git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/47-11/spotifete.git master
