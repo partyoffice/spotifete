@@ -18,9 +18,9 @@ jobs:
       
       - name: Merge develop into master
         run: |
-          git checkout master
+          git checkout --force master refs/remotes/origin/master
           git merge develop --commit -m "[Release] Merge branch develop into master"
-          git checkout develop
+          git checkout --force develop refs/remotes/origin/develop
           git rebase master
           
       - name: Prepare release draft
@@ -56,6 +56,7 @@ jobs:
         uses: actions-js/push@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: 'develop'
 
       - name: Publish release
         uses: actions/create-release@v1
