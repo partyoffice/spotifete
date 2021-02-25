@@ -12,18 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Checkout master
-        uses: actions/checkout@v2
-        with:
-          ref: 'master'
-          
-      - name: Checkout develop
-        uses: actions/checkout@v2
-        with:
-          ref: 'develop'
-      
-      - name: Merge develop into master
+    
+      - name: Checkout & merge develop into master
         run: |
           git checkout master
           git merge develop -m "[Release] Merge branch develop into master"
