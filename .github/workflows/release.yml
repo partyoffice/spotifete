@@ -12,6 +12,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Merge develop into master
+        uses: everlytic/branch-merge@1.1.0
+        with:
+          github_token: ${{ github.token }}
+          source_ref: 'develop'
+          target_branch: 'master'
+          commit_message_template: '[Release] Merge {source_ref} into {target_branch}'
+    
       - name: Checkout master
         uses: actions/checkout@v2
         with:
@@ -27,23 +35,15 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context: ./
-          file: ./Dockerfile
-          push: true
-          tags: nikos410/spotifete:${{ github.event.inputs.version }}
+#      - name: Build and push
+#        id: docker_build
+#        uses: docker/build-push-action@v2
+#        with:
+#          context: ./
+#          file: ./Dockerfile
+#          push: true
+#          tags: nikos410/spotifete:${{ github.event.inputs.version }}
           
-      - name: Merge develop into master
-        uses: everlytic/branch-merge@1.1.0
-        with:
-          github_token: ${{ github.token }}
-          source_ref: 'develop'
-          target_branch: 'master'
-          commit_message_template: '[Release] Merge {source_ref} into {target_branch}'
-
       - name: Publish release
         uses: actions/create-release@v1
         env:
@@ -55,10 +55,10 @@ jobs:
           draft: false
           prerelease: false
           
-      - name: Merge master into develop
-        uses: everlytic/branch-merge@1.1.0
+      - name: Merge Upstream
+        uses: exions/merge-upstream@v1
         with:
-          github_token: ${{ github.token }}
-          source_ref: 'master'
-          target_branch: 'develop'
-          commit_message_template: '[Release] Merge {source_ref} into {target_branch}'
+          upstream: 47-11/spotifete
+          upstream-branch: master
+          branch: develop
+          token: ${{ secrets.GITHUB_TOKEN }}
