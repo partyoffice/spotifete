@@ -38,11 +38,8 @@ jobs:
           push: true
           tags: nikos410/spotifete:${{ github.event.inputs.version }}
         
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: 'master'
+      - name: Push changes
+        run: git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/47-11/spotifete.git master
 
       - name: Publish release
         uses: actions/create-release@v1
