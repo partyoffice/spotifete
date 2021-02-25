@@ -17,7 +17,7 @@ jobs:
         run: |
           git clone https://github.com/47-11/spotifete.git ./
           git checkout master
-          git merge develop --commit -m "[Release] Merge branch develop into master"
+          git merge develop --no-ff --commit -m "[Release] Merge branch develop into master"
           git checkout develop
           git rebase master
         
