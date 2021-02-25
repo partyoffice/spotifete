@@ -22,5 +22,5 @@ jobs:
     - name: Test
       run: go test -v ./...
       
-    - name: Check-Formatting
+    - name: Check formatting
       run: go fmt ./... && git diff --exit-code
