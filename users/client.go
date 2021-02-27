@@ -8,6 +8,7 @@ import (
 	. "github.com/47-11/spotifete/shared"
 	"github.com/zmb3/spotify"
 	"net/http"
+	"time"
 )
 
 var clientCache = map[uint]*spotify.Client{}
@@ -43,7 +44,7 @@ func refreshAndSaveTokenForUserIfNecessary(client *spotify.Client, userId uint) 
 		return NewError("Could not refresh Spotify access token. Please try to log out and log in again.", err, http.StatusUnauthorized)
 	}
 
-	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
+	if newToken.Expiry.Round(time.Second).After(user.SpotifyTokenExpiry) {
 		updatedUser := user.SetToken(newToken)
 		database.GetConnection().Save(&updatedUser)
 	}

@@ -36,7 +36,7 @@ func (u SimpleUser) SetToken(token *oauth2.Token) SimpleUser {
 	u.SpotifyAccessToken = token.AccessToken
 	u.SpotifyRefreshToken = token.RefreshToken
 	u.SpotifyTokenType = token.TokenType
-	u.SpotifyTokenExpiry = token.Expiry
+	u.SpotifyTokenExpiry = token.Expiry.Round(time.Second)
 
 	return u
 }
