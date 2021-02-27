@@ -1,3 +1,3 @@
 # SpotiFete
 
-[![Build Status](http://jenkins.nikos410.de/buildStatus/icon?job=spotifete-develop&style=flat-square)](http://jenkins.nikos410.de/job/spotifete-develop/)
+[![Build](https://github.com/47-11/spotifete/actions/workflows/build.yml/badge.svg)](https://github.com/47-11/spotifete/actions/workflows/build.yml)
