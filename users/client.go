@@ -45,7 +45,7 @@ func refreshAndSaveTokenForUserIfNecessary(client *spotify.Client, userId uint) 
 
 	if newToken.Expiry.After(user.SpotifyTokenExpiry) {
 		updatedUser := user.SetToken(newToken)
-		go database.GetConnection().Save(&updatedUser)
+		database.GetConnection().Save(&updatedUser)
 	}
 
 	return nil
