@@ -6,6 +6,7 @@ type spotifeteConfiguration struct {
 	BaseUrl          string
 	Port             int
 	ReleaseMode      bool
+	LogDirectory     string
 	AppConfiguration appConfiguration
 }
 
@@ -18,6 +19,7 @@ func (c spotifeteConfiguration) read(viperConfiguration *viper.Viper) spotifeteC
 		c.Port = *configuredPort
 	}
 	c.ReleaseMode = getBool(viperConfiguration, "spotifete.releaseMode")
+	c.LogDirectory = getRequiredString(viperConfiguration, "spotifete.logDirectory")
 	c.AppConfiguration = appConfiguration{}.read(viperConfiguration)
 
 	return c
