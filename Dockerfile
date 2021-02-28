@@ -1,12 +1,10 @@
-FROM golang:1.16-alpine3.13
+FROM golang:3.13
 
-WORKDIR /go/spotifete
+WORKDIR /opt/spotifete
 
-COPY ./ /go/spotifete
-
-RUN go get -d -v ./...
-RUN go install -v ./...
+COPY ./spotifete ./spotifete
+COPY ./resources ./resources
 
 EXPOSE 8410
 
-CMD ["spotifete"]
+CMD ["./spotifete"]
