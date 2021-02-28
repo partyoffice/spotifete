@@ -11,7 +11,7 @@ import (
 const targetDatabaseVersion = 31
 
 func migrateIfNecessary(db *gorm.DB) {
-	logger.Info("Connection aquired. Checking database version")
+	logger.Info("Connection acquired. Checking database version")
 	migration := prepareMigration(db)
 	runMigrationIfNecessary(migration)
 }
