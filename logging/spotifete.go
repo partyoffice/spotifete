@@ -24,7 +24,7 @@ func doSetupSpotifeteLog() {
 func getLogFileWriter() io.Writer {
 	c := config.Get()
 	if c.SpotifeteConfiguration.ReleaseMode {
-		return openLogFile("spotifete.log")
+		return OpenLogFile("spotifete.log")
 	} else {
 		return ioutil.Discard
 	}

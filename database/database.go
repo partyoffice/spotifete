@@ -2,12 +2,14 @@ package database
 
 import (
 	"github.com/47-11/spotifete/config"
+	"github.com/47-11/spotifete/logging"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+	"io"
 	"log"
 	"os"
 	"sync"
@@ -54,17 +56,22 @@ func buildConfig() *gorm.Config {
 }
 
 func buildLogger() gormLogger.Interface {
+	c := config.Get()
+
 	var logLevel gormLogger.LogLevel
-	if config.Get().SpotifeteConfiguration.ReleaseMode {
+	var logWriter io.Writer
+	if c.SpotifeteConfiguration.ReleaseMode {
 		logLevel = gormLogger.Warn
+		logWriter = io.MultiWriter(logging.OpenLogFile("gorm.log"), os.Stderr)
 	} else {
 		logLevel = gormLogger.Info
+		logWriter = os.Stdout
 	}
 
 	return gormLogger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		log.New(logWriter, "\n", log.LstdFlags),
 		gormLogger.Config{
-			SlowThreshold: time.Second,
+			SlowThreshold: time.Millisecond * 200,
 			LogLevel:      logLevel,
 			Colorful:      false,
 		},

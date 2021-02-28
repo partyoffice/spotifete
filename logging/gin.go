@@ -17,8 +17,8 @@ func setupGinLog() {
 func doSetupGinLog() {
 	c := config.Get()
 	if c.SpotifeteConfiguration.ReleaseMode {
-		gin.DefaultWriter = openLogFile("gin/request.log")
-		gin.DefaultErrorWriter = io.MultiWriter(openLogFile("gin/error.log"), os.Stderr)
+		gin.DefaultWriter = OpenLogFile("gin/request.log")
+		gin.DefaultErrorWriter = io.MultiWriter(OpenLogFile("gin/error.log"), os.Stderr)
 	} else {
 		gin.DefaultWriter = os.Stdout
 		gin.DefaultErrorWriter = os.Stderr

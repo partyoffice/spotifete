@@ -17,7 +17,7 @@ func SetupLogging() {
 	setupGinLog()
 }
 
-func openLogFile(logFileName string) *os.File {
+func OpenLogFile(logFileName string) *os.File {
 	logFilePath := filepath.Join(logDirectory, logFileName)
 
 	err := os.MkdirAll(filepath.Dir(logFilePath), os.ModePerm)
