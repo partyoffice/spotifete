@@ -17,7 +17,7 @@ getJoinIdInputValue = () => {
     return $( '#joinIdInput' ).val().replace(/[\D]/g, '');
 };
 
-function disableJoinIdConfirmButtonIfNeccessary() {
+function disableJoinIdConfirmButtonIfNecessary() {
     const joinIdConfirmButton = $('#joinIdConfirmButton');
     if (isJoinIdInputValid()) {
         joinIdConfirmButton.removeAttr('disabled');
@@ -30,7 +30,7 @@ function disableJoinIdConfirmButtonIfNeccessary() {
 
 $( document ).ready(function() {
     $('#joinIdInput').on('input', function () {
-        disableJoinIdConfirmButtonIfNeccessary();
+        disableJoinIdConfirmButtonIfNecessary();
     });
-    disableJoinIdConfirmButtonIfNeccessary();
+    disableJoinIdConfirmButtonIfNecessary();
 });
