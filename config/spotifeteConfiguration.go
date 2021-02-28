@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/spf13/viper"
-	"strings"
 )
 
 type spotifeteConfiguration struct {
@@ -24,10 +23,6 @@ func (c spotifeteConfiguration) read(viperConfiguration *viper.Viper) spotifeteC
 
 	c.ReleaseMode = getBool(viperConfiguration, "spotifete.releaseMode")
 	c.LogDirectory = getRequiredString(viperConfiguration, "spotifete.logDirectory")
-	if !strings.HasSuffix(c.LogDirectory, "/") {
-		c.LogDirectory = c.LogDirectory + "/"
-	}
-
 	c.AppConfiguration = appConfiguration{}.read(viperConfiguration)
 
 	return c
