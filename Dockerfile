@@ -1,12 +1,12 @@
-FROM golang:1.16-alpine3.13
+FROM alpine:3.13
 
-WORKDIR /go/spotifete
+WORKDIR /opt/spotifete
 
-COPY ./ /go/spotifete
+COPY ./spotifete /opt/spotifete/spotifete
+COPY ./resources /opt/spotifete/resources
 
-RUN go get -d -v ./...
-RUN go install -v ./...
+RUN chmod +x /opt/spotifete/spotifete
 
 EXPOSE 8410
 
-CMD ["spotifete"]
+CMD ["/opt/spotifete/spotifete"]

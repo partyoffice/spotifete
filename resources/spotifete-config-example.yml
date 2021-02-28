@@ -1,8 +1,8 @@
 spotifete:
   baseUrl: http://localhost:8410
+  port: 8410
   releaseMode: true
-  app:
-    androidUrl: https://github.com/47-11/SpotiFete-App/releases/latest
+  logDirectory: /var/log/spotifete
 database:
   host: postgres.host.de
   port: 5432
