@@ -100,6 +100,7 @@ spotifete-config.yml
 
 # Log files
 *.log
+logs/
 
 # Executable from go build
 spotifete
