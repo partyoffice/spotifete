@@ -6,7 +6,6 @@ import (
 	"github.com/47-11/spotifete/webapp/apiv1"
 	"github.com/47-11/spotifete/webapp/apiv2"
 	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
@@ -40,12 +39,6 @@ func (SpotifeteWebapp) setGinMode() {
 		logger.Infof("Running in debug mode on port %d", c.SpotifeteConfiguration.Port)
 		gin.SetMode(gin.DebugMode)
 	}
-}
-
-func (w SpotifeteWebapp) setupSentryLogging() {
-	w.router.Use(sentrygin.New(sentrygin.Options{
-		Repanic: true,
-	}))
 }
 
 func (w SpotifeteWebapp) setupCors() SpotifeteWebapp {
