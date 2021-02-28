@@ -22,7 +22,13 @@ func (c spotifeteConfiguration) read(viperConfiguration *viper.Viper) spotifeteC
 	}
 
 	c.ReleaseMode = getBool(viperConfiguration, "spotifete.releaseMode")
-	c.LogDirectory = getRequiredString(viperConfiguration, "spotifete.logDirectory")
+	logDirectory := getOptionalString(viperConfiguration, "spotifete.logDirectory")
+	if logDirectory == nil {
+		c.LogDirectory = "./logs"
+	} else {
+		c.LogDirectory = *logDirectory
+	}
+
 	c.AppConfiguration = appConfiguration{}.read(viperConfiguration)
 
 	return c
