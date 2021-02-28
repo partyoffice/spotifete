@@ -10,18 +10,14 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
-	"io"
-	"os"
 )
 
 type SpotifeteWebapp struct {
-	router  *gin.Engine
-	logFile *os.File
+	router *gin.Engine
 }
 
 func (w SpotifeteWebapp) Setup() SpotifeteWebapp {
 	w = w.createAndConfigureRouter()
-	w = w.setupLogging()
 	w = w.setupCors()
 	w.setupRoutes()
 
@@ -29,13 +25,13 @@ func (w SpotifeteWebapp) Setup() SpotifeteWebapp {
 }
 
 func (w SpotifeteWebapp) createAndConfigureRouter() SpotifeteWebapp {
-	w.setGinModeDependingOnConfiguration()
+	w.setGinMode()
 	w.router = gin.Default()
 
 	return w
 }
 
-func (SpotifeteWebapp) setGinModeDependingOnConfiguration() {
+func (SpotifeteWebapp) setGinMode() {
 	c := config.Get()
 	if c.SpotifeteConfiguration.ReleaseMode {
 		logger.Infof("Running in release mode on port %d", c.SpotifeteConfiguration.Port)
@@ -44,26 +40,6 @@ func (SpotifeteWebapp) setGinModeDependingOnConfiguration() {
 		logger.Infof("Running in debug mode on port %d", c.SpotifeteConfiguration.Port)
 		gin.SetMode(gin.DebugMode)
 	}
-}
-
-func (w SpotifeteWebapp) setupLogging() SpotifeteWebapp {
-	w = w.setupGinLogging()
-	w.setupSentryLogging()
-
-	return w
-}
-
-func (w SpotifeteWebapp) setupGinLogging() SpotifeteWebapp {
-	logFile, err := os.OpenFile("gin.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
-	if err != nil {
-		logger.Fatalf("Failed to open gin log file: %v", err)
-	}
-
-	w.logFile = logFile
-
-	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
-
-	return w
 }
 
 func (w SpotifeteWebapp) setupSentryLogging() {
@@ -95,12 +71,5 @@ func (w SpotifeteWebapp) Run() {
 	if err != nil {
 		sentry.CaptureException(err)
 		logger.Fatal(err)
-	}
-}
-
-func (w SpotifeteWebapp) Shutdown() {
-	err := w.logFile.Close()
-	if err != nil {
-		panic("Could not close gin log file: " + err.Error())
 	}
 }
