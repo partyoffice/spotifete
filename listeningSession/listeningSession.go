@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var numberRunes = []rune("0123456789")
@@ -107,6 +108,8 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 }
 
 func newJoinId() string {
+	rand.Seed(time.Now().UnixNano())
+
 	for {
 		b := make([]rune, 8)
 		for i := range b {

@@ -4,6 +4,7 @@ import (
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
 	"math/rand"
+	"time"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -33,6 +34,8 @@ func NewSession(callbackRedirectUrl string) (newSession model.LoginSession, spot
 }
 
 func newSessionId() string {
+	rand.Seed(time.Now().UnixNano())
+
 	for {
 		b := make([]rune, 256)
 		for i := range b {
