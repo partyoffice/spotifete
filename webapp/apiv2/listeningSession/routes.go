@@ -19,4 +19,5 @@ func SetupRoutes(baseRouterGroup *gin.RouterGroup) {
 	router.POST("/id/:joinId/request-track", requestTrack)
 	router.PUT("/id/:joinId/fallback-playlist", changeFallbackPlaylist)
 	router.DELETE("/id/:joinId/fallback-playlist", removeFallbackPlaylist)
+	router.PATCH("/id/:joinId/fallback-playlist/shuffle", setFallbackPlaylistShuffle)
 }
