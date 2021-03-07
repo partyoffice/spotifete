@@ -5,43 +5,34 @@ on:
   pull_request:
 
 jobs:
-  update_sum:
-    runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/heads/dependabot/go_modules/') }}
-    steps: 
-     - name: Checkout code
-       uses: actions/checkout@v2
-
-     - name: Set up Go
-       uses: actions/setup-go@v2
-       with:
-         go-version: 1.16
-    
-     - name: Get dependencies
-       run: go get ./...
-       
-     - name: Commit & push updated go.sum
-       uses: stefanzweifel/git-auto-commit-action@v4
-       with:
-         commit_message: Update go.sum
-         file_pattern: go.sum
-
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
 
-    - name: Build
-      run: go build -v ./...
+      - name: Fix go.sum for dependabot branches
+        if: ${{ startsWith(github.ref, 'refs/heads/dependabot/go_modules/') }}
+        run: go get ./...
 
-    - name: Test
-      run: go test -v ./...
-      
-    - name: Check formatting
-      run: go fmt ./... && git diff --exit-code
+      - name: Commit & push updated go.sum for dependabot branches
+        if: ${{ startsWith(github.ref, 'refs/heads/dependabot/go_modules/') }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update go.sum
+          file_pattern: go.sum
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: Check formatting
+        run: go fmt ./... && git diff --exit-code
