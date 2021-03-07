@@ -1,16 +1,22 @@
 package users
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
+	. "github.com/47-11/spotifete/shared"
 )
 
 func FindSimpleUser(filter model.SimpleUser) *model.SimpleUser {
 	users := FindSimpleUsers(filter)
 
-	if len(users) == 1 {
+	resultCount := len(users)
+	if resultCount == 1 {
 		return &users[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }
@@ -24,9 +30,13 @@ func FindSimpleUsers(filter model.SimpleUser) []model.SimpleUser {
 func FindFullUser(filter model.SimpleUser) *model.FullUser {
 	users := FindFullUsers(filter)
 
-	if len(users) == 1 {
+	resultCount := len(users)
+	if resultCount == 1 {
 		return &users[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }

@@ -29,9 +29,13 @@ func GetActiveSessionCount() uint {
 func FindSimpleListeningSession(filter model.SimpleListeningSession) *model.SimpleListeningSession {
 	listeningSessions := FindSimpleListeningSessions(filter)
 
-	if len(listeningSessions) == 1 {
+	resultCount := len(listeningSessions)
+	if resultCount == 1 {
 		return &listeningSessions[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }
@@ -45,9 +49,13 @@ func FindSimpleListeningSessions(filter model.SimpleListeningSession) []model.Si
 func FindFullListeningSession(filter model.SimpleListeningSession) *model.FullListeningSession {
 	listeningSessions := FindFullListeningSessions(filter)
 
-	if len(listeningSessions) == 1 {
+	resultCount := len(listeningSessions)
+	if resultCount == 1 {
 		return &listeningSessions[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }

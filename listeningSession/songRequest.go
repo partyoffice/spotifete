@@ -1,9 +1,10 @@
 package listeningSession
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	"github.com/47-11/spotifete/shared"
+	. "github.com/47-11/spotifete/shared"
 	"github.com/zmb3/spotify"
 	"sort"
 	"time"
@@ -12,9 +13,13 @@ import (
 func FindSongRequest(filter model.SongRequest) *model.SongRequest {
 	songRequests := FindSongRequests(filter)
 
-	if len(songRequests) == 1 {
+	resultCount := len(songRequests)
+	if resultCount == 1 {
 		return &songRequests[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }
@@ -89,17 +94,17 @@ func GetDistinctRequestedTracks(session model.SimpleListeningSession) (trackIds 
 	return
 }
 
-func DeleteRequestFromQueue(session model.SimpleListeningSession, spotifyTrackId string) *shared.SpotifeteError {
+func DeleteRequestFromQueue(session model.SimpleListeningSession, spotifyTrackId string) *SpotifeteError {
 	requestToDelete := FindSongRequest(model.SongRequest{
 		SessionId:      session.ID,
 		SpotifyTrackId: spotifyTrackId,
 	})
 	if requestToDelete == nil {
-		return shared.NewUserError("Request not found in queue.")
+		return NewUserError("Request not found in queue.")
 	}
 
 	if requestToDelete.Status != model.StatusInQueue {
-		return shared.NewUserError("The request must be in the queue to be deleted.")
+		return NewUserError("The request must be in the queue to be deleted.")
 	}
 
 	database.GetConnection().Delete(requestToDelete)
