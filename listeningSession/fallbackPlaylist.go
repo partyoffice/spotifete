@@ -8,7 +8,9 @@ import (
 	"github.com/47-11/spotifete/users"
 	"github.com/google/logger"
 	"github.com/zmb3/spotify"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 func ChangeFallbackPlaylist(session model.SimpleListeningSession, user model.SimpleUser, playlistId string) *SpotifeteError {
@@ -109,7 +111,7 @@ func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.
 	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
 
 	for i := 0; i < 10_000; i++ {
-		fallbackTrack := findPossibleFallbackTrackFromPlayableTracks(playableTracks, session.SimpleListeningSession, currentlyPlayingRequest, 0)
+		fallbackTrack := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, currentlyPlayingRequest, 0)
 		if fallbackTrack != nil {
 			return *fallbackTrack, nil
 		}
@@ -121,10 +123,18 @@ func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.
 	return "", NewInternalError(fmt.Sprintf("No track found in fallback playlist for session %d that has been played less than 10,000 times. Aborting and removing fallback playlist.", session.ID), nil)
 }
 
-func findPossibleFallbackTrackFromPlayableTracks(playableTracks *[]spotify.FullTrack, session model.SimpleListeningSession, currentlyPlayingRequest *model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string) {
-	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
-	for _, playableTrack := range *playableTracks {
-		trackId := playableTrack.ID.String()
+func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTrack, session model.SimpleListeningSession, currentlyPlayingRequest *model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string) {
+	if session.FallbackPlaylistShuffle {
+		rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(
+			len(playableTracks),
+			func(i, j int) {
+				playableTracks[i], playableTracks[j] = playableTracks[j], playableTracks[i]
+			})
+	}
+
+	for _, track := range playableTracks {
+		trackId := track.ID.String()
 		if currentlyPlayingRequest == nil || currentlyPlayingRequest.SpotifyTrackId != trackId {
 			playCount := getTrackPlayCount(session, trackId)
 
