@@ -94,12 +94,13 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 
 	// Create database entry
 	listeningSession := model.SimpleListeningSession{
-		BaseModel:       model.BaseModel{},
-		Active:          true,
-		OwnerId:         user.ID,
-		JoinId:          joinId,
-		QueuePlaylistId: playlist.ID.String(),
-		Title:           title,
+		BaseModel:               model.BaseModel{},
+		Active:                  true,
+		OwnerId:                 user.ID,
+		JoinId:                  joinId,
+		QueuePlaylistId:         playlist.ID.String(),
+		Title:                   title,
+		FallbackPlaylistShuffle: true,
 	}
 
 	database.GetConnection().Create(&listeningSession)
