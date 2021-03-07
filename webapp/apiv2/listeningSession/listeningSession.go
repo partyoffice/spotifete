@@ -41,7 +41,8 @@ func newSession(c *gin.Context) {
 func getSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 
 	if session == nil {
@@ -77,7 +78,8 @@ func closeSession(c *gin.Context) {
 func getSessionQueue(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, "Session not found")
@@ -97,7 +99,8 @@ func getSessionQueue(c *gin.Context) {
 func deleteRequestFromQueue(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
@@ -140,7 +143,8 @@ func deleteRequestFromQueue(c *gin.Context) {
 func queueLastUpdated(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
@@ -167,7 +171,8 @@ func qrCode(c *gin.Context) {
 func searchTrack(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
@@ -206,7 +211,8 @@ func searchTrack(c *gin.Context) {
 func searchPlaylist(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Session not found."})
@@ -258,7 +264,8 @@ func requestTrack(c *gin.Context) {
 
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
@@ -295,7 +302,8 @@ func changeFallbackPlaylist(c *gin.Context) {
 
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
@@ -326,7 +334,8 @@ func removeFallbackPlaylist(c *gin.Context) {
 
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})

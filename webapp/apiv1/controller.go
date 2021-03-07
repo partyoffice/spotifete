@@ -41,7 +41,10 @@ func (ApiV1Controller) Index(c *gin.Context) {
 func (ApiV1Controller) GetSession(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 
-	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{JoinId: &sessionJoinId})
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: sessionJoinId,
+		Active: true,
+	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
 	} else {
@@ -158,7 +161,8 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 	}
 
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &listeningSessionJoinId,
+		JoinId: listeningSessionJoinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
@@ -205,7 +209,8 @@ func (ApiV1Controller) SearchSpotifyPlaylist(c *gin.Context) {
 	}
 
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &listeningSessionJoinId,
+		JoinId: listeningSessionJoinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
@@ -235,7 +240,8 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 
 	sessionJoinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &sessionJoinId,
+		JoinId: sessionJoinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})
@@ -262,7 +268,8 @@ func (ApiV1Controller) RequestSong(c *gin.Context) {
 func (ApiV1Controller) QueueLastUpdated(c *gin.Context) {
 	sessionJoinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &sessionJoinId,
+		JoinId: sessionJoinId,
+		Active: true,
 	})
 	if session == nil {
 		c.JSON(http.StatusNotFound, shared.ErrorResponse{Message: "session not found"})

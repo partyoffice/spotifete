@@ -88,7 +88,7 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 		BaseModel:       model.BaseModel{},
 		Active:          true,
 		OwnerId:         user.ID,
-		JoinId:          &joinId,
+		JoinId:          joinId,
 		QueuePlaylistId: playlist.ID.String(),
 		Title:           title,
 	}
@@ -114,7 +114,8 @@ func newJoinId() string {
 
 func joinIdFree(joinId string) bool {
 	existingListeningSession := FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 
 	return existingListeningSession == nil
@@ -122,7 +123,8 @@ func joinIdFree(joinId string) bool {
 
 func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	session := FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		return NewUserError("Unknown listening session.")
@@ -133,7 +135,6 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	}
 
 	session.Active = false
-	session.JoinId = nil
 	database.GetConnection().Save(&session)
 	// TODO: Use a transaction here
 
