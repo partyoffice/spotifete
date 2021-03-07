@@ -38,6 +38,22 @@ func RemoveFallbackPlaylist(session model.SimpleListeningSession, user model.Sim
 	return nil
 }
 
+func SetFallbackPlaylistShuffle(session model.SimpleListeningSession, user model.SimpleUser, shuffle bool) *SpotifeteError {
+	if user.ID != session.OwnerId {
+		return NewUserError("Only the session owner can change the shuffle mode.")
+	}
+
+	if shuffle == session.FallbackPlaylistShuffle {
+		return nil
+	}
+
+	session.FallbackPlaylistShuffle = shuffle
+
+	database.GetConnection().Model(&session).Update("fallback_playlist_shuffle", shuffle)
+
+	return nil
+}
+
 func addFallbackTrackIfNecessary(session model.FullListeningSession, upNextRequest *model.SongRequest) (trackAdded bool, error *SpotifeteError) {
 	if session.FallbackPlaylistId == nil {
 		return false, nil
