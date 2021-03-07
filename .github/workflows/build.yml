@@ -29,15 +29,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: test
+        run: echo {{ github.ref }}
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Build
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Build
       run: go build -v ./...
 
     - name: Test
