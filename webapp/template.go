@@ -52,7 +52,12 @@ func (TemplateController) Index(c *gin.Context) {
 func (TemplateController) Login(c *gin.Context) {
 	redirectTo := c.DefaultQuery("redirectTo", "/")
 
-	_, authUrl := authentication.NewSession(redirectTo)
+	_, authUrl, spotifeteError := authentication.NewSession(redirectTo)
+	if spotifeteError != nil {
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
+		return
+	}
+
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 

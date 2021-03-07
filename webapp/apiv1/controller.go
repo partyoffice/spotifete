@@ -92,11 +92,16 @@ func (ApiV1Controller) GetCurrentUser(c *gin.Context) {
 }
 
 func (ApiV1Controller) GetAuthUrl(c *gin.Context) {
-	newSession, authUrl := authentication.NewSession("/spotify/auth/success")
-	c.JSON(http.StatusOK, GetAuthUrlResponse{
-		Url:       authUrl,
-		SessionId: newSession.SessionId,
-	})
+	newSession, authUrl, spotifeteError := authentication.NewSession("/spotify/auth/success")
+
+	if spotifeteError == nil {
+		c.JSON(http.StatusOK, GetAuthUrlResponse{
+			Url:       authUrl,
+			SessionId: newSession.SessionId,
+		})
+	} else {
+		c.JSON(spotifeteError.HttpStatus, ErrorResponse{Message: spotifeteError.MessageForUser})
+	}
 }
 
 func (ApiV1Controller) DidAuthSucceed(c *gin.Context) {
@@ -147,7 +152,7 @@ func (ApiV1Controller) SearchSpotifyTrack(c *gin.Context) {
 	}
 
 	limitPatameter := c.Query("limit")
-	var limit int = -1
+	var limit = -1
 	if len(limitPatameter) > 0 {
 		limitParsed, err := strconv.ParseInt(limitPatameter, 10, 0)
 		if err != nil {

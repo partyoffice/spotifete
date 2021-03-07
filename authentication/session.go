@@ -1,10 +1,11 @@
 package authentication
 
 import (
+	"crypto/rand"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/database/model"
-	"math/rand"
-	"time"
+	. "github.com/47-11/spotifete/shared"
+	"math/big"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -20,33 +21,51 @@ func GetSession(sessionId string) *model.LoginSession {
 	}
 }
 
-func NewSession(callbackRedirectUrl string) (newSession model.LoginSession, spotifyAuthUrl string) {
+func NewSession(callbackRedirectUrl string) (newSession model.LoginSession, spotifyAuthUrl string, error *SpotifeteError) {
+	sessionId, spotifeteError := newSessionId()
+	if spotifeteError != nil {
+		return model.LoginSession{}, "", spotifeteError
+	}
+
 	newSession = model.LoginSession{
 		BaseModel:        model.BaseModel{},
-		SessionId:        newSessionId(),
+		SessionId:        sessionId,
 		UserId:           nil,
 		Active:           true,
 		CallbackRedirect: callbackRedirectUrl,
 	}
 
 	database.GetConnection().Create(&newSession)
-	return newSession, authUrlForSession(newSession)
+	return newSession, authUrlForSession(newSession), nil
 }
 
-func newSessionId() string {
-	rand.Seed(time.Now().UnixNano())
-
+func newSessionId() (string, *SpotifeteError) {
 	for {
-		b := make([]rune, 256)
-		for i := range b {
-			b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		newSessionId, spotifeteError := randomSessionId()
+		if spotifeteError != nil {
+			return "", spotifeteError
 		}
-		newSessionId := string(b)
 
 		if !sessionIdExists(newSessionId) {
-			return newSessionId
+			return newSessionId, nil
 		}
 	}
+}
+
+func randomSessionId() (string, *SpotifeteError) {
+	maxRandValue := big.NewInt(int64(len(letterRunes)))
+
+	b := make([]rune, 256)
+	for i := range b {
+		randInt, err := rand.Int(rand.Reader, maxRandValue)
+		if err != nil {
+			return "", NewInternalError("Could not generate random int", err)
+		}
+
+		b[i] = letterRunes[randInt.Uint64()]
+	}
+
+	return string(b), nil
 }
 
 func sessionIdExists(sessionId string) bool {
