@@ -43,6 +43,11 @@ func (r ChangeFallbackPlaylistRequest) Validate() *SpotifeteError {
 	return nil
 }
 
+type SetFallbackPlaylistShuffleRequest struct {
+	AuthenticatedRequest
+	Shuffle bool `json:"shuffle"`
+}
+
 type DeleteRequestFromQueueRequest struct {
 	AuthenticatedRequest
 	SpotifyTrackId string `json:"spotify_track_id""`

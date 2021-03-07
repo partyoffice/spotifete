@@ -6,8 +6,11 @@ import (
 	"github.com/47-11/spotifete/database/model"
 	. "github.com/47-11/spotifete/shared"
 	"github.com/47-11/spotifete/users"
+	"github.com/google/logger"
 	"github.com/zmb3/spotify"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 func ChangeFallbackPlaylist(session model.SimpleListeningSession, user model.SimpleUser, playlistId string) *SpotifeteError {
@@ -34,6 +37,22 @@ func RemoveFallbackPlaylist(session model.SimpleListeningSession, user model.Sim
 
 	session.FallbackPlaylistId = nil
 	database.GetConnection().Save(session)
+
+	return nil
+}
+
+func SetFallbackPlaylistShuffle(session model.SimpleListeningSession, user model.SimpleUser, shuffle bool) *SpotifeteError {
+	if user.ID != session.OwnerId {
+		return NewUserError("Only the session owner can change the shuffle mode.")
+	}
+
+	if shuffle == session.FallbackPlaylistShuffle {
+		return nil
+	}
+
+	session.FallbackPlaylistShuffle = shuffle
+
+	database.GetConnection().Model(&session).Update("fallback_playlist_shuffle", shuffle)
 
 	return nil
 }
@@ -70,51 +89,29 @@ func addFallbackTrack(session model.FullListeningSession) (error *SpotifeteError
 }
 
 func findNextFallbackTrack(session model.FullListeningSession) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
-
-	client := Client(session)
-	currentUser, err := client.CurrentUser()
-	if err != nil {
-		return "", NewError("Could not get user information on session owner from Spotify.", err, http.StatusInternalServerError)
-	}
-	country := currentUser.Country
-
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
-
-	var playableTracks []spotify.FullTrack
-	offset := 0
-	allTracksLoaded := false
-	for !allTracksLoaded {
-		newPage, err := client.GetPlaylistTracksOpt(spotify.ID(*session.FallbackPlaylistId), &spotify.Options{Country: &country, Offset: &offset}, "")
-		if err != nil {
-			return "", NewError("Could not get tracks in fallback playlist from Spotify.", err, http.StatusInternalServerError)
-		}
-
-		newPlayableTracks := filterPlayableTracksFromPlaylistTracks(newPage.Tracks)
-		fallbackTrack := findPossibleFallbackTrackFromPlayableTracks(newPlayableTracks, session.SimpleListeningSession, currentlyPlayingRequest, 0)
-		if fallbackTrack != nil {
-			return *fallbackTrack, nil
-		}
-
-		playableTracks = append(playableTracks, newPlayableTracks...)
-		offset += newPage.Limit
-		allTracksLoaded = offset == newPage.Total
+	playableTracks, spotifeteError := getPlayablePlaylistTracks(*session.FallbackPlaylistId, session.Owner)
+	if spotifeteError != nil {
+		return "", spotifeteError
 	}
 
-	return doFindNextFallbackTrack(playableTracks, session, currentlyPlayingRequest)
+	if len(*playableTracks) >= 0 {
+		return doFindNextFallbackTrack(playableTracks, session)
+	}
+
+	session.FallbackPlaylistId = nil
+	database.GetConnection().Save(session)
+
+	logger.Info(fmt.Sprintf("Fallback playlist (%s) for session %d does not contain any playable tracks. Removing fallback playlist.",
+		*session.FallbackPlaylistId,
+		session.ID))
+	return "", NewUserError("Fallback playlist does not contain any playable tracks.")
 }
 
-func doFindNextFallbackTrack(playableTracks []spotify.FullTrack, session model.FullListeningSession, currentlyPlayingRequest *model.SongRequest) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
-	if len(playableTracks) == 0 {
-		fallbackPlaylistId := *session.FallbackPlaylistId
-
-		session.FallbackPlaylistId = nil
-		database.GetConnection().Save(session)
-
-		return "", NewInternalError(fmt.Sprintf("Fallback playlist (%s) for session %d does not contain any playable tracks. Removing fallback playlist.", fallbackPlaylistId, session.ID), nil)
-	}
+func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.FullListeningSession) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
 
 	for i := 0; i < 10_000; i++ {
-		fallbackTrack := findPossibleFallbackTrackFromPlayableTracks(playableTracks, session.SimpleListeningSession, currentlyPlayingRequest, 0)
+		fallbackTrack := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, currentlyPlayingRequest, 0)
 		if fallbackTrack != nil {
 			return *fallbackTrack, nil
 		}
@@ -126,21 +123,18 @@ func doFindNextFallbackTrack(playableTracks []spotify.FullTrack, session model.F
 	return "", NewInternalError(fmt.Sprintf("No track found in fallback playlist for session %d that has been played less than 10,000 times. Aborting and removing fallback playlist.", session.ID), nil)
 }
 
-func filterPlayableTracksFromPlaylistTracks(playlistTracks []spotify.PlaylistTrack) (playableTracks []spotify.FullTrack) {
-	for _, playlistTrack := range playlistTracks {
-		track := playlistTrack.Track
-		if track.IsPlayable != nil && *track.IsPlayable {
-			playableTracks = append(playableTracks, track)
-		}
+func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTrack, session model.SimpleListeningSession, currentlyPlayingRequest *model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string) {
+	if session.FallbackPlaylistShuffle {
+		rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(
+			len(playableTracks),
+			func(i, j int) {
+				playableTracks[i], playableTracks[j] = playableTracks[j], playableTracks[i]
+			})
 	}
 
-	return playableTracks
-}
-
-func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTrack, session model.SimpleListeningSession, currentlyPlayingRequest *model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string) {
-	// TODO: Maybe we could choose a random track? To do that we could just filter all tracks in the current page first and then choose a random one
-	for _, playableTrack := range playableTracks {
-		trackId := playableTrack.ID.String()
+	for _, track := range playableTracks {
+		trackId := track.ID.String()
 		if currentlyPlayingRequest == nil || currentlyPlayingRequest.SpotifyTrackId != trackId {
 			playCount := getTrackPlayCount(session, trackId)
 

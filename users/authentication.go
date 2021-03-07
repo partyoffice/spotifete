@@ -37,6 +37,7 @@ func getOrCreateFromSpotifyUser(spotifyUser *spotify.PrivateUser) model.SimpleUs
 		user = &model.SimpleUser{
 			SpotifyId:          spotifyUser.ID,
 			SpotifyDisplayName: spotifyUser.DisplayName,
+			Country:            spotifyUser.Country,
 		}
 
 		database.GetConnection().Create(user)

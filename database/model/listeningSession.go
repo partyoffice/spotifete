@@ -2,12 +2,13 @@ package model
 
 type SimpleListeningSession struct {
 	BaseModel
-	Active             bool    `json:"active"`
-	OwnerId            uint    `json:"owner_id"`
-	JoinId             string  `json:"join_id"`
-	QueuePlaylistId    string  `gorm:"column:queue_playlist" json:"queue_playlist_id"`
-	Title              string  `json:"title"`
-	FallbackPlaylistId *string `gorm:"column:fallback_playlist" json:"fallback_playlist_id"`
+	Active                  bool    `json:"active"`
+	OwnerId                 uint    `json:"owner_id"`
+	JoinId                  string  `json:"join_id"`
+	QueuePlaylistId         string  `gorm:"column:queue_playlist" json:"queue_playlist_id"`
+	Title                   string  `json:"title"`
+	FallbackPlaylistId      *string `gorm:"column:fallback_playlist" json:"fallback_playlist_id"`
+	FallbackPlaylistShuffle bool    `json:"fallback_playlist_shuffle"`
 }
 
 func (SimpleListeningSession) TableName() string {
