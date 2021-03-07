@@ -11,6 +11,7 @@ import (
 
 var spotifeteWebapp webapp.SpotifeteWebapp
 
+// Test
 func main() {
 	printBanner()
 	setup()
