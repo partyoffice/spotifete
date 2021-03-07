@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var numberRunes = []rune("0123456789")
@@ -29,9 +30,13 @@ func GetActiveSessionCount() uint {
 func FindSimpleListeningSession(filter model.SimpleListeningSession) *model.SimpleListeningSession {
 	listeningSessions := FindSimpleListeningSessions(filter)
 
-	if len(listeningSessions) == 1 {
+	resultCount := len(listeningSessions)
+	if resultCount == 1 {
 		return &listeningSessions[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }
@@ -45,9 +50,13 @@ func FindSimpleListeningSessions(filter model.SimpleListeningSession) []model.Si
 func FindFullListeningSession(filter model.SimpleListeningSession) *model.FullListeningSession {
 	listeningSessions := FindFullListeningSessions(filter)
 
-	if len(listeningSessions) == 1 {
+	resultCount := len(listeningSessions)
+	if resultCount == 1 {
 		return &listeningSessions[0]
+	} else if resultCount == 0 {
+		return nil
 	} else {
+		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
 		return nil
 	}
 }
@@ -88,7 +97,7 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 		BaseModel:       model.BaseModel{},
 		Active:          true,
 		OwnerId:         user.ID,
-		JoinId:          &joinId,
+		JoinId:          joinId,
 		QueuePlaylistId: playlist.ID.String(),
 		Title:           title,
 	}
@@ -99,6 +108,8 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 }
 
 func newJoinId() string {
+	rand.Seed(time.Now().UnixNano())
+
 	for {
 		b := make([]rune, 8)
 		for i := range b {
@@ -114,7 +125,8 @@ func newJoinId() string {
 
 func joinIdFree(joinId string) bool {
 	existingListeningSession := FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 
 	return existingListeningSession == nil
@@ -122,7 +134,8 @@ func joinIdFree(joinId string) bool {
 
 func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	session := FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		return NewUserError("Unknown listening session.")
@@ -133,7 +146,6 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	}
 
 	session.Active = false
-	session.JoinId = nil
 	database.GetConnection().Save(&session)
 	// TODO: Use a transaction here
 

@@ -10,12 +10,15 @@ import (
 func newSession(c *gin.Context) {
 	callbackRedirectUrl := c.DefaultQuery("redirectTo", "/api/v2/auth/success")
 
-	session, spotifyAuthenticationUrl := authentication.NewSession(callbackRedirectUrl)
-
-	c.JSON(http.StatusOK, NewSessionResponse{
-		SpotifyAuthenticationUrl: spotifyAuthenticationUrl,
-		SpotifeteSessionId:       session.SessionId,
-	})
+	session, spotifyAuthenticationUrl, spotifeteError := authentication.NewSession(callbackRedirectUrl)
+	if spotifeteError == nil {
+		c.JSON(http.StatusOK, NewSessionResponse{
+			SpotifyAuthenticationUrl: spotifyAuthenticationUrl,
+			SpotifeteSessionId:       session.SessionId,
+		})
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
 }
 
 func isSessionAuthenticated(c *gin.Context) {

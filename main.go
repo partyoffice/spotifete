@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/47-11/spotifete/database"
 	"github.com/47-11/spotifete/listeningSession"
 	"github.com/47-11/spotifete/logging"
@@ -23,7 +24,7 @@ func printBanner() {
 		return
 	}
 
-	println(string(bannerTextBytes))
+	fmt.Println(string(bannerTextBytes))
 }
 
 func setup() {

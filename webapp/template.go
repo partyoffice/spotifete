@@ -52,7 +52,12 @@ func (TemplateController) Index(c *gin.Context) {
 func (TemplateController) Login(c *gin.Context) {
 	redirectTo := c.DefaultQuery("redirectTo", "/")
 
-	_, authUrl := authentication.NewSession(redirectTo)
+	_, authUrl, spotifeteError := authentication.NewSession(redirectTo)
+	if spotifeteError != nil {
+		c.String(spotifeteError.HttpStatus, spotifeteError.MessageForUser)
+		return
+	}
+
 	c.Redirect(http.StatusTemporaryRedirect, authUrl)
 }
 
@@ -102,13 +107,14 @@ func (TemplateController) NewListeningSessionSubmit(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s", *session.JoinId))
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/session/view/%s", session.JoinId))
 }
 
 func (TemplateController) ViewSession(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.String(http.StatusNotFound, "Session not found.")
@@ -143,7 +149,8 @@ func (TemplateController) ViewSession(c *gin.Context) {
 func (TemplateController) RequestTrack(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.String(http.StatusNotFound, "session not found")
@@ -163,7 +170,8 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 func (TemplateController) ChangeFallbackPlaylist(c *gin.Context) {
 	joinId := c.Param("joinId")
 	session := listeningSession.FindSimpleListeningSession(model.SimpleListeningSession{
-		JoinId: &joinId,
+		JoinId: joinId,
+		Active: true,
 	})
 	if session == nil {
 		c.String(http.StatusNotFound, "session not found")
