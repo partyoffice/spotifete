@@ -9,6 +9,7 @@ type SimpleUser struct {
 	BaseModel
 	SpotifyId           string    `json:"spotify_id"`
 	SpotifyDisplayName  string    `json:"spotify_display_name"`
+	Country             string    `json:"country"`
 	SpotifyAccessToken  string    `json:"-"`
 	SpotifyRefreshToken string    `json:"-"`
 	SpotifyTokenType    string    `json:"-"`
