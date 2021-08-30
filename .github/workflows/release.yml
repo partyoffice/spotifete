@@ -22,19 +22,19 @@ jobs:
     
       - name: Checkout master
         run: | 
-          git clone https://github.com/47-11/spotifete.git ./
+          git clone https://github.com/partyoffice/spotifete.git ./
           git checkout -f master
           
       - name: Create release tag
         run: |
           git tag v${{ github.event.inputs.version }}
-          git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/47-11/spotifete.git v${{ github.event.inputs.version }}
+          git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/partyoffice/spotifete.git v${{ github.event.inputs.version }}
 
       - name: Merge master back into develop
         run: |
           git checkout -f develop
           git merge --ff-only master
-          git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/47-11/spotifete.git develop
+          git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/partyoffice/spotifete.git develop
 
       - name: Set up Go
         uses: actions/setup-go@v2
