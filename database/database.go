@@ -61,7 +61,7 @@ func buildLogger() gormLogger.Interface {
 	var logLevel gormLogger.LogLevel
 	var logWriter io.Writer
 	if c.SpotifeteConfiguration.ReleaseMode {
-		logLevel = gormLogger.Warn
+		logLevel = gormLogger.Error
 		logWriter = io.MultiWriter(logging.OpenLogFile("gorm.log"), os.Stderr)
 	} else {
 		logLevel = gormLogger.Info
