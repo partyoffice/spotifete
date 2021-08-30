@@ -1,16 +1,17 @@
 package apiv1
 
 import (
-	"github.com/47-11/spotifete/authentication"
-	"github.com/47-11/spotifete/database/model"
-	"github.com/47-11/spotifete/listeningSession"
-	"github.com/47-11/spotifete/users"
-	"github.com/47-11/spotifete/webapp/apiv2/shared"
-	"github.com/gin-gonic/gin"
-	"github.com/google/logger"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/logger"
+	"github.com/partyoffice/spotifete/authentication"
+	"github.com/partyoffice/spotifete/database/model"
+	"github.com/partyoffice/spotifete/listeningSession"
+	"github.com/partyoffice/spotifete/users"
+	"github.com/partyoffice/spotifete/webapp/apiv2/shared"
 )
 
 type ApiV1Controller struct{}

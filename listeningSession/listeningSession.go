@@ -2,15 +2,16 @@ package listeningSession
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/47-11/spotifete/users"
-	"github.com/zmb3/spotify"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/partyoffice/spotifete/users"
+	"github.com/zmb3/spotify"
 )
 
 var numberRunes = []rune("0123456789")

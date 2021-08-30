@@ -1,8 +1,9 @@
 package apiv1
 
 import (
-	"github.com/47-11/spotifete/database/model"
 	"time"
+
+	"github.com/partyoffice/spotifete/database/model"
 )
 
 type ErrorResponse struct {

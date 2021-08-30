@@ -1,10 +1,11 @@
 package logging
 
 import (
-	"github.com/47-11/spotifete/config"
+	"sync"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/google/logger"
-	"sync"
+	"github.com/partyoffice/spotifete/config"
 )
 
 var setupSentryLogOnce sync.Once

@@ -1,19 +1,20 @@
 package database
 
 import (
-	"github.com/47-11/spotifete/config"
-	"github.com/47-11/spotifete/logging"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/google/logger"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	gormLogger "gorm.io/gorm/logger"
 	"io"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/logger"
+	"github.com/partyoffice/spotifete/config"
+	"github.com/partyoffice/spotifete/logging"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 var connection *gorm.DB

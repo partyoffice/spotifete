@@ -1,4 +1,4 @@
-module github.com/47-11/spotifete
+module github.com/partyoffice/spotifete
 
 go 1.16
 

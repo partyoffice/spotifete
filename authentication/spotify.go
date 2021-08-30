@@ -1,14 +1,15 @@
 package authentication
 
 import (
-	"github.com/47-11/spotifete/config"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/gin-gonic/gin"
-	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
 	"net/http"
 	"sync"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/config"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/zmb3/spotify"
+	"golang.org/x/oauth2"
 )
 
 func NewClientForToken(token *oauth2.Token) spotify.Client {

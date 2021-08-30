@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/47-11/spotifete/shared"
+	"github.com/partyoffice/spotifete/shared"
 	"github.com/zmb3/spotify"
 	"strings"
 )

@@ -1,12 +1,13 @@
 package logging
 
 import (
-	"github.com/47-11/spotifete/config"
-	"github.com/google/logger"
 	"io"
 	"io/ioutil"
 	"log"
 	"sync"
+
+	"github.com/google/logger"
+	"github.com/partyoffice/spotifete/config"
 )
 
 var setupSpotifeteLogOnce sync.Once

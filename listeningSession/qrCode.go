@@ -2,12 +2,13 @@ package listeningSession
 
 import (
 	"bytes"
-	"github.com/47-11/spotifete/config"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/skip2/go-qrcode"
 	"image/jpeg"
 	"image/png"
 	"net/http"
+
+	"github.com/partyoffice/spotifete/config"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/skip2/go-qrcode"
 )
 
 func QrCodeAsJpeg(joinId string, disableBorder bool, size int) (*bytes.Buffer, *SpotifeteError) {

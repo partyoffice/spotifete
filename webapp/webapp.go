@@ -2,13 +2,14 @@ package webapp
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/config"
-	"github.com/47-11/spotifete/webapp/apiv1"
-	"github.com/47-11/spotifete/webapp/apiv2"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
+	"github.com/partyoffice/spotifete/config"
+	"github.com/partyoffice/spotifete/webapp/apiv1"
+	"github.com/partyoffice/spotifete/webapp/apiv2"
 )
 
 type SpotifeteWebapp struct {

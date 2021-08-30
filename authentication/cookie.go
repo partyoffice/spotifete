@@ -2,11 +2,12 @@ package authentication
 
 import (
 	"errors"
-	"github.com/47-11/spotifete/database/model"
+	"net/http"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
-	"net/http"
+	"github.com/partyoffice/spotifete/database/model"
 )
 
 const sessionCookieName = "SF_SESSION_ID"

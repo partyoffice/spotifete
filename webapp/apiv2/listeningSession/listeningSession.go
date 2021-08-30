@@ -1,12 +1,13 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database/model"
-	"github.com/47-11/spotifete/listeningSession"
-	. "github.com/47-11/spotifete/webapp/apiv2/shared"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/database/model"
+	"github.com/partyoffice/spotifete/listeningSession"
+	. "github.com/partyoffice/spotifete/webapp/apiv2/shared"
 )
 
 func newSession(c *gin.Context) {

@@ -1,11 +1,12 @@
 package apiv2
 
 import (
-	"github.com/47-11/spotifete/webapp/apiv2/authentication"
-	"github.com/47-11/spotifete/webapp/apiv2/listeningSession"
-	"github.com/47-11/spotifete/webapp/apiv2/user"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/webapp/apiv2/authentication"
+	"github.com/partyoffice/spotifete/webapp/apiv2/listeningSession"
+	"github.com/partyoffice/spotifete/webapp/apiv2/user"
 )
 
 func SetupApiRoutes(baseRouter *gin.Engine) {

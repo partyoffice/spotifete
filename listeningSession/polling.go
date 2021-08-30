@@ -1,8 +1,9 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database/model"
 	"time"
+
+	"github.com/partyoffice/spotifete/database/model"
 )
 
 func StartPollSessionsLoop() {

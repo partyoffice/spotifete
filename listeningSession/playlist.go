@@ -1,14 +1,15 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/47-11/spotifete/users"
-	"github.com/patrickmn/go-cache"
-	"github.com/zmb3/spotify"
 	"net/http"
 	"time"
+
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/partyoffice/spotifete/users"
+	"github.com/patrickmn/go-cache"
+	"github.com/zmb3/spotify"
 )
 
 var playlistTrackCache = cache.New(30*time.Minute, time.Hour)

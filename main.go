@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/listeningSession"
-	"github.com/47-11/spotifete/logging"
-	"github.com/47-11/spotifete/webapp"
 	"io/ioutil"
+
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/listeningSession"
+	"github.com/partyoffice/spotifete/logging"
+	"github.com/partyoffice/spotifete/webapp"
 )
 
 var spotifeteWebapp webapp.SpotifeteWebapp
