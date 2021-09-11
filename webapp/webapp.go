@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/logger"
 	"github.com/partyoffice/spotifete/config"
-	"github.com/partyoffice/spotifete/webapp/apiv1"
 	"github.com/partyoffice/spotifete/webapp/apiv2"
 )
 
@@ -56,7 +55,6 @@ func (w SpotifeteWebapp) setupRoutes() {
 	apiv2.SetupApiRoutes(w.router)
 
 	TemplateController{}.SetupWithBaseRouter(w.router)
-	apiv1.ApiV1Controller{}.SetupWithBaseRouter(w.router)
 }
 
 func (w SpotifeteWebapp) Run() {
