@@ -363,3 +363,24 @@ func updateSessionPlaylist(session model.FullListeningSession) *SpotifeteError {
 
 	return nil
 }
+
+func NewQueuePlaylist(session model.FullListeningSession) *SpotifeteError {
+
+	owner := session.Owner
+	client := users.Client(owner)
+
+	err := client.UnfollowPlaylist(spotify.ID(owner.SpotifyId), spotify.ID(session.QueuePlaylistId))
+	if err != nil {
+		return NewError("Could not unfollow old playlist.", err, http.StatusInternalServerError)
+	}
+
+	newPlaylist, spotifeteError := createPlaylistForSession(session.JoinId, session.Title, owner)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+
+	session.QueuePlaylistId = newPlaylist.ID.String()
+	database.GetConnection().Save(&session)
+
+	return nil
+}
