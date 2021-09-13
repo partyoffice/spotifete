@@ -1,11 +1,12 @@
 package logging
 
 import (
-	"github.com/47-11/spotifete/config"
-	"github.com/gin-gonic/gin"
 	"io"
 	"os"
 	"sync"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/config"
 )
 
 var setupGinLogOnce sync.Once

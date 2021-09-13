@@ -1,12 +1,13 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database/model"
-	"github.com/47-11/spotifete/listeningSession"
-	. "github.com/47-11/spotifete/webapp/apiv2/shared"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/database/model"
+	"github.com/partyoffice/spotifete/listeningSession"
+	. "github.com/partyoffice/spotifete/webapp/apiv2/shared"
 )
 
 func newSession(c *gin.Context) {
@@ -273,6 +274,82 @@ func requestTrack(c *gin.Context) {
 	}
 
 	_, spotifeteError = listeningSession.RequestSong(*session, request.TrackId)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
+}
+
+func newQueuePlaylist(c *gin.Context) {
+
+	joinId := c.Param("joinId")
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: joinId,
+		Active: true,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
+		return
+	}
+
+	request := AuthenticatedRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	if session.OwnerId != authenticatedUser.ID {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "Only the session owner can delete requests from the queue!"})
+		return
+	}
+
+	spotifeteError = listeningSession.NewQueuePlaylist(*session)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
+}
+
+func refollowQueuePlaylist(c *gin.Context) {
+
+	joinId := c.Param("joinId")
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: joinId,
+		Active: true,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
+		return
+	}
+
+	request := AuthenticatedRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	if session.OwnerId != authenticatedUser.ID {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "Only the session owner can delete requests from the queue!"})
+		return
+	}
+
+	spotifeteError = listeningSession.RefollowQueuePlaylist(*session)
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {

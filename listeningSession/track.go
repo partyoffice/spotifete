@@ -1,8 +1,8 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
 	"github.com/zmb3/spotify"
 )
 

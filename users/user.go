@@ -2,9 +2,10 @@ package users
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
+
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
 )
 
 func FindSimpleUser(filter model.SimpleUser) *model.SimpleUser {

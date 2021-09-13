@@ -1,8 +1,8 @@
 package shared
 
 import (
-	. "github.com/47-11/spotifete/shared"
 	"github.com/gin-gonic/gin"
+	. "github.com/partyoffice/spotifete/shared"
 )
 
 type ErrorResponse struct {

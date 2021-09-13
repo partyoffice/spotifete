@@ -2,13 +2,14 @@ package users
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/authentication"
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/zmb3/spotify"
 	"net/http"
 	"time"
+
+	"github.com/partyoffice/spotifete/authentication"
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/zmb3/spotify"
 )
 
 var clientCache = map[uint]*spotify.Client{}

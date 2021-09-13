@@ -2,14 +2,15 @@ package webapp
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/authentication"
-	"github.com/47-11/spotifete/config"
-	"github.com/47-11/spotifete/database/model"
-	"github.com/47-11/spotifete/listeningSession"
-	"github.com/47-11/spotifete/users"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/authentication"
+	"github.com/partyoffice/spotifete/config"
+	"github.com/partyoffice/spotifete/database/model"
+	"github.com/partyoffice/spotifete/listeningSession"
+	"github.com/partyoffice/spotifete/users"
 )
 
 type TemplateController struct{}

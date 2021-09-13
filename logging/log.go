@@ -2,11 +2,12 @@ package logging
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/config"
-	"github.com/google/logger"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/google/logger"
+	"github.com/partyoffice/spotifete/config"
 )
 
 var logDirectory = config.Get().SpotifeteConfiguration.LogDirectory

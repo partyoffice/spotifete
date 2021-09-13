@@ -1,12 +1,13 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/47-11/spotifete/users"
-	"github.com/zmb3/spotify"
 	"net/http"
 	"strings"
+
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/partyoffice/spotifete/users"
+	"github.com/zmb3/spotify"
 )
 
 func SearchTrack(listeningSession model.FullListeningSession, query string, limit int) ([]model.TrackMetadata, *SpotifeteError) {

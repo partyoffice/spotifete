@@ -2,15 +2,16 @@ package listeningSession
 
 import (
 	"fmt"
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/47-11/spotifete/users"
-	"github.com/zmb3/spotify"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/partyoffice/spotifete/users"
+	"github.com/zmb3/spotify"
 )
 
 var numberRunes = []rune("0123456789")
@@ -68,37 +69,21 @@ func FindFullListeningSessions(filter model.SimpleListeningSession) []model.Full
 }
 
 func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSession, *SpotifeteError) {
-	if len(title) == 0 {
-		return nil, NewUserError("Session title must not be empty.")
-	}
 
-	client := users.Client(user)
-
-	joinId := newJoinId()
-	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s - SpotiFete", title), fmt.Sprintf("Automatic playlist for SpotiFete session %s. You can join using the code %s-%s or by installing our app and scanning the QR code in the playlist image.", title, joinId[0:4], joinId[4:8]), false)
-	if err != nil {
-		return nil, NewError("Could not create spotify playlist.", err, http.StatusInternalServerError)
-	}
-
-	qrCode, spotifeteError := QrCodeAsJpeg(joinId, false, 512)
+	cleanedTitle, spotifeteError := cleanTitle(title)
 	if spotifeteError != nil {
 		return nil, spotifeteError
 	}
 
-	go func() {
-		err := client.SetPlaylistImage(playlist.ID, qrCode)
-		if err != nil {
-			NewInternalError("Could not set playlist image.", err)
-		}
-	}()
+	joinId := newJoinId()
+	queuePlaylist, spotifeteError := createPlaylistForSession(joinId, cleanedTitle, user)
 
-	// Create database entry
 	listeningSession := model.SimpleListeningSession{
 		BaseModel:               model.BaseModel{},
 		Active:                  true,
 		OwnerId:                 user.ID,
 		JoinId:                  joinId,
-		QueuePlaylistId:         playlist.ID.String(),
+		QueuePlaylistId:         queuePlaylist.ID.String(),
 		Title:                   title,
 		FallbackPlaylistShuffle: true,
 	}
@@ -106,6 +91,20 @@ func NewSession(user model.SimpleUser, title string) (*model.SimpleListeningSess
 	database.GetConnection().Create(&listeningSession)
 
 	return &listeningSession, nil
+}
+
+func cleanTitle(rawTitle string) (cleanedTitle string, err *SpotifeteError) {
+
+	trimmedTitle := strings.TrimSpace(rawTitle)
+	if len(trimmedTitle) == 0 {
+		return "", NewUserError("Session title must not be empty.")
+	}
+
+	if len(trimmedTitle) > 100 {
+		return "", NewUserError("Session title must not be longer than 100 characters.")
+	}
+
+	return trimmedTitle, nil
 }
 
 func newJoinId() string {
@@ -363,4 +362,48 @@ func updateSessionPlaylist(session model.FullListeningSession) *SpotifeteError {
 	}
 
 	return nil
+}
+
+func NewQueuePlaylist(session model.FullListeningSession) *SpotifeteError {
+
+	owner := session.Owner
+	client := users.Client(owner)
+
+	err := client.UnfollowPlaylist(spotify.ID(owner.SpotifyId), spotify.ID(session.QueuePlaylistId))
+	if err != nil {
+		return NewError("Could not unfollow old playlist.", err, http.StatusInternalServerError)
+	}
+
+	newPlaylist, spotifeteError := createPlaylistForSession(session.JoinId, session.Title, owner)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+
+	session.QueuePlaylistId = newPlaylist.ID.String()
+	database.GetConnection().Save(&session)
+
+	return nil
+}
+
+func RefollowQueuePlaylist(session model.FullListeningSession) *SpotifeteError {
+
+	owner := session.Owner
+	client := users.Client(owner)
+
+	ownerId := spotify.ID(owner.SpotifyId)
+	queuePlaylistId := spotify.ID(session.QueuePlaylistId)
+
+	err := client.UnfollowPlaylist(ownerId, queuePlaylistId)
+	if err != nil {
+		return NewError("Could not unfollow playlist.", err, http.StatusInternalServerError)
+	}
+
+	time.Sleep(1 * time.Second)
+
+	err = client.FollowPlaylist(ownerId, queuePlaylistId, false)
+	if err == nil {
+		return nil
+	} else {
+		return NewError("Could not unfollow playlist.", err, http.StatusInternalServerError)
+	}
 }

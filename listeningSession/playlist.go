@@ -1,14 +1,16 @@
 package listeningSession
 
 import (
-	"github.com/47-11/spotifete/database"
-	"github.com/47-11/spotifete/database/model"
-	. "github.com/47-11/spotifete/shared"
-	"github.com/47-11/spotifete/users"
-	"github.com/patrickmn/go-cache"
-	"github.com/zmb3/spotify"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/partyoffice/spotifete/database"
+	"github.com/partyoffice/spotifete/database/model"
+	. "github.com/partyoffice/spotifete/shared"
+	"github.com/partyoffice/spotifete/users"
+	"github.com/patrickmn/go-cache"
+	"github.com/zmb3/spotify"
 )
 
 var playlistTrackCache = cache.New(30*time.Minute, time.Hour)
@@ -38,6 +40,39 @@ func GetPlaylistMetadataBySpotifyPlaylistId(playlistId string) *model.PlaylistMe
 		return &foundPlaylists[0]
 	} else {
 		return nil
+	}
+}
+
+func createPlaylistForSession(joinId string, sessionTitle string, user model.SimpleUser) (*spotify.FullPlaylist, *SpotifeteError) {
+
+	client := users.Client(user)
+
+	playlistTitle := fmt.Sprintf("%s - SpotiFete", sessionTitle)
+	playlistDescription := fmt.Sprintf("Automatic playlist for Spotifete session %s. You can join using the code %s-%s or by installing our app and scanning the QR code in the playlist image.", playlistTitle, joinId[0:4], joinId[4:8])
+
+	playlist, err := client.CreatePlaylistForUser(user.SpotifyId, playlistTitle, playlistDescription, false)
+	if err != nil {
+		return nil, NewError("Could not create spotify playlist.", err, http.StatusInternalServerError)
+	}
+
+	go setPlaylistImage(playlist, joinId, user)
+	return playlist, nil
+}
+
+func setPlaylistImage(playlist *spotify.FullPlaylist, joinId string, user model.SimpleUser) *SpotifeteError {
+
+	client := users.Client(user)
+
+	qrCode, spotifeteError := QrCodeAsJpeg(joinId, false, 512)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+
+	err := client.SetPlaylistImage(playlist.ID, qrCode)
+	if err == nil {
+		return nil
+	} else {
+		return NewError("Could not create spotify playlist.", err, http.StatusInternalServerError)
 	}
 }
 

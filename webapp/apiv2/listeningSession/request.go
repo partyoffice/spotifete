@@ -1,8 +1,8 @@
 package listeningSession
 
 import (
-	. "github.com/47-11/spotifete/shared"
-	. "github.com/47-11/spotifete/webapp/apiv2/shared"
+	. "github.com/partyoffice/spotifete/shared"
+	. "github.com/partyoffice/spotifete/webapp/apiv2/shared"
 )
 
 type NewSessionRequest struct {

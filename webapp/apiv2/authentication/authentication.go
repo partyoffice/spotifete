@@ -1,10 +1,11 @@
 package authentication
 
 import (
-	"github.com/47-11/spotifete/authentication"
-	. "github.com/47-11/spotifete/webapp/apiv2/shared"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/partyoffice/spotifete/authentication"
+	. "github.com/partyoffice/spotifete/webapp/apiv2/shared"
 )
 
 func newSession(c *gin.Context) {
