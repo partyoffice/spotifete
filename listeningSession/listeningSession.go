@@ -384,3 +384,26 @@ func NewQueuePlaylist(session model.FullListeningSession) *SpotifeteError {
 
 	return nil
 }
+
+func RefollowQueuePlaylist(session model.FullListeningSession) *SpotifeteError {
+
+	owner := session.Owner
+	client := users.Client(owner)
+
+	ownerId := spotify.ID(owner.SpotifyId)
+	queuePlaylistId := spotify.ID(session.QueuePlaylistId)
+
+	err := client.UnfollowPlaylist(ownerId, queuePlaylistId)
+	if err != nil {
+		return NewError("Could not unfollow playlist.", err, http.StatusInternalServerError)
+	}
+
+	time.Sleep(1 * time.Second)
+
+	err = client.FollowPlaylist(ownerId, queuePlaylistId, false)
+	if err == nil {
+		return nil
+	} else {
+		return NewError("Could not unfollow playlist.", err, http.StatusInternalServerError)
+	}
+}

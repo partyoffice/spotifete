@@ -319,6 +319,44 @@ func newQueuePlaylist(c *gin.Context) {
 	}
 }
 
+func refollowQueuePlaylist(c *gin.Context) {
+
+	joinId := c.Param("joinId")
+	session := listeningSession.FindFullListeningSession(model.SimpleListeningSession{
+		JoinId: joinId,
+		Active: true,
+	})
+	if session == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Message: "Listening session not found."})
+		return
+	}
+
+	request := AuthenticatedRequest{}
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid requestBody: " + err.Error()})
+		return
+	}
+
+	authenticatedUser, spotifeteError := request.GetSimpleUser()
+	if spotifeteError != nil {
+		SetJsonError(*spotifeteError, c)
+		return
+	}
+
+	if session.OwnerId != authenticatedUser.ID {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Message: "Only the session owner can delete requests from the queue!"})
+		return
+	}
+
+	spotifeteError = listeningSession.RefollowQueuePlaylist(*session)
+	if spotifeteError == nil {
+		c.Status(http.StatusNoContent)
+	} else {
+		SetJsonError(*spotifeteError, c)
+	}
+}
+
 func changeFallbackPlaylist(c *gin.Context) {
 	request := ChangeFallbackPlaylistRequest{}
 	err := c.ShouldBindJSON(&request)
