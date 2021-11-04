@@ -217,13 +217,6 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 		return model.SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
-	queue, err := GetLimitedQueue(session.SimpleListeningSession, 2)
-	if err != nil {
-		return model.SongRequest{}, NewInternalError("Could not fetch queue from database", err)
-	}
-
-	locked := len(queue) < 2
-
 	weight, err := getRequestCountForUser(session.SimpleListeningSession, "")
 	if err != nil {
 		return model.SongRequest{}, NewInternalError("Could not get number of requests for user.", err)
@@ -234,9 +227,16 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 		SessionId:      session.ID,
 		RequestedBy:    username,
 		SpotifyTrackId: updatedTrackMetadata.SpotifyTrackId,
-		Played:         false,
-		Locked:         locked,
 		Weight:         weight,
+	}
+
+	queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("Could not fetch queue from database", err)
+	}
+
+	if len(queue) < 2 {
+		newSongRequest.Locked = true
 	}
 
 	database.GetConnection().Create(&newSongRequest)
