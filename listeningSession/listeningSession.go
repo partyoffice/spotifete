@@ -135,7 +135,7 @@ func joinIdFree(joinId string) bool {
 }
 
 func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
-	session := FindSimpleListeningSession(model.SimpleListeningSession{
+	session := FindFullListeningSession(model.SimpleListeningSession{
 		JoinId: joinId,
 		Active: true,
 	})
@@ -143,50 +143,87 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 		return NewUserError("Unknown listening session.")
 	}
 
-	if user.ID != session.OwnerId {
+	if user.ID != session.Owner.ID {
 		return NewUserError("Only the session owner can close a session.")
 	}
 
 	session.Active = false
-	database.GetConnection().Save(&session)
-	// TODO: Use a transaction here
+	database.GetConnection().Save(session)
 
-	client := users.Client(user)
-	// TODO: Only try to unfollow playlist if owner is still following it.
-	err := client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.QueuePlaylistId))
+	go unfollowQueuePlaylistIfNecessary(*session)
+	go createRewindPlaylistIfNecessary(*session)
+
+	return nil
+}
+
+func unfollowQueuePlaylistIfNecessary(session model.FullListeningSession) {
+
+	err := tryUnfollowQueuePlaylistIfNecessary(session)
 	if err != nil {
-		return NewError("Could not unfollow (delete) playlist.", err, http.StatusInternalServerError)
+		NewInternalError("could not unfollow queue playlist", err)
+	}
+}
+
+func tryUnfollowQueuePlaylistIfNecessary(session model.FullListeningSession) error {
+
+	owner := session.Owner
+	ownerId := spotify.ID(owner.SpotifyId)
+	client := users.Client(owner)
+	playlistId := spotify.ID(session.QueuePlaylistId)
+
+	err := client.UnfollowPlaylist(ownerId, playlistId)
+	if err != nil {
+		// TODO: Don't fail if user does not follow the playlist anymore.
+		return err
 	}
 
-	// Create rewind playlist if any tracks were requested
-	distinctRequestedTracks := GetDistinctRequestedTracks(*session)
-	if len(distinctRequestedTracks) > 0 {
-		rewindPlaylist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s Rewind - SpotiFete", session.Title), fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title), false)
-		if err != nil {
-			return NewError("Could not create rewind playlist.", err, http.StatusInternalServerError)
+	return nil
+}
+
+func createRewindPlaylistIfNecessary(session model.FullListeningSession) {
+
+	err := tryCreateRewindPlaylistIfNecessary(session)
+	if err != nil {
+		NewInternalError("could not create rewind playlist", err)
+	}
+}
+
+func tryCreateRewindPlaylistIfNecessary(session model.FullListeningSession) error {
+
+	distinctRequestedTracks := GetDistinctRequestedTracks(session.SimpleListeningSession)
+	if len(distinctRequestedTracks) == 0 {
+		return nil
+	}
+
+	owner := session.Owner
+	client := users.Client(owner)
+	ownerId := owner.SpotifyId
+	playlistName := fmt.Sprintf("%s Rewind - SpotiFete", session.Title)
+	playlistDescription := fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title)
+
+	rewindPlaylist, err := client.CreatePlaylistForUser(ownerId, playlistName, playlistDescription, false)
+	if err != nil {
+		return err
+	}
+
+	var page []spotify.ID
+	for _, track := range distinctRequestedTracks {
+		page = append(page, track)
+
+		if len(page) == 100 {
+			_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+			if err != nil {
+				return err
+			}
+			page = []spotify.ID{}
 		}
+	}
 
-		go func() {
-			var page []spotify.ID
-			for _, track := range distinctRequestedTracks {
-				page = append(page, track)
-
-				if len(page) == 100 {
-					_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
-					if err != nil {
-						_ = NewInternalError(fmt.Sprintf("Could not add tracks to rewind playlist. Session: %d | Rewind playlist: %s | Tracks: %s", session.ID, rewindPlaylist.ID, page), err)
-					}
-					page = []spotify.ID{}
-				}
-			}
-
-			if len(page) > 0 {
-				_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
-				if err != nil {
-					_ = NewInternalError(fmt.Sprintf("Could not add tracks to rewind playlist. Session: %d | Rewind playlist: %s | Tracks: %s", session.ID, rewindPlaylist.ID, page), err)
-				}
-			}
-		}()
+	if len(page) > 0 {
+		_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
