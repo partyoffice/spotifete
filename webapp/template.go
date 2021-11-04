@@ -162,13 +162,11 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 	trackId := c.PostForm("trackId")
 
+	username := ""
 	loginSession := authentication.GetValidSessionFromCookie(c)
-	if loginSession == nil || loginSession.User == nil {
-		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
-		return
+	if loginSession != nil && loginSession.User != nil {
+		username = loginSession.User.SpotifyDisplayName
 	}
-
-	username := loginSession.User.SpotifyDisplayName
 
 	_, spotifeteError := listeningSession.RequestSong(*session, trackId, username)
 	if spotifeteError == nil {
