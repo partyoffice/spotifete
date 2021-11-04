@@ -241,7 +241,7 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 
 	database.GetConnection().Create(&newSongRequest)
 
-	return newSongRequest, updateSessionPlaylistIfNecessary(session)
+	return newSongRequest, updatePlaylistIfNecessary(session)
 }
 
 func getRequestCountForUser(session model.SimpleListeningSession, requestedBy string) (int64, error) {
@@ -265,17 +265,17 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 		return spotifeteError
 	}
 
-	if isSessionUpdateNecessary(session, queue) {
-		err = updateSession(queue)
+	if shouldUpdateQueue(session, queue) {
+		err = updateQueue(queue)
 		if err != nil {
 			return NewInternalError("could not update session", err)
 		}
 	}
 
-	return updateSessionPlaylistIfNecessary(session)
+	return updatePlaylistIfNecessary(session)
 }
 
-func isSessionUpdateNecessary(session model.FullListeningSession, queue []model.SongRequest) bool {
+func shouldUpdateQueue(session model.FullListeningSession, queue []model.SongRequest) bool {
 
 	if len(queue) < 2 {
 		return false
@@ -299,16 +299,16 @@ func isSessionPlaying(session model.FullListeningSession, playbackContext spotif
 	return playbackContext.Type == "playlist" && strings.HasSuffix(string(playbackContext.URI), session.QueuePlaylistId)
 }
 
-func updateSession(queue []model.SongRequest) error {
+func updateQueue(queue []model.SongRequest) error {
 
 	updateSessionTask := func(tx *gorm.DB) error {
-		return updateSessionInTransaction(queue, tx)
+		return updateQueueInTransaction(queue, tx)
 	}
 
 	return database.GetConnection().Transaction(updateSessionTask)
 }
 
-func updateSessionInTransaction(queue []model.SongRequest, tx *gorm.DB) error {
+func updateQueueInTransaction(queue []model.SongRequest, tx *gorm.DB) error {
 
 	queue[0].Played = true
 	err := tx.Save(&queue[0]).Error
@@ -336,26 +336,26 @@ func updateSessionInTransaction(queue []model.SongRequest, tx *gorm.DB) error {
 	return tx.Save(&queue[2]).Error
 }
 
-func updateSessionPlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
+func updatePlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
 
 	queue, err := GetLimitedQueue(session.SimpleListeningSession, 2)
 	if err != nil {
 		return NewInternalError("could not fetch limited queue from database", err)
 	}
 
-	shouldUpdateSessionPlaylist, spotifeteError := shouldUpdateSessionPlaylist(session, queue)
+	shouldUpdateSessionPlaylist, spotifeteError := shouldUpdatePlaylist(session, queue)
 	if spotifeteError != nil {
 		return spotifeteError
 	}
 
 	if shouldUpdateSessionPlaylist {
-		return updateSessionPlaylist(session, queue)
+		return updatePlaylist(session, queue)
 	}
 
 	return nil
 }
 
-func shouldUpdateSessionPlaylist(session model.FullListeningSession, queue []model.SongRequest) (bool, *SpotifeteError) {
+func shouldUpdatePlaylist(session model.FullListeningSession, queue []model.SongRequest) (bool, *SpotifeteError) {
 
 	queueLength := len(queue)
 	if queueLength == 0 {
@@ -393,7 +393,7 @@ func shouldUpdateSessionPlaylist(session model.FullListeningSession, queue []mod
 	return false, nil
 }
 
-func updateSessionPlaylist(session model.FullListeningSession, queue []model.SongRequest) *SpotifeteError {
+func updatePlaylist(session model.FullListeningSession, queue []model.SongRequest) *SpotifeteError {
 
 	client := Client(session)
 	playlistId := spotify.ID(session.QueuePlaylistId)
