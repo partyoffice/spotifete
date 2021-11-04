@@ -34,8 +34,7 @@ func GetTrackMetadataBySpotifyTrackId(trackId string) *model.TrackMetadata {
 	}
 }
 
-func getTrackPlayCount(session model.SimpleListeningSession, spotifyTrackId string) int64 {
-	var trackPlays int64
-	database.GetConnection().Model(model.SongRequest{}).Where(model.SongRequest{SessionId: session.ID, SpotifyTrackId: spotifyTrackId}).Count(&trackPlays)
-	return trackPlays
+func getTrackPlayCount(session model.SimpleListeningSession, spotifyTrackId string) (int64, error) {
+
+	return FindSongRequestCount(model.SongRequest{SessionId: session.ID, SpotifyTrackId: spotifyTrackId})
 }

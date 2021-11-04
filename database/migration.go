@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const targetDatabaseVersion = 35
+const targetDatabaseVersion = 41
 
 func migrateIfNecessary(db *gorm.DB) {
 	logger.Info("Connection acquired. Checking database version")

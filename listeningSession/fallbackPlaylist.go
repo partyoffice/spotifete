@@ -58,38 +58,41 @@ func SetFallbackPlaylistShuffle(session model.SimpleListeningSession, user model
 	return nil
 }
 
-func addFallbackTrackIfNecessary(session model.FullListeningSession, upNextRequest *model.SongRequest) (trackAdded bool, error *SpotifeteError) {
+func addFallbackTrackIfNecessary(session model.FullListeningSession, queue []model.SongRequest) (updatedQueue []model.SongRequest, error *SpotifeteError) {
+
 	if session.FallbackPlaylistId == nil {
-		return false, nil
+		return queue, nil
 	}
 
-	if upNextRequest != nil {
-		return false, nil
+	for i := len(queue); i < 2; i++ {
+		addedRequest, spotifeteError := addFallbackTrack(session)
+		if spotifeteError != nil {
+			return queue, spotifeteError
+		}
+
+		queue = append(queue, addedRequest)
 	}
 
-	spotifeteError := addFallbackTrack(session)
-	if spotifeteError != nil {
-		return false, spotifeteError
-	}
-
-	return true, nil
+	return queue, nil
 }
 
-func addFallbackTrack(session model.FullListeningSession) (error *SpotifeteError) {
+func addFallbackTrack(session model.FullListeningSession) (addedRequest model.SongRequest, error *SpotifeteError) {
+
 	fallbackTrackId, spotifeteError := findNextFallbackTrack(session)
 	if spotifeteError != nil {
-		return spotifeteError
+		return model.SongRequest{}, spotifeteError
 	}
 
-	_, spotifeteError = RequestSong(session, fallbackTrackId)
+	addedRequest, spotifeteError = RequestSong(session, fallbackTrackId, "Fallback-Playlist")
 	if spotifeteError != nil {
-		return spotifeteError
+		return model.SongRequest{}, spotifeteError
 	}
 
-	return nil
+	return addedRequest, nil
 }
 
 func findNextFallbackTrack(session model.FullListeningSession) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
+
 	playableTracks, spotifeteError := getPlayablePlaylistTracks(*session.FallbackPlaylistId, session.Owner)
 	if spotifeteError != nil {
 		return "", spotifeteError
@@ -109,10 +112,17 @@ func findNextFallbackTrack(session model.FullListeningSession) (nextFallbackTrac
 }
 
 func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.FullListeningSession) (nextFallbackTrackId string, spotifeteError *SpotifeteError) {
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
+
+	queue, err := GetFullQueue(session.SimpleListeningSession)
+	if err != nil {
+		return "", nil
+	}
 
 	for i := 0; i < 10_000; i++ {
-		fallbackTrack := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, currentlyPlayingRequest, 0)
+		fallbackTrack, err := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, queue, 0)
+		if err != nil {
+			return "", NewInternalError("could not find possible fallback tracks", err)
+		}
 		if fallbackTrack != nil {
 			return *fallbackTrack, nil
 		}
@@ -124,7 +134,7 @@ func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.
 	return "", NewInternalError(fmt.Sprintf("No track found in fallback playlist for session %d that has been played less than 10,000 times. Aborting and removing fallback playlist.", session.ID), nil)
 }
 
-func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTrack, session model.SimpleListeningSession, currentlyPlayingRequest *model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string) {
+func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTrack, session model.SimpleListeningSession, queue []model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string, err error) {
 	if session.FallbackPlaylistShuffle {
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(
@@ -136,14 +146,28 @@ func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTr
 
 	for _, track := range playableTracks {
 		trackId := track.ID.String()
-		if currentlyPlayingRequest == nil || currentlyPlayingRequest.SpotifyTrackId != trackId {
-			playCount := getTrackPlayCount(session, trackId)
+		if !queueContainsTrack(queue, trackId) {
+			playCount, err := getTrackPlayCount(session, trackId)
+			if err != nil {
+				return nil, err
+			}
 
 			if playCount <= maximumPlays {
-				return &trackId
+				return &trackId, nil
 			}
 		}
 	}
 
-	return nil
+	return nil, nil
+}
+
+func queueContainsTrack(queue []model.SongRequest, trackId string) bool {
+
+	for _, trackInQueue := range queue {
+		if trackInQueue.SpotifyTrackId == trackId {
+			return true
+		}
+	}
+
+	return false
 }
