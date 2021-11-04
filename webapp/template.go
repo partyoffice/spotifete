@@ -122,13 +122,6 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		return
 	}
 
-	currentlyPlayingRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
-	upNextRequest := listeningSession.GetUpNextRequest(*session)
-	queue := listeningSession.GetSessionQueueInDemocraticOrder(*session)
-
-	displayError := c.Query("displayError")
-
-	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session).UTC().Format(time.RFC3339Nano)
 	loginSession := authentication.GetValidSessionFromCookie(c)
 
 	var user *model.SimpleUser
@@ -136,12 +129,21 @@ func (TemplateController) ViewSession(c *gin.Context) {
 		user = loginSession.User
 	}
 
+	fullQueue, err := listeningSession.GetFullQueue(*session)
+	if err != nil {
+		c.HTML(http.StatusOK, "viewSession.html", gin.H{
+			"session":      session,
+			"user":         user,
+			"displayError": err.Error(),
+		})
+	}
+	queueLastUpdated := listeningSession.GetQueueLastUpdated(*session).UTC().Format(time.RFC3339Nano)
+
+	displayError := c.Query("displayError")
 	c.HTML(http.StatusOK, "viewSession.html", gin.H{
 		"queueLastUpdated": queueLastUpdated,
 		"session":          session,
-		"currentlyPlaying": currentlyPlayingRequest,
-		"upNext":           upNextRequest,
-		"queue":            queue,
+		"queue":            fullQueue,
 		"user":             user,
 		"displayError":     displayError,
 	})
@@ -160,7 +162,15 @@ func (TemplateController) RequestTrack(c *gin.Context) {
 
 	trackId := c.PostForm("trackId")
 
-	_, spotifeteError := listeningSession.RequestSong(*session, trackId)
+	loginSession := authentication.GetValidSessionFromCookie(c)
+	if loginSession == nil || loginSession.User == nil {
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/login?redirectTo=/session/view/%s", joinId))
+		return
+	}
+
+	username := loginSession.User.SpotifyDisplayName
+
+	_, spotifeteError := listeningSession.RequestSong(*session, trackId, username)
 	if spotifeteError == nil {
 		c.Redirect(http.StatusSeeOther, "/session/view/"+joinId)
 	} else {
