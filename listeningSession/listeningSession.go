@@ -173,7 +173,6 @@ func tryUnfollowQueuePlaylistIfNecessary(session model.FullListeningSession) err
 
 	err := client.UnfollowPlaylist(ownerId, playlistId)
 	if err != nil {
-		// TODO: Don't fail if user does not follow the playlist anymore.
 		return err
 	}
 
