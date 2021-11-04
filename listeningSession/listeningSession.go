@@ -2,6 +2,7 @@ package listeningSession
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -265,9 +266,9 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 	}
 
 	if isSessionUpdateNecessary(session, queue) {
-		spotifeteError := updateSession(queue)
-		if spotifeteError != nil {
-			return spotifeteError
+		err = updateSession(queue)
+		if err != nil {
+			return NewInternalError("could not update session", err)
 		}
 	}
 
@@ -298,12 +299,21 @@ func isSessionPlaying(session model.FullListeningSession, playbackContext spotif
 	return playbackContext.Type == "playlist" && strings.HasSuffix(string(playbackContext.URI), session.QueuePlaylistId)
 }
 
-func updateSession(queue []model.SongRequest) *SpotifeteError {
+func updateSession(queue []model.SongRequest) error {
+
+	updateSessionTask := func(tx *gorm.DB) error {
+		return updateSessionInTransaction(queue, tx)
+	}
+
+	return database.GetConnection().Transaction(updateSessionTask)
+}
+
+func updateSessionInTransaction(queue []model.SongRequest, tx *gorm.DB) error {
 
 	queue[0].Played = true
-	err := database.GetConnection().Save(&queue[0]).Error
+	err := tx.Save(&queue[0]).Error
 	if err != nil {
-		return NewInternalError("could not save song request after marking as played", err)
+		return err
 	}
 
 	if len(queue) < 2 {
@@ -312,9 +322,9 @@ func updateSession(queue []model.SongRequest) *SpotifeteError {
 
 	queue[1].Locked = true
 	queue[1].Weight = 0
-	err = database.GetConnection().Save(&queue[1]).Error
+	err = tx.Save(&queue[1]).Error
 	if err != nil {
-		return NewInternalError("could not save song request after marking as played", err)
+		return err
 	}
 
 	if len(queue) < 3 {
@@ -323,12 +333,7 @@ func updateSession(queue []model.SongRequest) *SpotifeteError {
 
 	queue[2].Locked = true
 	queue[2].Weight = 1
-	err = database.GetConnection().Save(&queue[2]).Error
-	if err != nil {
-		return NewInternalError("could not save song request after marking as played", err)
-	}
-
-	return nil
+	return tx.Save(&queue[2]).Error
 }
 
 func updateSessionPlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
