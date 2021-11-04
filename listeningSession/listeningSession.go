@@ -1,6 +1,7 @@
 package listeningSession
 
 import (
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"math/rand"
@@ -191,12 +192,37 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 	return nil
 }
 
-// TODO: This is probably not thread-safe
-func RequestSong(session model.FullListeningSession, trackId string, username string) (model.SongRequest, *SpotifeteError) {
+func RequestSong(session model.FullListeningSession, trackId string, username string) (createdRequest model.SongRequest, spotifeteError *SpotifeteError) {
+
+	requestSongTask := func(tx *gorm.DB) error {
+		createdRequest, spotifeteError = createNewSongRequestInTransaction(session, trackId, username, tx)
+		if spotifeteError != nil {
+			// TODO: improve this when refactoring errors
+			return errors.New("rolling back transaction")
+		}
+
+		queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
+		if err != nil {
+			return err
+		}
+
+		go updatePlaylistIfNecessary(session, queue)
+
+		return nil
+	}
+
+	err := database.GetConnection().Transaction(requestSongTask)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("could not request song", err)
+	}
+
+	return createdRequest, nil
+}
+
+func createNewSongRequestInTransaction(session model.FullListeningSession, trackId string, username string, tx *gorm.DB) (model.SongRequest, *SpotifeteError) {
 	client := Client(session)
 
-	// Prevent duplicates
-	if IsTrackInQueue(session.SimpleListeningSession, trackId) {
+	if isTrackInQueue(session.SimpleListeningSession, trackId, tx) {
 		return model.SongRequest{}, NewUserError("This tack is already in the queue.")
 	}
 
@@ -211,13 +237,17 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 	if err != nil {
 		return model.SongRequest{}, NewError("Could not get track information from spotify.", err, http.StatusInternalServerError)
 	}
-	updatedTrackMetadata := AddOrUpdateTrackMetadata(*spotifyTrack)
+
+	updatedTrackMetadata, err := AddOrUpdateTrackMetadataInTransaction(*spotifyTrack, tx)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("Could not get track metadata", err)
+	}
 
 	if spotifyTrack.IsPlayable == nil || !*spotifyTrack.IsPlayable {
 		return model.SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
-	weight, err := getRequestCountForUser(session.SimpleListeningSession, "")
+	weight, err := getRequestCountForUser(session.SimpleListeningSession, "", tx)
 	if err != nil {
 		return model.SongRequest{}, NewInternalError("Could not get number of requests for user.", err)
 	}
@@ -230,27 +260,33 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 		Weight:         weight,
 	}
 
-	queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
-	if err != nil {
-		return model.SongRequest{}, NewInternalError("Could not fetch queue from database", err)
+	filter := map[string]interface{}{
+		"session_id": session.ID,
+		"played":     false,
 	}
-
-	if len(queue) < 2 {
+	queueLength, err := FindSongRequestCountInTransaction(filter, tx)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("Could not fetch duplicates from database", err)
+	}
+	if queueLength < 2 {
 		newSongRequest.Locked = true
 	}
 
-	database.GetConnection().Create(&newSongRequest)
+	err = tx.Create(&newSongRequest).Error
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("could not save new request", err)
+	}
 
-	return newSongRequest, updatePlaylistIfNecessary(session, queue)
+	return newSongRequest, nil
 }
 
-func getRequestCountForUser(session model.SimpleListeningSession, requestedBy string) (int64, error) {
+func getRequestCountForUser(session model.SimpleListeningSession, requestedBy string, tx *gorm.DB) (int64, error) {
 
 	filter := map[string]interface{}{
 		"session_id":   session.ID,
 		"requested_by": requestedBy,
 	}
-	return FindSongRequestCount(filter)
+	return FindSongRequestCountInTransaction(filter, tx)
 }
 
 func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteError {

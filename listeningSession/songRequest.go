@@ -43,6 +43,13 @@ func FindSongRequestCount(filter interface{}) (int64, error) {
 	return count, err
 }
 
+func FindSongRequestCountInTransaction(filter interface{}, tx *gorm.DB) (int64, error) {
+
+	var count int64
+	err := tx.Model(model.SongRequest{}).Where(filter).Count(&count).Error
+	return count, err
+}
+
 func GetFullQueue(session model.SimpleListeningSession) ([]model.SongRequest, error) {
 
 	query := buildGetQueueQuery(session)
@@ -79,9 +86,9 @@ func GetQueueLastUpdated(session model.SimpleListeningSession) time.Time {
 	}
 }
 
-func IsTrackInQueue(session model.SimpleListeningSession, trackId string) bool {
+func isTrackInQueue(session model.SimpleListeningSession, trackId string, tx *gorm.DB) bool {
 	var duplicateRequestsForTrack []model.SongRequest
-	database.GetConnection().Where("played = false AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
+	tx.Where("played = false AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
 	return len(duplicateRequestsForTrack) > 0
 }
 

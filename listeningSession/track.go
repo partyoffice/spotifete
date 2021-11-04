@@ -1,31 +1,33 @@
 package listeningSession
 
 import (
-	"github.com/partyoffice/spotifete/database"
 	"github.com/partyoffice/spotifete/database/model"
 	"github.com/zmb3/spotify"
+	"gorm.io/gorm"
 )
 
-func AddOrUpdateTrackMetadata(spotifyTrack spotify.FullTrack) model.TrackMetadata {
-	track := GetTrackMetadataBySpotifyTrackId(spotifyTrack.ID.String())
-	if track != nil {
-		updatedTrack := track.SetMetadata(spotifyTrack)
+func AddOrUpdateTrackMetadataInTransaction(spotifyTrack spotify.FullTrack, tx *gorm.DB) (trackMetadata model.TrackMetadata, err error) {
 
-		database.GetConnection().Save(&updatedTrack)
+	knownTrackMetadata := GetTrackMetadataBySpotifyTrackIdInTransaction(spotifyTrack.ID.String(), tx)
+	if knownTrackMetadata != nil {
 
-		return updatedTrack
+		updatedTrackMetadata := knownTrackMetadata.SetMetadata(spotifyTrack)
+		err = tx.Save(&updatedTrackMetadata).Error
+
+		return updatedTrackMetadata, err
 	} else {
-		newTrack := model.TrackMetadata{}.SetMetadata(spotifyTrack)
 
-		database.GetConnection().Create(&newTrack)
+		newTrackMetadata := model.TrackMetadata{}.SetMetadata(spotifyTrack)
+		err = tx.Create(&newTrackMetadata).Error
 
-		return newTrack
+		return newTrackMetadata, err
 	}
 }
 
-func GetTrackMetadataBySpotifyTrackId(trackId string) *model.TrackMetadata {
+func GetTrackMetadataBySpotifyTrackIdInTransaction(trackId string, tx *gorm.DB) *model.TrackMetadata {
+
 	var foundTracks []model.TrackMetadata
-	database.GetConnection().Where(model.TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
+	tx.Where(model.TrackMetadata{SpotifyTrackId: trackId}).Find(&foundTracks)
 
 	if len(foundTracks) > 0 {
 		return &foundTracks[0]
