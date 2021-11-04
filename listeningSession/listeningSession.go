@@ -265,7 +265,10 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 	}
 
 	if isSessionUpdateNecessary(session, queue) {
-		return updateSession(queue)
+		spotifeteError := updateSession(queue)
+		if spotifeteError != nil {
+			return spotifeteError
+		}
 	}
 
 	return updateSessionPlaylistIfNecessary(session)
