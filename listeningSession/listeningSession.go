@@ -247,7 +247,7 @@ func createNewSongRequestInTransaction(session model.FullListeningSession, track
 		return model.SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
-	weight, err := getRequestCountForUser(session.SimpleListeningSession, "", tx)
+	weight, err := getRequestCountForUser(session.SimpleListeningSession, username, tx)
 	if err != nil {
 		return model.SongRequest{}, NewInternalError("Could not get number of requests for user.", err)
 	}
