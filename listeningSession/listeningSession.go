@@ -303,12 +303,26 @@ func updateSession(queue []model.SongRequest) *SpotifeteError {
 		return NewInternalError("could not save song request after marking as played", err)
 	}
 
-	if len(queue) >= 3 {
-		queue[2].Locked = true
-		err = database.GetConnection().Save(&queue[2]).Error
-		if err != nil {
-			return NewInternalError("could not save song request after marking as locked", err)
-		}
+	if len(queue) < 2 {
+		return nil
+	}
+
+	queue[1].Locked = true
+	queue[1].Weight = 0
+	err = database.GetConnection().Save(&queue[1]).Error
+	if err != nil {
+		return NewInternalError("could not save song request after marking as played", err)
+	}
+
+	if len(queue) < 3 {
+		return nil
+	}
+
+	queue[2].Locked = true
+	queue[2].Weight = 1
+	err = database.GetConnection().Save(&queue[2]).Error
+	if err != nil {
+		return NewInternalError("could not save song request after marking as played", err)
 	}
 
 	return nil
