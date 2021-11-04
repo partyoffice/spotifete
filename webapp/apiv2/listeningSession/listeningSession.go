@@ -1,6 +1,7 @@
 package listeningSession
 
 import (
+	"github.com/partyoffice/spotifete/shared"
 	"net/http"
 	"strconv"
 
@@ -87,13 +88,12 @@ func getSessionQueue(c *gin.Context) {
 		return
 	}
 
-	currentlyPlayingRequest := listeningSession.GetCurrentlyPlayingRequest(*session)
-	upNextRequest := listeningSession.GetUpNextRequest(*session)
-	queue := listeningSession.GetSessionQueueInDemocraticOrder(*session)
+	queue, err := listeningSession.GetFullQueue(*session)
+	if err != nil {
+		SetJsonError(*shared.NewInternalError("could not get full queue", err), c)
+	}
 	c.JSON(http.StatusOK, GetSessionQueueResponse{
-		CurrentlyPlayingRequest: currentlyPlayingRequest,
-		UpNextRequest:           upNextRequest,
-		Queue:                   queue,
+		Queue: queue,
 	})
 }
 
@@ -273,7 +273,7 @@ func requestTrack(c *gin.Context) {
 		return
 	}
 
-	_, spotifeteError = listeningSession.RequestSong(*session, request.TrackId)
+	_, spotifeteError = listeningSession.RequestSong(*session, request.TrackId, request.Username)
 	if spotifeteError == nil {
 		c.Status(http.StatusNoContent)
 	} else {

@@ -2,7 +2,7 @@ package listeningSession
 
 import (
 	"fmt"
-	"sort"
+	"gorm.io/gorm"
 	"time"
 
 	"github.com/partyoffice/spotifete/database"
@@ -11,51 +11,65 @@ import (
 	"github.com/zmb3/spotify"
 )
 
-func FindSongRequest(filter model.SongRequest) *model.SongRequest {
-	songRequests := FindSongRequests(filter)
+func FindSongRequest(filter interface{}) (*model.SongRequest, error) {
+
+	query := database.GetConnection().Where(filter)
+	songRequests, err := FindSongRequests(query)
+	if err != nil {
+		return nil, err
+	}
 
 	resultCount := len(songRequests)
 	if resultCount == 1 {
-		return &songRequests[0]
+		return &songRequests[0], nil
 	} else if resultCount == 0 {
-		return nil
+		return nil, nil
 	} else {
-		NewInternalError(fmt.Sprintf("Got more than one result for filter %v", filter), nil)
-		return nil
+		return nil, fmt.Errorf("got more than one result")
 	}
 }
 
-func FindSongRequests(filter model.SongRequest) []model.SongRequest {
+func FindSongRequests(query *gorm.DB) ([]model.SongRequest, error) {
+
 	var songRequests []model.SongRequest
-	database.GetConnection().Where(filter).Joins("TrackMetadata").Find(&songRequests)
-	return songRequests
+	err := query.Joins("TrackMetadata").Find(&songRequests).Error
+	return songRequests, err
 }
 
-func GetCurrentlyPlayingRequest(session model.SimpleListeningSession) *model.SongRequest {
-	return FindSongRequest(model.SongRequest{
-		SessionId: session.ID,
-		Status:    model.StatusCurrentlyPlaying,
-	})
+func FindSongRequestCount(filter interface{}) (int64, error) {
+
+	var count int64
+	err := database.GetConnection().Model(model.SongRequest{}).Where(filter).Count(&count).Error
+	return count, err
 }
 
-func GetUpNextRequest(session model.SimpleListeningSession) *model.SongRequest {
-	return FindSongRequest(model.SongRequest{
-		SessionId: session.ID,
-		Status:    model.StatusUpNext,
-	})
+func FindSongRequestCountInTransaction(filter interface{}, tx *gorm.DB) (int64, error) {
+
+	var count int64
+	err := tx.Model(model.SongRequest{}).Where(filter).Count(&count).Error
+	return count, err
 }
 
-func GetSessionQueueInDemocraticOrder(session model.SimpleListeningSession) []model.SongRequest {
-	queue := FindSongRequests(model.SongRequest{
-		SessionId: session.ID,
-		Status:    model.StatusInQueue,
-	})
+func GetFullQueue(session model.SimpleListeningSession) ([]model.SongRequest, error) {
 
-	sort.SliceStable(queue, func(i, j int) bool {
-		return queue[i].ID < queue[j].ID
-	})
+	query := buildGetQueueQuery(session)
+	return FindSongRequests(query)
+}
 
-	return queue
+func GetLimitedQueue(session model.SimpleListeningSession, limit int) ([]model.SongRequest, error) {
+
+	query := buildGetQueueQuery(session).Limit(limit)
+	return FindSongRequests(query)
+}
+
+func buildGetQueueQuery(session model.SimpleListeningSession) *gorm.DB {
+
+	filter := map[string]interface{}{
+		"session_id": session.ID,
+		"played":     false,
+	}
+
+	return database.GetConnection().Where(filter).Order("locked desc, weight asc, created_at asc")
 }
 
 func GetQueueLastUpdated(session model.SimpleListeningSession) time.Time {
@@ -72,9 +86,9 @@ func GetQueueLastUpdated(session model.SimpleListeningSession) time.Time {
 	}
 }
 
-func IsTrackInQueue(session model.SimpleListeningSession, trackId string) bool {
+func isTrackInQueue(session model.SimpleListeningSession, trackId string, tx *gorm.DB) bool {
 	var duplicateRequestsForTrack []model.SongRequest
-	database.GetConnection().Where("status != 'PLAYED' AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
+	tx.Where("played = false AND session_id = ? AND spotify_track_id = ?", session.ID, trackId).Find(&duplicateRequestsForTrack)
 	return len(duplicateRequestsForTrack) > 0
 }
 
@@ -96,16 +110,22 @@ func GetDistinctRequestedTracks(session model.SimpleListeningSession) (trackIds 
 }
 
 func DeleteRequestFromQueue(session model.SimpleListeningSession, spotifyTrackId string) *SpotifeteError {
-	requestToDelete := FindSongRequest(model.SongRequest{
-		SessionId:      session.ID,
-		SpotifyTrackId: spotifyTrackId,
-	})
+
+	filter := map[string]interface{}{
+		"session_id":       session.ID,
+		"spotify_track_id": spotifyTrackId,
+		"played":           false,
+	}
+
+	requestToDelete, err := FindSongRequest(filter)
+	if err != nil {
+		return NewInternalError("Could not fetch request to delete", err)
+	}
 	if requestToDelete == nil {
 		return NewUserError("Request not found in queue.")
 	}
-
-	if requestToDelete.Status != model.StatusInQueue {
-		return NewUserError("The request must be in the queue to be deleted.")
+	if requestToDelete.Locked {
+		return NewUserError("This request cannot be deleted.")
 	}
 
 	database.GetConnection().Delete(requestToDelete)

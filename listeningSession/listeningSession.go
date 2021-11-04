@@ -1,7 +1,9 @@
 package listeningSession
 
 import (
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -133,7 +135,7 @@ func joinIdFree(joinId string) bool {
 }
 
 func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
-	session := FindSimpleListeningSession(model.SimpleListeningSession{
+	session := FindFullListeningSession(model.SimpleListeningSession{
 		JoinId: joinId,
 		Active: true,
 	})
@@ -141,61 +143,122 @@ func CloseSession(user model.SimpleUser, joinId string) *SpotifeteError {
 		return NewUserError("Unknown listening session.")
 	}
 
-	if user.ID != session.OwnerId {
+	if user.ID != session.Owner.ID {
 		return NewUserError("Only the session owner can close a session.")
 	}
 
 	session.Active = false
-	database.GetConnection().Save(&session)
-	// TODO: Use a transaction here
+	database.GetConnection().Save(session)
 
-	client := users.Client(user)
-	// TODO: Only try to unfollow playlist if owner is still following it.
-	err := client.UnfollowPlaylist(spotify.ID(user.SpotifyId), spotify.ID(session.QueuePlaylistId))
+	go unfollowQueuePlaylistIfNecessary(*session)
+	go createRewindPlaylistIfNecessary(*session)
+
+	return nil
+}
+
+func unfollowQueuePlaylistIfNecessary(session model.FullListeningSession) {
+
+	err := tryUnfollowQueuePlaylistIfNecessary(session)
 	if err != nil {
-		return NewError("Could not unfollow (delete) playlist.", err, http.StatusInternalServerError)
+		NewInternalError("could not unfollow queue playlist", err)
 	}
+}
 
-	// Create rewind playlist if any tracks were requested
-	distinctRequestedTracks := GetDistinctRequestedTracks(*session)
-	if len(distinctRequestedTracks) > 0 {
-		rewindPlaylist, err := client.CreatePlaylistForUser(user.SpotifyId, fmt.Sprintf("%s Rewind - SpotiFete", session.Title), fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title), false)
-		if err != nil {
-			return NewError("Could not create rewind playlist.", err, http.StatusInternalServerError)
-		}
+func tryUnfollowQueuePlaylistIfNecessary(session model.FullListeningSession) error {
 
-		go func() {
-			var page []spotify.ID
-			for _, track := range distinctRequestedTracks {
-				page = append(page, track)
+	owner := session.Owner
+	ownerId := spotify.ID(owner.SpotifyId)
+	client := users.Client(owner)
+	playlistId := spotify.ID(session.QueuePlaylistId)
 
-				if len(page) == 100 {
-					_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
-					if err != nil {
-						_ = NewInternalError(fmt.Sprintf("Could not add tracks to rewind playlist. Session: %d | Rewind playlist: %s | Tracks: %s", session.ID, rewindPlaylist.ID, page), err)
-					}
-					page = []spotify.ID{}
-				}
-			}
-
-			if len(page) > 0 {
-				_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
-				if err != nil {
-					_ = NewInternalError(fmt.Sprintf("Could not add tracks to rewind playlist. Session: %d | Rewind playlist: %s | Tracks: %s", session.ID, rewindPlaylist.ID, page), err)
-				}
-			}
-		}()
+	err := client.UnfollowPlaylist(ownerId, playlistId)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// TODO: This is probably not thread-safe
-func RequestSong(session model.FullListeningSession, trackId string) (model.SongRequest, *SpotifeteError) {
+func createRewindPlaylistIfNecessary(session model.FullListeningSession) {
+
+	err := tryCreateRewindPlaylistIfNecessary(session)
+	if err != nil {
+		NewInternalError("could not create rewind playlist", err)
+	}
+}
+
+func tryCreateRewindPlaylistIfNecessary(session model.FullListeningSession) error {
+
+	distinctRequestedTracks := GetDistinctRequestedTracks(session.SimpleListeningSession)
+	if len(distinctRequestedTracks) == 0 {
+		return nil
+	}
+
+	owner := session.Owner
+	client := users.Client(owner)
+	ownerId := owner.SpotifyId
+	playlistName := fmt.Sprintf("%s Rewind - SpotiFete", session.Title)
+	playlistDescription := fmt.Sprintf("Rewind playlist for your session %s. This contains all the songs that were requested.", session.Title)
+
+	rewindPlaylist, err := client.CreatePlaylistForUser(ownerId, playlistName, playlistDescription, false)
+	if err != nil {
+		return err
+	}
+
+	var page []spotify.ID
+	for _, track := range distinctRequestedTracks {
+		page = append(page, track)
+
+		if len(page) == 100 {
+			_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+			if err != nil {
+				return err
+			}
+			page = []spotify.ID{}
+		}
+	}
+
+	if len(page) > 0 {
+		_, err = client.AddTracksToPlaylist(rewindPlaylist.ID, page...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func RequestSong(session model.FullListeningSession, trackId string, username string) (createdRequest model.SongRequest, spotifeteError *SpotifeteError) {
+
+	requestSongTask := func(tx *gorm.DB) error {
+		createdRequest, spotifeteError = createNewSongRequestInTransaction(session, trackId, username, tx)
+		if spotifeteError != nil {
+			// TODO: improve this when refactoring errors
+			return errors.New("rolling back transaction")
+		}
+
+		queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
+		if err != nil {
+			return err
+		}
+
+		go updatePlaylistIfNecessary(session, queue)
+
+		return nil
+	}
+
+	err := database.GetConnection().Transaction(requestSongTask)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("could not request song", err)
+	}
+
+	return createdRequest, nil
+}
+
+func createNewSongRequestInTransaction(session model.FullListeningSession, trackId string, username string, tx *gorm.DB) (model.SongRequest, *SpotifeteError) {
 	client := Client(session)
 
-	// Prevent duplicates
-	if IsTrackInQueue(session.SimpleListeningSession, trackId) {
+	if isTrackInQueue(session.SimpleListeningSession, trackId, tx) {
 		return model.SongRequest{}, NewUserError("This tack is already in the queue.")
 	}
 
@@ -210,70 +273,83 @@ func RequestSong(session model.FullListeningSession, trackId string) (model.Song
 	if err != nil {
 		return model.SongRequest{}, NewError("Could not get track information from spotify.", err, http.StatusInternalServerError)
 	}
-	updatedTrackMetadata := AddOrUpdateTrackMetadata(*spotifyTrack)
+
+	updatedTrackMetadata, err := AddOrUpdateTrackMetadataInTransaction(*spotifyTrack, tx)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("Could not get track metadata", err)
+	}
 
 	if spotifyTrack.IsPlayable == nil || !*spotifyTrack.IsPlayable {
 		return model.SongRequest{}, NewUserError("Sorry, this track is not available :/")
 	}
 
-	// Check if we have to add the request to the queue or play it immediately
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
-	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
-
-	var newRequestStatus model.SongRequestStatus
-	if currentlyPlayingRequest == nil {
-		newRequestStatus = model.StatusCurrentlyPlaying
-	} else if upNextRequest == nil {
-		newRequestStatus = model.StatusUpNext
-	} else {
-		newRequestStatus = model.StatusInQueue
+	weight, err := getRequestCountForUser(session.SimpleListeningSession, username, tx)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("Could not get number of requests for user.", err)
 	}
 
 	newSongRequest := model.SongRequest{
 		BaseModel:      model.BaseModel{},
 		SessionId:      session.ID,
-		UserId:         nil,
+		RequestedBy:    username,
 		SpotifyTrackId: updatedTrackMetadata.SpotifyTrackId,
-		Status:         newRequestStatus,
+		Weight:         weight,
 	}
 
-	database.GetConnection().Create(&newSongRequest)
+	filter := map[string]interface{}{
+		"session_id": session.ID,
+		"played":     false,
+	}
+	queueLength, err := FindSongRequestCountInTransaction(filter, tx)
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("Could not fetch duplicates from database", err)
+	}
+	if queueLength < 2 {
+		newSongRequest.Locked = true
+	}
 
-	return newSongRequest, updateSessionPlaylistIfNecessary(session)
+	err = tx.Create(&newSongRequest).Error
+	if err != nil {
+		return model.SongRequest{}, NewInternalError("could not save new request", err)
+	}
+
+	return newSongRequest, nil
+}
+
+func getRequestCountForUser(session model.SimpleListeningSession, requestedBy string, tx *gorm.DB) (int64, error) {
+
+	filter := map[string]interface{}{
+		"session_id":   session.ID,
+		"requested_by": requestedBy,
+	}
+	return FindSongRequestCountInTransaction(filter, tx)
 }
 
 func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteError {
-	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
 
-	trackAdded, spotifeteError := addFallbackTrackIfNecessary(session, upNextRequest)
+	queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
+	if err != nil {
+		return NewInternalError("Could not fetch queue from database", err)
+	}
+
+	queue, spotifeteError := addFallbackTrackIfNecessary(session, queue)
 	if spotifeteError != nil {
 		return spotifeteError
 	}
-	if trackAdded {
-		return UpdateSessionIfNecessary(session)
-	}
 
-	if isSessionUpdateNecessary(session, upNextRequest) {
-		currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
-		currentlyPlayingRequest.Status = model.StatusPlayed
-		database.GetConnection().Save(currentlyPlayingRequest)
-
-		upNextRequest.Status = model.StatusCurrentlyPlaying
-		database.GetConnection().Save(upNextRequest)
-
-		queue := GetSessionQueueInDemocraticOrder(session.SimpleListeningSession)
-		if len(queue) > 0 {
-			newUpNext := queue[0]
-			newUpNext.Status = model.StatusUpNext
-			database.GetConnection().Save(&newUpNext)
+	if shouldUpdateQueue(session, queue) {
+		queue, err = updateQueue(queue)
+		if err != nil {
+			return NewInternalError("could not update session", err)
 		}
 	}
 
-	return updateSessionPlaylistIfNecessary(session)
+	return updatePlaylistIfNecessary(session, queue)
 }
 
-func isSessionUpdateNecessary(session model.FullListeningSession, upNextRequest *model.SongRequest) bool {
-	if upNextRequest == nil {
+func shouldUpdateQueue(session model.FullListeningSession, queue []model.SongRequest) bool {
+
+	if len(queue) < 2 {
 		return false
 	}
 
@@ -287,78 +363,137 @@ func isSessionUpdateNecessary(session model.FullListeningSession, upNextRequest 
 		return false
 	}
 
-	return isSessionPlaying(session, currentlyPlaying.PlaybackContext) && upNextRequest.SpotifyTrackId == currentlyPlaying.Item.ID.String()
+	nextRequest := queue[1]
+	return isSessionPlaying(session, currentlyPlaying.PlaybackContext) && nextRequest.SpotifyTrackId == currentlyPlaying.Item.ID.String()
 }
 
 func isSessionPlaying(session model.FullListeningSession, playbackContext spotify.PlaybackContext) bool {
 	return playbackContext.Type == "playlist" && strings.HasSuffix(string(playbackContext.URI), session.QueuePlaylistId)
 }
 
-func updateSessionPlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
-	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
+func updateQueue(queue []model.SongRequest) (updatedQueue []model.SongRequest, err error) {
 
-	if currentlyPlayingRequest == nil && upNextRequest == nil {
+	updateSessionTask := func(tx *gorm.DB) error {
+		updatedQueue, err = updateQueueInTransaction(queue, tx)
+		return err
+	}
+	err = database.GetConnection().Transaction(updateSessionTask)
+
+	return updatedQueue, err
+}
+
+func updateQueueInTransaction(queue []model.SongRequest, tx *gorm.DB) (updatedQueue []model.SongRequest, err error) {
+
+	err = markPreviousAsPlayed(queue, tx)
+	if err != nil {
+		return []model.SongRequest{}, err
+	}
+
+	err = updateFirst(queue, tx)
+	if err != nil {
+		return []model.SongRequest{}, err
+	}
+
+	err = updateSecondIfPresent(queue, tx)
+	if err != nil {
+		return []model.SongRequest{}, err
+	}
+
+	return queue[1:], nil
+}
+
+func markPreviousAsPlayed(queue []model.SongRequest, tx *gorm.DB) error {
+
+	queue[0].Played = true
+	return tx.Save(&queue[0]).Error
+}
+
+func updateFirst(queue []model.SongRequest, tx *gorm.DB) error {
+
+	queue[1].Locked = true
+	queue[1].Weight = 0
+	return tx.Save(&queue[1]).Error
+}
+
+func updateSecondIfPresent(queue []model.SongRequest, tx *gorm.DB) error {
+
+	if len(queue) >= 3 {
+		queue[2].Locked = true
+		queue[2].Weight = 1
+		return tx.Save(&queue[2]).Error
+	} else {
 		return nil
+	}
+}
+
+func updatePlaylistIfNecessary(session model.FullListeningSession, queue []model.SongRequest) *SpotifeteError {
+
+	shouldUpdateSessionPlaylist, spotifeteError := shouldUpdatePlaylist(session, queue)
+	if spotifeteError != nil {
+		return spotifeteError
+	}
+
+	if shouldUpdateSessionPlaylist {
+		return updatePlaylist(session, queue)
+	}
+
+	return nil
+}
+
+func shouldUpdatePlaylist(session model.FullListeningSession, queue []model.SongRequest) (bool, *SpotifeteError) {
+
+	queueLength := len(queue)
+	if queueLength == 0 {
+		return false, nil
 	}
 
 	client := Client(session)
 
 	playlist, err := client.GetPlaylist(spotify.ID(session.QueuePlaylistId))
 	if err != nil {
-		return NewError("Could not get playlist information from Spotify.", err, http.StatusInternalServerError)
+		return false, NewInternalError("Could not get playlist information from Spotify.", err)
 	}
 
 	playlistTracks := playlist.Tracks.Tracks
+	playlistLength := len(playlistTracks)
 
-	// First, check playlist length
-	if currentlyPlayingRequest != nil && upNextRequest != nil && len(playlistTracks) != 2 {
-		return updateSessionPlaylist(session)
+	if playlistLength <= 0 {
+		return true, nil
 	}
 
-	if currentlyPlayingRequest != nil && upNextRequest == nil && len(playlistTracks) != 1 {
-		return updateSessionPlaylist(session)
+	if queue[0].SpotifyTrackId != playlistTracks[0].Track.ID.String() {
+		return true, nil
 	}
 
-	if currentlyPlayingRequest == nil && upNextRequest == nil && len(playlistTracks) != 0 {
-		return updateSessionPlaylist(session)
-	}
-
-	// Second, check playlist content
-	if currentlyPlayingRequest != nil {
-		if playlistTracks[0].Track.ID.String() != currentlyPlayingRequest.SpotifyTrackId {
-			return updateSessionPlaylist(session)
+	if queueLength > 1 {
+		if playlistLength <= 1 {
+			return true, nil
 		}
 
-		if upNextRequest != nil {
-			if playlistTracks[1].Track.ID.String() != upNextRequest.SpotifyTrackId {
-				return updateSessionPlaylist(session)
-			}
+		if queue[1].SpotifyTrackId != playlistTracks[1].Track.ID.String() {
+			return true, nil
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
-func updateSessionPlaylist(session model.FullListeningSession) *SpotifeteError {
+func updatePlaylist(session model.FullListeningSession, queue []model.SongRequest) *SpotifeteError {
+
 	client := Client(session)
-	currentlyPlayingRequest := GetCurrentlyPlayingRequest(session.SimpleListeningSession)
-	upNextRequest := GetUpNextRequest(session.SimpleListeningSession)
-
 	playlistId := spotify.ID(session.QueuePlaylistId)
+	firstTrackId := spotify.ID(queue[0].SpotifyTrackId)
 
-	// Always replace all tracks with only the current one playing first
-	err := client.ReplacePlaylistTracks(playlistId, spotify.ID(currentlyPlayingRequest.SpotifyTrackId))
-	if err != nil {
-		return NewError("Could not update tracks in playlist.", err, http.StatusInternalServerError)
+	var err error
+	if len(queue) > 1 {
+		secondTrackId := spotify.ID(queue[1].SpotifyTrackId)
+		err = client.ReplacePlaylistTracks(playlistId, firstTrackId, secondTrackId)
+	} else {
+		err = client.ReplacePlaylistTracks(playlistId, firstTrackId)
 	}
 
-	// After that, add the up next song as well if it is present
-	if upNextRequest != nil {
-		_, err = client.AddTracksToPlaylist(playlistId, spotify.ID(upNextRequest.SpotifyTrackId))
-		if err != nil {
-			return NewError("Could not add track to playlist.", err, http.StatusInternalServerError)
-		}
+	if err != nil {
+		return NewError("Could not update tracks in playlist.", err, http.StatusInternalServerError)
 	}
 
 	return nil

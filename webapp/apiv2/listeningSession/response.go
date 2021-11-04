@@ -17,9 +17,7 @@ type SearchPlaylistResponse struct {
 }
 
 type GetSessionQueueResponse struct {
-	CurrentlyPlayingRequest *model.SongRequest  `json:"currently_playing"`
-	UpNextRequest           *model.SongRequest  `json:"up_next"`
-	Queue                   []model.SongRequest `json:"queue"`
+	Queue []model.SongRequest `json:"queue"`
 }
 
 type QueueLastUpdatedResponse struct {
