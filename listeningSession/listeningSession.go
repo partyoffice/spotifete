@@ -241,7 +241,7 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 
 	database.GetConnection().Create(&newSongRequest)
 
-	return newSongRequest, updatePlaylistIfNecessary(session)
+	return newSongRequest, updatePlaylistIfNecessary(session, queue)
 }
 
 func getRequestCountForUser(session model.SimpleListeningSession, requestedBy string) (int64, error) {
@@ -266,13 +266,13 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 	}
 
 	if shouldUpdateQueue(session, queue) {
-		err = updateQueue(queue)
+		queue, err = updateQueue(queue)
 		if err != nil {
 			return NewInternalError("could not update session", err)
 		}
 	}
 
-	return updatePlaylistIfNecessary(session)
+	return updatePlaylistIfNecessary(session, queue)
 }
 
 func shouldUpdateQueue(session model.FullListeningSession, queue []model.SongRequest) bool {
@@ -299,49 +299,62 @@ func isSessionPlaying(session model.FullListeningSession, playbackContext spotif
 	return playbackContext.Type == "playlist" && strings.HasSuffix(string(playbackContext.URI), session.QueuePlaylistId)
 }
 
-func updateQueue(queue []model.SongRequest) error {
+func updateQueue(queue []model.SongRequest) (updatedQueue []model.SongRequest, err error) {
 
 	updateSessionTask := func(tx *gorm.DB) error {
-		return updateQueueInTransaction(queue, tx)
-	}
-
-	return database.GetConnection().Transaction(updateSessionTask)
-}
-
-func updateQueueInTransaction(queue []model.SongRequest, tx *gorm.DB) error {
-
-	queue[0].Played = true
-	err := tx.Save(&queue[0]).Error
-	if err != nil {
+		updatedQueue, err = updateQueueInTransaction(queue, tx)
 		return err
 	}
+	err = database.GetConnection().Transaction(updateSessionTask)
 
-	if len(queue) < 2 {
-		return nil
+	return updatedQueue, err
+}
+
+func updateQueueInTransaction(queue []model.SongRequest, tx *gorm.DB) (updatedQueue []model.SongRequest, err error) {
+
+	err = markPreviousAsPlayed(queue, tx)
+	if err != nil {
+		return []model.SongRequest{}, err
 	}
+
+	err = updateFirst(queue, tx)
+	if err != nil {
+		return []model.SongRequest{}, err
+	}
+
+	err = updateSecondIfPresent(queue, tx)
+	if err != nil {
+		return []model.SongRequest{}, err
+	}
+
+	return queue[1:], nil
+}
+
+func markPreviousAsPlayed(queue []model.SongRequest, tx *gorm.DB) error {
+
+	queue[0].Played = true
+	return tx.Save(&queue[0]).Error
+}
+
+func updateFirst(queue []model.SongRequest, tx *gorm.DB) error {
 
 	queue[1].Locked = true
 	queue[1].Weight = 0
-	err = tx.Save(&queue[1]).Error
-	if err != nil {
-		return err
-	}
-
-	if len(queue) < 3 {
-		return nil
-	}
-
-	queue[2].Locked = true
-	queue[2].Weight = 1
-	return tx.Save(&queue[2]).Error
+	return tx.Save(&queue[1]).Error
 }
 
-func updatePlaylistIfNecessary(session model.FullListeningSession) *SpotifeteError {
+func updateSecondIfPresent(queue []model.SongRequest, tx *gorm.DB) error {
 
-	queue, err := GetLimitedQueue(session.SimpleListeningSession, 2)
-	if err != nil {
-		return NewInternalError("could not fetch limited queue from database", err)
+	if len(queue) >= 3 {
+		queue[2].Locked = true
+		queue[2].Weight = 1
+		return tx.Save(&queue[2]).Error
+	} else {
+		return nil
 	}
+}
+
+func updatePlaylistIfNecessary(session model.FullListeningSession, queue []model.SongRequest) *SpotifeteError {
 
 	shouldUpdateSessionPlaylist, spotifeteError := shouldUpdatePlaylist(session, queue)
 	if spotifeteError != nil {
