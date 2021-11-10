@@ -46,16 +46,30 @@ jobs:
           github_token: ${{ github.token }}
 
       - name: Evaluate previous version
+        id: previous-version
         run: |
           VERSION_TAG=$(git describe --tags)
-          export VERSION_MAJOR=$(echo $VERSION_TAG | sed -r 's/[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9])+.*/\1/')
-          export VERSION_MINOR=$(echo $VERSION_TAG | sed -r 's/[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9])+.*/\2/')
-          export VERSION_PATCH=$(echo $VERSION_TAG | sed -r 's/[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9])+.*/\3/')
+          VERSION_MAJOR=$(echo $VERSION_TAG | sed -r 's/[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9])+.*/\1/')
+          VERSION_MINOR=$(echo $VERSION_TAG | sed -r 's/[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9])+.*/\2/')
+          VERSION_PATCH=$(echo $VERSION_TAG | sed -r 's/[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9])+.*/\3/')
+          echo "::set-output name=version_major::$VERSION_MAJOR"
+          echo "::set-output name=version_minor::$VERSION_MINOR"
+          echo "::set-output name=version_patch::$VERSION_PATCH"
 
       - name: Set release version (Feature)
+        id: release-version
         #if: ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.title, 'labels') }}
+        env:
+          VERSION_MAJOR: ${{ steps.previous-version.outputs.version_major }}
+          VERSION_MINOR: ${{ steps.previous-version.outputs.version_minor }}
+          VERSION_PATCH: ${{ steps.previous-version.outputs.version_patch }}
         run: |
           RELEASE_VERSION_MINOR=$((VERSION_MINOR+1))
-          export RELEASE_VERSION_PATCH=0
-          export RELEASE_VERSION=$VERSION_MAJOR.$RELEASE_VERSION_MINOR.$RELEASE_VERSION_PATCH
-          echo Releasing: $RELEASE_VERSION
+          RELEASE_VERSION_PATCH=0
+          RELEASE_VERSION=$VERSION_MAJOR.$RELEASE_VERSION_MINOR.$RELEASE_VERSION_PATCH
+          echo "::set-output name=release_version::$RELEASE_VERSION"
+
+      - name: Print release version
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.release_version }}
+        run: echo $RELEASE_VERSION
