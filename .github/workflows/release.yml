@@ -1,30 +1,32 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'The version number of the release'
-        required: true
+  push:
+    branches:
+      - ci-testing
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Merge develop into master
-        uses: everlytic/branch-merge@1.1.0
-        with:
-          github_token: ${{ github.token }}
-          source_ref: 'develop'
-          target_branch: 'master'
-          commit_message_template: 'Release v${{ github.event.inputs.version }}'
     
       - name: Checkout master
         run: | 
           git clone https://github.com/partyoffice/spotifete.git ./
           git checkout -f master
-          
+
+      - name: Evaluate version
+        run: |
+          VERSION=`git describe --tags | sed 's/v\([^-]*\)-.*/\1/'`
+          IFS='.'; VERSION_PARTS=($VERSION); UNSET IFS
+          VERSION_MAJOR=${VERSION_PARTS[0]}
+          VERSION_MINOR=${VERSION_PARTS[1]}
+          VERSION_PATCH=${VERSION_PARTS[2]}
+          echo Major: $VERSION_MAJOR
+          echo Minor: $VERSION_MINOR
+          echo Patch: $VERSION_PATCH
+
       - name: Create release tag
         run: |
           git tag v${{ github.event.inputs.version }}
