@@ -18,7 +18,7 @@ jobs:
 
       - name: Evaluate version
         run: |
-          VERSION=`git describe --tags | sed -r 's/v?([^-]*)-.*/\1/`
+          VERSION=$(git describe --tags | sed -r 's/v?([^-]*)-.*/\1/')
           IFS='.'; VERSION_PARTS=($VERSION); unset IFS
           VERSION_MAJOR=${VERSION_PARTS[0]}
           VERSION_MINOR=${VERSION_PARTS[1]}
