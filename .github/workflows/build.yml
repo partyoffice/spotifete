@@ -17,17 +17,6 @@ jobs:
         with:
           go-version: 1.17
 
-      - name: Fix go.sum for dependabot branches
-        if: ${{ startsWith(github.ref, 'refs/heads/dependabot/go_modules/') }}
-        run: go get ./...
-
-      - name: Commit & push updated go.sum for dependabot branches
-        if: ${{ startsWith(github.ref, 'refs/heads/dependabot/go_modules/') }}
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Update go.sum
-          file_pattern: go.sum
-
       - name: Build
         run: go build -v ./...
 
