@@ -63,8 +63,10 @@ jobs:
           VERSION_MAJOR: ${{ steps.previous-version.outputs.version_major }}
           VERSION_MINOR: ${{ steps.previous-version.outputs.version_minor }}
           VERSION_PATCH: ${{ steps.previous-version.outputs.version_patch }}
+          PR_TITLE: ${{ steps.merged-pr.outputs.title }}
+          PR_LABELS: ${{ steps.merged-pr.outputs.labels }}
         run: |
-          if [ ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.labels, 'feature') }} ]
+          if [[ $PR_TITLE = Feature:* ]] || [[ $PR_LABELS = *Feature* ]]
           then
             RELEASE_VERSION_MAJOR=$VERSION_MAJOR
             RELEASE_VERSION_MINOR=$((VERSION_MINOR+1))
