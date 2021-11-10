@@ -56,7 +56,7 @@ jobs:
           echo "::set-output name=version_minor::$VERSION_MINOR"
           echo "::set-output name=version_patch::$VERSION_PATCH"
 
-      - name: Set release version (Feature)
+      - name: Set release version
         id: release-version
         #if:
         env:
@@ -64,7 +64,7 @@ jobs:
           VERSION_MINOR: ${{ steps.previous-version.outputs.version_minor }}
           VERSION_PATCH: ${{ steps.previous-version.outputs.version_patch }}
         run: |
-          if [ ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.title, 'labels') }} ]
+          if [ ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.labels, 'feature') }} ]
           then
             RELEASE_VERSION_MAJOR=$VERSION_MAJOR
             RELEASE_VERSION_MINOR=$((VERSION_MINOR+1))
