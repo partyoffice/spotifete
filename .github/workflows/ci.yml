@@ -41,7 +41,7 @@ jobs:
 
       - name: Get merged pull request
         id: merged-pr
-        uses: emihq/action-get-merged-pull-request
+        uses: emihq/action-get-merged-pull-request@v1
         with:
           github_token: ${{ github.token }}
 
