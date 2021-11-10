@@ -55,7 +55,7 @@ jobs:
       - name: Set release version (Feature)
         #if: ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.title, 'labels') }}
         run: |
-          RELEASE_VERSION_MINOR=$VERSION_MINOR + 1
+          RELEASE_VERSION_MINOR=$((VERSION_MINOR+1))
           RELEASE_VERSION_PATCH=0
           RELEASE_VERSION=$VERSION_MAJOR.$RELEASE_VERSION_MINOR.$RELEASE_VERSION_PATCH
           echo Releasing: $RELEASE_VERSION
