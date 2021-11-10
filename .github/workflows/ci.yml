@@ -58,15 +58,24 @@ jobs:
 
       - name: Set release version (Feature)
         id: release-version
-        #if: ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.title, 'labels') }}
+        #if:
         env:
           VERSION_MAJOR: ${{ steps.previous-version.outputs.version_major }}
           VERSION_MINOR: ${{ steps.previous-version.outputs.version_minor }}
           VERSION_PATCH: ${{ steps.previous-version.outputs.version_patch }}
         run: |
-          RELEASE_VERSION_MINOR=$((VERSION_MINOR+1))
-          RELEASE_VERSION_PATCH=0
-          RELEASE_VERSION=$VERSION_MAJOR.$RELEASE_VERSION_MINOR.$RELEASE_VERSION_PATCH
+          if [ ${{ startsWith(steps.merged-pr.outputs.title, 'Feature:') || contains(steps.merged-pr.outputs.title, 'labels') }} ]
+          then
+            RELEASE_VERSION_MAJOR=$VERSION_MAJOR
+            RELEASE_VERSION_MINOR=$((VERSION_MINOR+1))
+            RELEASE_VERSION_PATCH=0
+          else
+            RELEASE_VERSION_MAJOR=$VERSION_MAJOR
+            RELEASE_VERSION_MINOR=$VERSION_MINOR
+            RELEASE_VERSION_PATCH=$((VERSION_PATCH+1))
+          fi
+
+          RELEASE_VERSION=$RELEASE_VERSION_MAJOR.$RELEASE_VERSION_MINOR.$RELEASE_VERSION_PATCH
           echo "::set-output name=release_version::$RELEASE_VERSION"
 
       - name: Print release version
