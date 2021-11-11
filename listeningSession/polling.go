@@ -17,11 +17,28 @@ func pollSessionsLoop() {
 }
 
 func pollSessions() {
+
+	sessionsToUpdate := findSessionsToUpdate()
+
+	for _, session := range sessionsToUpdate {
+		UpdateSessionIfNecessary(session)
+	}
+}
+
+func findSessionsToUpdate() []model.FullListeningSession {
+
 	activeSessions := FindFullListeningSessions(model.SimpleListeningSession{
 		Active: true,
 	})
 
-	for _, session := range activeSessions {
-		UpdateSessionIfNecessary(session)
+	recentlyUpdatedThreshold := time.Now().Add(-1 * time.Hour)
+
+	var recentlyUpdatedSessions []model.FullListeningSession
+	for _, s := range activeSessions {
+		if s.UpdatedAt.After(recentlyUpdatedThreshold) {
+			recentlyUpdatedSessions = append(recentlyUpdatedSessions, s)
+		}
 	}
+
+	return recentlyUpdatedSessions
 }
