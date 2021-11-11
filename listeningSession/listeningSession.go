@@ -237,7 +237,7 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 			return errors.New("rolling back transaction")
 		}
 
-		queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
+		queue, err := GetLimitedQueueInTransaction(session.SimpleListeningSession, 3, tx)
 		if err != nil {
 			return err
 		}
@@ -313,6 +313,9 @@ func createNewSongRequestInTransaction(session model.FullListeningSession, track
 		return model.SongRequest{}, NewInternalError("could not save new request", err)
 	}
 
+	session.UpdatedAt = time.Now()
+	tx.Save(session.SimpleListeningSession)
+
 	return newSongRequest, nil
 }
 
@@ -342,6 +345,9 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 		if err != nil {
 			return NewInternalError("could not update session", err)
 		}
+
+		session.UpdatedAt = time.Now()
+		database.GetConnection().Save(session.SimpleListeningSession)
 	}
 
 	return updatePlaylistIfNecessary(session, queue)
