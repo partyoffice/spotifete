@@ -237,7 +237,7 @@ func RequestSong(session model.FullListeningSession, trackId string, username st
 			return errors.New("rolling back transaction")
 		}
 
-		queue, err := GetLimitedQueue(session.SimpleListeningSession, 3)
+		queue, err := GetLimitedQueueInTransaction(session.SimpleListeningSession, 3, tx)
 		if err != nil {
 			return err
 		}

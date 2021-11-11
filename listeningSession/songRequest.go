@@ -52,24 +52,34 @@ func FindSongRequestCountInTransaction(filter interface{}, tx *gorm.DB) (int64, 
 
 func GetFullQueue(session model.SimpleListeningSession) ([]model.SongRequest, error) {
 
-	query := buildGetQueueQuery(session)
+	return GetFullQueueInTransaction(session, database.GetConnection())
+}
+
+func GetFullQueueInTransaction(session model.SimpleListeningSession, tx *gorm.DB) ([]model.SongRequest, error) {
+
+	query := buildGetQueueQuery(session, tx)
 	return FindSongRequests(query)
 }
 
 func GetLimitedQueue(session model.SimpleListeningSession, limit int) ([]model.SongRequest, error) {
 
-	query := buildGetQueueQuery(session).Limit(limit)
+	return GetLimitedQueueInTransaction(session, limit, database.GetConnection())
+}
+
+func GetLimitedQueueInTransaction(session model.SimpleListeningSession, limit int, tx *gorm.DB) ([]model.SongRequest, error) {
+
+	query := buildGetQueueQuery(session, tx).Limit(limit)
 	return FindSongRequests(query)
 }
 
-func buildGetQueueQuery(session model.SimpleListeningSession) *gorm.DB {
+func buildGetQueueQuery(session model.SimpleListeningSession, tx *gorm.DB) *gorm.DB {
 
 	filter := map[string]interface{}{
 		"session_id": session.ID,
 		"played":     false,
 	}
 
-	return database.GetConnection().Where(filter).Order("locked desc, weight asc, created_at asc")
+	return tx.Where(filter).Order("locked desc, weight asc, created_at asc")
 }
 
 func GetQueueLastUpdated(session model.SimpleListeningSession) time.Time {
