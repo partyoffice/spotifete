@@ -313,6 +313,9 @@ func createNewSongRequestInTransaction(session model.FullListeningSession, track
 		return model.SongRequest{}, NewInternalError("could not save new request", err)
 	}
 
+	session.UpdatedAt = time.Now()
+	tx.Save(session.SimpleListeningSession)
+
 	return newSongRequest, nil
 }
 
