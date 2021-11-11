@@ -345,6 +345,9 @@ func UpdateSessionIfNecessary(session model.FullListeningSession) *SpotifeteErro
 		if err != nil {
 			return NewInternalError("could not update session", err)
 		}
+
+		session.UpdatedAt = time.Now()
+		database.GetConnection().Save(session.SimpleListeningSession)
 	}
 
 	return updatePlaylistIfNecessary(session, queue)
