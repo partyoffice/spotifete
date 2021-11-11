@@ -4,7 +4,7 @@ WORKDIR /go/src/github.com/partyoffice/spotifete
 COPY . .
 
 ENV CGO_ENABLED=0
-RUN go build -v -o ./ ./...
+RUN go build -v -trimpath -o ./ ./...
 
 FROM alpine:latest
 
