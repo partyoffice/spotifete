@@ -48,7 +48,7 @@ jobs:
 
       - name: Create release tag
         run: |
-          git tag v${{ github.event.inputs.version }}
+          git tag v${{ steps.release-version.outputs.release_version }}
           git push https://Nikos410:${{ secrets.GITHUB_TOKEN }}@github.com/partyoffice/spotifete.git v${{ steps.release-version.outputs.release_version }}
 
       - name: Set up Go
