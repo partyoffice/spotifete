@@ -5,3 +5,5 @@
 [![version](https://img.shields.io/docker/v/nikos410/spotifete?color=blue&label=version&sort=semver&style=flat-square)](https://hub.docker.com/r/nikos410/spotifete/tags)
 
 Collaborative Spotify for your Events.
+
+Aaa
