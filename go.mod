@@ -13,7 +13,7 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/zmb3/spotify v1.3.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	gorm.io/driver/postgres v1.2.1
+	gorm.io/driver/postgres v1.2.2
 	gorm.io/gorm v1.22.2
 )
 
