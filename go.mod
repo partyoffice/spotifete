@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.7.6
+	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/logger v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
