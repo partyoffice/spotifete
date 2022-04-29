@@ -6,7 +6,7 @@ require (
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
-	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/logger v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -24,8 +24,8 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
