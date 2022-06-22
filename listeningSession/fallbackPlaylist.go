@@ -118,7 +118,7 @@ func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.
 		return "", nil
 	}
 
-	for i := int64(0); i < 10_000; i++ {
+	for i := int64(0); i < 100; i++ {
 		fallbackTrack, err := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, queue, i)
 		if err != nil {
 			return "", NewInternalError("could not find possible fallback tracks", err)
@@ -131,7 +131,7 @@ func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.
 	session.FallbackPlaylistId = nil
 	database.GetConnection().Save(session)
 
-	return "", NewInternalError(fmt.Sprintf("No track found in fallback playlist for session %d that has been played less than 10,000 times. Aborting and removing fallback playlist.", session.ID), nil)
+	return "", NewInternalError(fmt.Sprintf("No track found in fallback playlist for session %d that has been played less than 100 times. Aborting and removing fallback playlist.", session.ID), nil)
 }
 
 func findPossibleFallbackTrackFromPlayableTracks(playableTracks []spotify.FullTrack, session model.SimpleListeningSession, queue []model.SongRequest, maximumPlays int64) (possibleFallbackTrackId *string, err error) {
