@@ -118,8 +118,8 @@ func doFindNextFallbackTrack(playableTracks *[]spotify.FullTrack, session model.
 		return "", nil
 	}
 
-	for i := 0; i < 10_000; i++ {
-		fallbackTrack, err := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, queue, 0)
+	for i := int64(0); i < 10_000; i++ {
+		fallbackTrack, err := findPossibleFallbackTrackFromPlayableTracks(*playableTracks, session.SimpleListeningSession, queue, i)
 		if err != nil {
 			return "", NewInternalError("could not find possible fallback tracks", err)
 		}
