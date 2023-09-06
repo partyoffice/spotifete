@@ -14,7 +14,7 @@ require (
 	github.com/zmb3/spotify v1.3.0
 	golang.org/x/oauth2 v0.12.0
 	gorm.io/driver/postgres v1.4.5
-	gorm.io/gorm v1.25.3
+	gorm.io/gorm v1.25.4
 )
 
 require (
