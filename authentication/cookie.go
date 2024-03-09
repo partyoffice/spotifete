@@ -1,12 +1,7 @@
 package authentication
 
 import (
-	"errors"
-	"net/http"
-
-	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/google/logger"
 	"github.com/partyoffice/spotifete/database/model"
 )
 
@@ -30,14 +25,7 @@ func GetValidSessionFromCookie(c *gin.Context) *model.LoginSession {
 
 func GetSessionIdFromCookie(c *gin.Context) *string {
 	sessionId, err := c.Cookie(sessionCookieName)
-	if err != nil {
-		if !errors.As(err, &http.ErrNoCookie) {
-			logger.Error("Could not get error from context", err)
-			sentry.CaptureException(err)
-		}
-
-		return nil
-	} else if sessionId == "" {
+	if err != nil || sessionId == "" {
 		return nil
 	}
 
