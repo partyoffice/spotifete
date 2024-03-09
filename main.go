@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/partyoffice/spotifete/database"
 	"github.com/partyoffice/spotifete/listeningSession"
@@ -19,7 +19,7 @@ func main() {
 }
 
 func printBanner() {
-	bannerTextBytes, err := ioutil.ReadFile("resources/banner.txt")
+	bannerTextBytes, err := os.ReadFile("resources/banner.txt")
 	if err != nil {
 		println("Could not read banner text file: " + err.Error())
 		return
