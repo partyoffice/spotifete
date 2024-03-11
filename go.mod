@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/getsentry/sentry-go v0.27.0
-	github.com/gin-contrib/cors v1.6.0
+	github.com/gin-contrib/cors v1.7.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/google/logger v1.1.1
